@@ -1,0 +1,8 @@
+{
+  "projectId": "383bec31-8757-4e88-9f19-2af831c09162",
+  "createdAt": 1736785600000,
+  "startupCommands": [
+    "bun install; cd packages/proxy; $env:ZS_AI_MASTER_KEY='test-master-key'; bun run dev",
+    "cd packages/ui; bun run dev"
+  ]
+}

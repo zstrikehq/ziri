@@ -1,0 +1,39 @@
+{
+  "name": "@zs-ai",
+  "version": "1.0.0",
+  "description": "ZS AI Gateway - All-in-one package with management UI, CLI, and SDKs",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
+  "bin": {
+    "zs-ai": "./packages/cli/dist/cli.js"
+  },
+  "exports": {
+    ".": "./packages/sdk/dist/index.js",
+    "./sdk": "./packages/sdk/dist/index.js",
+    "./cli": "./packages/cli/dist/cli.js",
+    "./config": "./packages/config/dist/index.js"
+  },
+  "scripts": {
+    "dev": "npm run dev --workspace=packages/ui",
+    "build": "npm run build --workspaces",
+    "build:ui": "npm run build --workspace=packages/ui",
+    "build:sdk": "npm run build --workspace=packages/sdk",
+    "build:cli": "npm run build --workspace=packages/cli",
+    "build:auth": "npm run build --workspace=packages/auth-plugin",
+    "build:config": "npm run build --workspace=packages/config",
+    "build:proxy": "npm run build --workspace=packages/proxy",
+    "preview": "npm run preview --workspace=packages/ui",
+    "prepare": "npm run postinstall --workspace=packages/ui || true",
+    "start": "node packages/cli/dist/cli.js start",
+    "ui": "node packages/cli/dist/cli.js start"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
