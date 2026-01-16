@@ -350,22 +350,22 @@ const { getAuthHeader } = useAdminAuth()
           <option value="disabled">Disabled</option>
         </select>
       </div>
-      <UiButton @click="showCreateModal = true">
+      <!-- <UiButton @click="showCreateModal = true">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
         </svg>
         Create Key
-      </UiButton>
+      </UiButton> -->
     </div>
 
     <!-- Empty state toolbar (when no keys at all) -->
     <div class="flex items-center justify-end gap-4" v-if="keys.length === 0 && !loading && !searchQuery && !filterStatus">
-      <UiButton @click="showCreateModal = true">
+      <!-- <UiButton @click="showCreateModal = true">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
         </svg>
         Create Key
-      </UiButton>
+      </UiButton> -->
     </div>
 
     <!-- Keys Table -->
@@ -383,12 +383,12 @@ const { getAuthHeader } = useAdminAuth()
       @update:items-per-page="itemsPerPage = $event"
     >
       <template #empty-action>
-        <UiButton @click="showCreateModal = true">
+        <!-- <UiButton @click="showCreateModal = true">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
           </svg>
           Create Key
-        </UiButton>
+        </UiButton> -->
       </template>
       <template #userId="{ value }">
         <code class="px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-900/30 font-mono text-xs text-indigo-600 dark:text-indigo-400 font-semibold">{{ value }}</code>

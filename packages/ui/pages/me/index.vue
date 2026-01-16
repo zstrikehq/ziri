@@ -241,7 +241,7 @@ const loadProfile = async () => {
       lastSignIn: userData.lastSignIn || userData.lastLogin || '' // Support both field names
     }
 
-    // Load API key
+    // Load API key and usage stats from UserKey entity
     const keysResponse = await fetch('/api/me/keys', {
       headers: {
         'Authorization': authHeader
@@ -254,14 +254,8 @@ const loadProfile = async () => {
       if (keysData.data && keysData.data.length > 0) {
         const keyEntity = keysData.data[0]
         apiKey.value = keyEntity.apiKey || null
-      }
-    }
-
-    // Load usage stats from UserKey entity
-    if (keysResponse.ok) {
-      const keysData = await keysResponse.json()
-      if (keysData.data && keysData.data.length > 0) {
-        const keyEntity = keysData.data[0]
+        
+        // Load usage stats from UserKey entity
         usage.value = {
           currentDailySpend: typeof keyEntity.currentDailySpend === 'number' ? keyEntity.currentDailySpend : parseFloat(keyEntity.currentDailySpend) || 0,
           currentMonthlySpend: typeof keyEntity.currentMonthlySpend === 'number' ? keyEntity.currentMonthlySpend : parseFloat(keyEntity.currentMonthlySpend) || 0,

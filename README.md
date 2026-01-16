@@ -2,6 +2,7 @@
 
 A production-grade LLM Gateway management interface with Cedar-based authorization. This monorepo contains a local proxy server, management UI, SDKs, and authentication for managing API keys, policies, and schema.
 
+> 💡 **New to the project?** Check out the [QUICKSTART.md](./QUICKSTART.md) guide for a streamlined setup process.
 
 ## ✨ Features
 
