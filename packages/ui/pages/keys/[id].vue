@@ -2,13 +2,16 @@
 import { useKeys } from '~/composables/useKeys'
 import { useConfigStore } from '~/stores/config'
 import { useToast } from '~/composables/useToast'
+import { useUnifiedAuth } from '~/composables/useUnifiedAuth'
 import { formatCurrency, formatDate, formatPercent, maskApiKey } from '~/utils/formatters'
 import type { Key } from '~/types/entity'
+import KeysSpendChart from '~/components/keys/SpendChart.vue'
 
 const route = useRoute()
 const router = useRouter()
 const configStore = useConfigStore()
 const { getKey, getKeyByUserId, revokeKey, currentKey, loading } = useKeys()
+const { getAuthHeader } = useUnifiedAuth()
 const toast = useToast()
 
 const routeId = route.params.id as string
@@ -34,29 +37,131 @@ const demoKey = ref<Key>({
 
 const key = computed(() => currentKey.value || demoKey.value)
 
-// Generate demo chart data
-const dailySpendData = computed(() => {
-  const labels = []
-  const values = []
-  const today = new Date()
+// Cost tracking data
+const isLoadingCosts = ref(false)
+const dailyCostData = ref<any[]>([])
+const monthlyCostData = ref<any[]>([])
+
+// Fetch cost tracking data
+const fetchCostData = async () => {
+  if (!key.value.executionKey) return
   
-  for (let i = 29; i >= 0; i--) {
-    const date = new Date(today)
-    date.setDate(date.getDate() - i)
-    labels.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }))
-    values.push(Math.random() * 15 + 5)
+  isLoadingCosts.value = true
+  try {
+    const authHeader = getAuthHeader()
+    if (!authHeader) return
+
+    // Fetch daily costs (last 30 days)
+    const dailyStartDate = new Date()
+    dailyStartDate.setDate(dailyStartDate.getDate() - 30)
+    const dailyParams = new URLSearchParams({
+      executionKey: key.value.executionKey,
+      groupBy: 'day',
+      startDate: dailyStartDate.toISOString(),
+      endDate: new Date().toISOString()
+    })
+
+    const dailyResponse = await fetch(`/api/costs/summary?${dailyParams.toString()}`, {
+      headers: {
+        'Authorization': authHeader
+      }
+    })
+
+    if (dailyResponse.ok) {
+      const dailyResult = await dailyResponse.json()
+      dailyCostData.value = dailyResult.data || []
+    }
+
+    // Fetch monthly costs (last 12 months)
+    const monthlyStartDate = new Date()
+    monthlyStartDate.setMonth(monthlyStartDate.getMonth() - 12)
+    const monthlyParams = new URLSearchParams({
+      executionKey: key.value.executionKey,
+      groupBy: 'day', // Group by day, then aggregate by month
+      startDate: monthlyStartDate.toISOString(),
+      endDate: new Date().toISOString()
+    })
+
+    const monthlyResponse = await fetch(`/api/costs/summary?${monthlyParams.toString()}`, {
+      headers: {
+        'Authorization': authHeader
+      }
+    })
+
+    if (monthlyResponse.ok) {
+      const monthlyResult = await monthlyResponse.json()
+      // Group by month
+      const monthlyMap = new Map<string, number>()
+      monthlyResult.data?.forEach((item: any) => {
+        const date = new Date(item.period || item.request_timestamp || '')
+        const monthKey = date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+        monthlyMap.set(monthKey, (monthlyMap.get(monthKey) || 0) + (item.total_cost || 0))
+      })
+      monthlyCostData.value = Array.from(monthlyMap.entries()).map(([month, cost]) => ({
+        period: month,
+        total_cost: cost
+      }))
+    }
+  } catch (error) {
+    // Error handled silently
+  } finally {
+    isLoadingCosts.value = false
   }
-  values[29] = key.value.currentDailySpend
-  
-  return { labels, values }
+}
+
+// Generate chart data from real cost tracking
+const dailySpendData = computed(() => {
+  if (dailyCostData.value.length === 0) {
+    // Fallback to empty or demo data
+    const labels = []
+    const values = []
+    const today = new Date()
+    for (let i = 29; i >= 0; i--) {
+      const date = new Date(today)
+      date.setDate(date.getDate() - i)
+      labels.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }))
+      values.push(0)
+    }
+    return { labels, values }
+  }
+
+  // Sort by date
+  const sorted = [...dailyCostData.value].sort((a, b) => {
+    const dateA = new Date(a.period || a.request_timestamp || '').getTime()
+    const dateB = new Date(b.period || b.request_timestamp || '').getTime()
+    return dateA - dateB
+  })
+
+  return {
+    labels: sorted.map(item => {
+      const date = new Date(item.period || item.request_timestamp || '')
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    }),
+    values: sorted.map(item => item.total_cost || 0)
+  }
 })
 
 const monthlySpendData = computed(() => {
-  const labels = ['Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan']
-  const values = labels.map(() => Math.random() * 300 + 100)
-  values[11] = key.value.currentMonthlySpend
-  
-  return { labels, values }
+  if (monthlyCostData.value.length === 0) {
+    // Fallback to empty data
+    const labels = ['Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan']
+    return { labels, values: labels.map(() => 0) }
+  }
+
+  // Sort by date
+  const sorted = [...monthlyCostData.value].sort((a, b) => {
+    const dateA = new Date(a.period || '').getTime()
+    const dateB = new Date(b.period || '').getTime()
+    return dateA - dateB
+  })
+
+  return {
+    labels: sorted.map(item => {
+      // Extract month from "Jan 2026" format
+      return item.period?.split(' ')[0] || ''
+    }),
+    values: sorted.map(item => item.total_cost || 0)
+  }
 })
 
 const handleRevoke = async () => {
@@ -87,9 +192,19 @@ onMounted(async () => {
         // If getKey fails, try getKeyByUserId
         await getKeyByUserId(routeId)
       }
+      
+      // Fetch cost data after key is loaded
+      await fetchCostData()
     } catch (e) {
       // Error handled by composable
     }
+  }
+})
+
+// Watch for key changes to refetch cost data
+watch(() => key.value.executionKey, () => {
+  if (key.value.executionKey) {
+    fetchCostData()
   }
 })
 </script>

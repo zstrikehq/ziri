@@ -275,6 +275,7 @@ type RequestContext = {
   ip_address: __cedar::ipaddr,
   is_emergency: __cedar::Bool,
   model_name: __cedar::String,
+  model_provider: __cedar::String,
   request_time: __cedar::String
 };
 

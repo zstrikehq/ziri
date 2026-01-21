@@ -27,19 +27,43 @@ export function getDatabase(): Database.Database {
   // Enable foreign keys
   db.pragma('foreign_keys = ON')
 
-  // Initialize schema
-  initializeSchema(db)
+  // Initialize schema (async but we'll await it)
+  initializeSchema(db).catch((error) => {
+    console.warn('[DB] Schema initialization error:', error.message)
+  })
 
   console.log(`[DB] Database initialized at: ${DB_PATH}`)
 
   return db
 }
 
-function initializeSchema(database: Database.Database): void {
+async function initializeSchema(database: Database.Database): Promise<void> {
   console.log('[DB] Initializing database schema...')
   
   for (const schema of ALL_SCHEMAS) {
     database.exec(schema)
+  }
+  
+  // Run migration for audit/cost tracking tables
+  try {
+    const { up: migrationUp } = await import('./migrations/003_audit_cost_tracking.js')
+    migrationUp(database)
+    console.log('[DB] Migration 003 applied: audit_cost_tracking')
+  } catch (error: any) {
+    // Migration might fail if tables already exist, that's okay
+    if (!error.message?.includes('already exists') && !error.message?.includes('Cannot find module')) {
+      console.warn('[DB] Migration 003 failed (may already be applied):', error.message)
+    }
+  }
+  
+  // Seed pricing data after migration
+  try {
+    const { seedPricing } = await import('./seed-pricing.js')
+    seedPricing(database)
+  } catch (error: any) {
+    if (!error.message?.includes('Cannot find module')) {
+      console.warn('[DB] Pricing seed failed:', error.message)
+    }
   }
   
   console.log('[DB] Database schema initialized')

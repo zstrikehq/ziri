@@ -1,198 +1,263 @@
 <script setup lang="ts">
 import { formatCurrency, formatDateShort } from '~/utils/formatters'
-import { Bar } from 'vue-chartjs'
-import { 
-  Chart as ChartJS, 
-  CategoryScale, 
-  LinearScale, 
-  BarElement,
-  Title, 
-  Tooltip, 
-  Legend
-} from 'chart.js'
+import { useUnifiedAuth } from '~/composables/useUnifiedAuth'
+import KeysSpendChart from '~/components/keys/SpendChart.vue'
 
-ChartJS.register(
-  CategoryScale, 
-  LinearScale, 
-  BarElement,
-  Title, 
-  Tooltip, 
-  Legend
-)
+definePageMeta({
+  layout: 'default'
+})
 
-// Dummy analytics data
+const { getAuthHeader } = useUnifiedAuth()
+
+// Time range
 const timeRange = ref<'7d' | '30d' | '90d' | 'all'>('30d')
 
-const stats = computed(() => ({
-  totalRequests: 12450,
-  totalSpend: 2345.67,
-  avgResponseTime: 1.23,
-  successRate: 98.5,
-  activeUsers: 23,
-  requestsToday: 342
-}))
-
-// Generate proper dummy data with dates
-const requestTrend = computed(() => {
-  const days = timeRange.value === '7d' ? 7 : timeRange.value === '30d' ? 30 : timeRange.value === '90d' ? 90 : 365
-  const baseDate = new Date()
-  const data = []
-  
-  for (let i = days - 1; i >= 0; i--) {
-    const date = new Date(baseDate)
-    date.setDate(date.getDate() - i)
-    
-    // Create realistic trend with some variation
-    const baseValue = 300 + Math.sin(i / days * Math.PI * 2) * 100
-    const variation = (Math.random() - 0.5) * 50
-    
-    data.push({
-      date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      fullDate: date,
-      requests: Math.floor(baseValue + variation),
-      spend: (baseValue + variation) * 0.15 + Math.random() * 10
-    })
-  }
-  
-  return data
+// Loading state
+const isLoading = ref(true)
+const overviewStats = ref({
+  totalRequests: 0,
+  permitCount: 0,
+  forbidCount: 0,
+  totalCost: 0
 })
+const costByProvider = ref<any[]>([])
+const costByModel = ref<any[]>([])
+const dailyCost = ref<any[]>([])
 
-const requestTrendChartData = computed(() => ({
-  labels: requestTrend.value.map(d => d.date),
-  datasets: [{
-    label: 'Requests',
-    data: requestTrend.value.map(d => d.requests),
-    backgroundColor: 'rgba(99, 102, 241, 0.1)',
-    borderColor: 'rgb(99, 102, 241)',
-    borderWidth: 2,
-    borderRadius: 4
-  }]
-}))
-
-const requestTrendChartOptions = {
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: {
-    legend: {
-      display: false
-    },
-    tooltip: {
-      backgroundColor: 'rgba(0, 0, 0, 0.8)',
-      titleFont: { size: 11 },
-      bodyFont: { size: 11 },
-      padding: 8,
-      callbacks: {
-        label: (context: any) => `${context.parsed.y.toLocaleString()} requests`
+// Calculate date range
+const getDateRange = () => {
+  const now = new Date()
+  switch (timeRange.value) {
+    case '7d':
+      return {
+        startDate: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+        endDate: now.toISOString()
       }
-    }
-  },
-  scales: {
-    x: {
-      grid: { display: false },
-      ticks: { 
-        font: { size: 10 },
-        color: 'rgb(156, 163, 175)',
-        maxRotation: 45,
-        minRotation: 45
+    case '30d':
+      return {
+        startDate: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+        endDate: now.toISOString()
       }
-    },
-    y: {
-      beginAtZero: true,
-      grid: { color: 'rgba(156, 163, 175, 0.1)' },
-      ticks: { 
-        font: { size: 10 },
-        color: 'rgb(156, 163, 175)',
-        callback: (value: number) => value.toLocaleString()
+    case '90d':
+      return {
+        startDate: new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000).toISOString(),
+        endDate: now.toISOString()
       }
-    }
+    default:
+      return {
+        startDate: undefined,
+        endDate: undefined
+      }
   }
 }
 
-const hourlyDistribution = computed(() => {
-  const data = []
-  for (let i = 0; i < 24; i++) {
-    // Create realistic hourly pattern (higher during business hours)
-    const baseValue = i >= 9 && i <= 17 ? 120 : 60
-    const variation = (Math.random() - 0.5) * 30
-    data.push({
-      hour: i,
-      requests: Math.floor(baseValue + variation),
-      label: `${i.toString().padStart(2, '0')}:00`
+// Fetch overview statistics
+const fetchOverviewStats = async () => {
+  try {
+    const authHeader = getAuthHeader()
+    if (!authHeader) return
+
+    const response = await fetch('/api/stats/overview', {
+      headers: {
+        'Authorization': authHeader
+      }
     })
-  }
-  return data
-})
 
-const hourlyChartData = computed(() => ({
-  labels: hourlyDistribution.value.map(h => h.label),
-  datasets: [{
-    label: 'Requests',
-    data: hourlyDistribution.value.map(h => h.requests),
-    backgroundColor: 'rgba(168, 85, 247, 0.1)',
-    borderColor: 'rgb(168, 85, 247)',
-    borderWidth: 2,
-    borderRadius: 4
-  }]
-}))
-
-const hourlyChartOptions = {
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: {
-    legend: {
-      display: false
-    },
-    tooltip: {
-      backgroundColor: 'rgba(0, 0, 0, 0.8)',
-      titleFont: { size: 11 },
-      bodyFont: { size: 11 },
-      padding: 8,
-      callbacks: {
-        label: (context: any) => `${context.parsed.y.toLocaleString()} requests`
-      }
+    if (response.ok) {
+      const data = await response.json()
+      overviewStats.value = data
     }
-  },
-  scales: {
-    x: {
-      grid: { display: false },
-      ticks: { 
-        font: { size: 10 },
-        color: 'rgb(156, 163, 175)',
-        maxRotation: 0
-      }
-    },
-    y: {
-      beginAtZero: true,
-      grid: { color: 'rgba(156, 163, 175, 0.1)' },
-      ticks: { 
-        font: { size: 10 },
-        color: 'rgb(156, 163, 175)',
-        callback: (value: number) => value.toLocaleString()
-      }
-    }
+  } catch (error) {
+    // Error handled silently
   }
 }
 
-const topModels = computed(() => [
-  { model: 'gpt-4', requests: 4523, spend: 1234.56, percentage: 36.3 },
-  { model: 'gpt-3.5-turbo', requests: 3892, spend: 567.89, percentage: 31.2 },
-  { model: 'claude-3-opus', requests: 2341, spend: 345.67, percentage: 18.8 },
-  { model: 'claude-3-sonnet', requests: 1694, spend: 197.55, percentage: 13.6 }
-])
+// Fetch cost by provider
+const fetchCostByProvider = async () => {
+  try {
+    const authHeader = getAuthHeader()
+    if (!authHeader) return
 
-const topUsers = computed(() => [
-  { userId: 'alice', name: 'Alice Smith', requests: 1234, spend: 234.56, percentage: 10.0 },
-  { userId: 'bob', name: 'Bob Johnson', requests: 987, spend: 189.23, percentage: 7.9 },
-  { userId: 'charlie', name: 'Charlie Brown', requests: 756, spend: 145.67, percentage: 6.1 },
-  { userId: 'diana', name: 'Diana Prince', requests: 623, spend: 112.34, percentage: 5.0 },
-  { userId: 'eve', name: 'Eve Wilson', requests: 512, spend: 98.45, percentage: 4.1 }
-])
+    const dateRangeParams = getDateRange()
+    const params = new URLSearchParams({
+      groupBy: 'provider',
+      ...(dateRangeParams.startDate && { startDate: dateRangeParams.startDate }),
+      ...(dateRangeParams.endDate && { endDate: dateRangeParams.endDate }),
+    })
 
-const statusCodes = computed(() => ({
-  '2xx': 12250,
-  '4xx': 145,
-  '5xx': 55
-}))
+    const response = await fetch(`/api/costs/summary?${params.toString()}`, {
+      headers: {
+        'Authorization': authHeader
+      }
+    })
+
+    if (response.ok) {
+      const data = await response.json()
+      costByProvider.value = data.data || []
+    }
+  } catch (error) {
+    // Error handled silently
+  }
+}
+
+// Fetch cost by model
+const fetchCostByModel = async () => {
+  try {
+    const authHeader = getAuthHeader()
+    if (!authHeader) return
+
+    const dateRangeParams = getDateRange()
+    const params = new URLSearchParams({
+      groupBy: 'model',
+      ...(dateRangeParams.startDate && { startDate: dateRangeParams.startDate }),
+      ...(dateRangeParams.endDate && { endDate: dateRangeParams.endDate }),
+    })
+
+    const response = await fetch(`/api/costs/summary?${params.toString()}`, {
+      headers: {
+        'Authorization': authHeader
+      }
+    })
+
+    if (response.ok) {
+      const data = await response.json()
+      costByModel.value = data.data || []
+    }
+  } catch (error) {
+    // Error handled silently
+  }
+}
+
+// Fetch daily cost trend
+const fetchDailyCost = async () => {
+  try {
+    const authHeader = getAuthHeader()
+    if (!authHeader) return
+
+    const dateRangeParams = getDateRange()
+    const params = new URLSearchParams({
+      groupBy: 'day',
+      ...(dateRangeParams.startDate && { startDate: dateRangeParams.startDate }),
+      ...(dateRangeParams.endDate && { endDate: dateRangeParams.endDate }),
+    })
+
+    const response = await fetch(`/api/costs/summary?${params.toString()}`, {
+      headers: {
+        'Authorization': authHeader
+      }
+    })
+
+    if (response.ok) {
+      const data = await response.json()
+      dailyCost.value = data.data || []
+    }
+  } catch (error) {
+    // Error handled silently
+  }
+}
+
+// Fetch all data
+const fetchAllData = async () => {
+  isLoading.value = true
+  try {
+    await Promise.all([
+      fetchOverviewStats(),
+      fetchCostByProvider(),
+      fetchCostByModel(),
+      fetchDailyCost()
+    ])
+  } finally {
+    isLoading.value = false
+  }
+}
+
+// Watch time range changes
+watch(timeRange, () => {
+  fetchAllData()
+})
+
+// Calculate stats
+const stats = computed(() => {
+  const totalRequests = overviewStats.value.totalRequests || 0
+  const permitCount = overviewStats.value.permitCount || 0
+  const successRate = totalRequests > 0 ? ((permitCount / totalRequests) * 100).toFixed(1) : '0.0'
+  
+  return {
+    totalRequests,
+    totalSpend: overviewStats.value.totalCost || 0,
+    avgResponseTime: 0, // Not available in current API
+    successRate: parseFloat(successRate),
+    activeUsers: 0, // Not available in current API
+    requestsToday: 0 // Not available in current API
+  }
+})
+
+// Top models (from cost by model)
+const topModels = computed(() => {
+  const total = costByModel.value.reduce((sum, item) => sum + (item.total_cost || 0), 0)
+  return costByModel.value
+    .map(item => ({
+      model: item.model_used || 'N/A',
+      requests: item.request_count || 0,
+      spend: item.total_cost || 0,
+      percentage: total > 0 ? ((item.total_cost || 0) / total * 100).toFixed(1) : '0.0'
+    }))
+    .sort((a, b) => b.spend - a.spend)
+    .slice(0, 5)
+})
+
+// Chart data transformations
+const dailyCostChartData = computed(() => {
+  if (!dailyCost.value || dailyCost.value.length === 0) {
+    return { labels: [], values: [] }
+  }
+  
+  // Sort by date and format
+  const sorted = [...dailyCost.value].sort((a, b) => {
+    const dateA = new Date(a.period || a.request_timestamp || '').getTime()
+    const dateB = new Date(b.period || b.request_timestamp || '').getTime()
+    return dateA - dateB
+  })
+  
+  return {
+    labels: sorted.map(item => {
+      const date = new Date(item.period || item.request_timestamp || '')
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    }),
+    values: sorted.map(item => item.total_cost || 0)
+  }
+})
+
+const costByProviderChartData = computed(() => {
+  if (!costByProvider.value || costByProvider.value.length === 0) {
+    return { labels: [], values: [] }
+  }
+  
+  return {
+    labels: costByProvider.value.map(item => item.provider || 'N/A'),
+    values: costByProvider.value.map(item => item.total_cost || 0)
+  }
+})
+
+const costByModelChartData = computed(() => {
+  if (!costByModel.value || costByModel.value.length === 0) {
+    return { labels: [], values: [] }
+  }
+  
+  // Get top 10 models for chart
+  const sorted = [...costByModel.value]
+    .sort((a, b) => (b.total_cost || 0) - (a.total_cost || 0))
+    .slice(0, 10)
+  
+  return {
+    labels: sorted.map(item => item.model_used || 'N/A'),
+    values: sorted.map(item => item.total_cost || 0)
+  }
+})
+
+onMounted(() => {
+  fetchAllData()
+})
 </script>
 
 <template>
@@ -206,6 +271,7 @@ const statusCodes = computed(() => ({
       <select 
         v-model="timeRange"
         class="input w-32"
+        @change="fetchAllData"
       >
         <option value="7d">Last 7 days</option>
         <option value="30d">Last 30 days</option>
@@ -215,172 +281,194 @@ const statusCodes = computed(() => ({
     </div>
 
     <!-- Stats Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      <div class="p-5 rounded-xl border-2 border-[rgb(var(--border))] bg-[rgb(var(--surface))]">
-        <div class="flex items-center justify-between mb-2">
-          <p class="text-sm font-medium text-[rgb(var(--text-muted))]">Total Requests</p>
-          <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-          </svg>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="card-interactive group">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-xs font-semibold text-[rgb(var(--text-muted))] uppercase tracking-wider">Total Requests</p>
+            <p v-if="isLoading" class="text-2xl font-bold text-[rgb(var(--text))] mt-1">...</p>
+            <p v-else class="text-2xl font-bold text-[rgb(var(--text))] mt-1">{{ stats.totalRequests.toLocaleString() }}</p>
+            <p class="text-xs text-[rgb(var(--text-secondary))] mt-1">
+              <span class="text-green-500">{{ overviewStats.permitCount }}</span> permitted,
+              <span class="text-red-400">{{ overviewStats.forbidCount }}</span> denied
+            </p>
+          </div>
+          <div class="p-3 rounded-xl bg-indigo-100 dark:bg-indigo-900/30 group-hover:scale-110 transition-transform">
+            <svg class="w-6 h-6 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+          </div>
         </div>
-        <p class="text-3xl font-bold text-[rgb(var(--text))]">{{ stats.totalRequests.toLocaleString() }}</p>
-        <p class="text-xs text-green-600 dark:text-green-400 mt-1">+12.5% from last period</p>
       </div>
 
-      <div class="p-5 rounded-xl border-2 border-[rgb(var(--border))] bg-[rgb(var(--surface))]">
-        <div class="flex items-center justify-between mb-2">
-          <p class="text-sm font-medium text-[rgb(var(--text-muted))]">Total Spend</p>
-          <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
+      <div class="card-interactive group">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-xs font-semibold text-[rgb(var(--text-muted))] uppercase tracking-wider">Total Spend</p>
+            <p v-if="isLoading" class="text-2xl font-bold text-[rgb(var(--text))] mt-1">...</p>
+            <p v-else class="text-2xl font-bold text-[rgb(var(--text))] mt-1">{{ formatCurrency(stats.totalSpend) }}</p>
+            <p class="text-xs text-[rgb(var(--text-secondary))] mt-1">
+              {{ timeRange === '7d' ? 'Last 7 days' : timeRange === '30d' ? 'Last 30 days' : timeRange === '90d' ? 'Last 90 days' : 'All time' }}
+            </p>
+          </div>
+          <div class="p-3 rounded-xl bg-green-100 dark:bg-green-900/30 group-hover:scale-110 transition-transform">
+            <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
         </div>
-        <p class="text-3xl font-bold text-[rgb(var(--text))]">{{ formatCurrency(stats.totalSpend) }}</p>
-        <p class="text-xs text-green-600 dark:text-green-400 mt-1">+8.3% from last period</p>
       </div>
 
-      <div class="p-5 rounded-xl border-2 border-[rgb(var(--border))] bg-[rgb(var(--surface))]">
-        <div class="flex items-center justify-between mb-2">
-          <p class="text-sm font-medium text-[rgb(var(--text-muted))]">Avg Response Time</p>
-          <svg class="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-          </svg>
+      <div class="card-interactive group">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-xs font-semibold text-[rgb(var(--text-muted))] uppercase tracking-wider">Success Rate</p>
+            <p v-if="isLoading" class="text-2xl font-bold text-[rgb(var(--text))] mt-1">...</p>
+            <p v-else class="text-2xl font-bold text-[rgb(var(--text))] mt-1">{{ stats.successRate }}%</p>
+            <p class="text-xs text-[rgb(var(--text-secondary))] mt-1">
+              authorization pass rate
+            </p>
+          </div>
+          <div class="p-3 rounded-xl bg-blue-100 dark:bg-blue-900/30 group-hover:scale-110 transition-transform">
+            <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
         </div>
-        <p class="text-3xl font-bold text-[rgb(var(--text))]">{{ stats.avgResponseTime }}s</p>
-        <p class="text-xs text-green-600 dark:text-green-400 mt-1">-5.2% from last period</p>
       </div>
 
-      <div class="p-5 rounded-xl border-2 border-[rgb(var(--border))] bg-[rgb(var(--surface))]">
-        <div class="flex items-center justify-between mb-2">
-          <p class="text-sm font-medium text-[rgb(var(--text-muted))]">Success Rate</p>
-          <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
+      <div class="card-interactive group">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-xs font-semibold text-[rgb(var(--text-muted))] uppercase tracking-wider">Avg Cost/Request</p>
+            <p v-if="isLoading" class="text-2xl font-bold text-[rgb(var(--text))] mt-1">...</p>
+            <p v-else class="text-2xl font-bold text-[rgb(var(--text))] mt-1">{{ formatCurrency(stats.totalRequests > 0 ? stats.totalSpend / stats.totalRequests : 0) }}</p>
+            <p class="text-xs text-[rgb(var(--text-secondary))] mt-1">
+              per authorization
+            </p>
+          </div>
+          <div class="p-3 rounded-xl bg-purple-100 dark:bg-purple-900/30 group-hover:scale-110 transition-transform">
+            <svg class="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+          </div>
         </div>
-        <p class="text-3xl font-bold text-[rgb(var(--text))]">{{ stats.successRate }}%</p>
-        <p class="text-xs text-green-600 dark:text-green-400 mt-1">+0.3% from last period</p>
-      </div>
-
-      <div class="p-5 rounded-xl border-2 border-[rgb(var(--border))] bg-[rgb(var(--surface))]">
-        <div class="flex items-center justify-between mb-2">
-          <p class="text-sm font-medium text-[rgb(var(--text-muted))]">Active Users</p>
-          <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 100 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-          </svg>
-        </div>
-        <p class="text-3xl font-bold text-[rgb(var(--text))]">{{ stats.activeUsers }}</p>
-        <p class="text-xs text-green-600 dark:text-green-400 mt-1">+3 from last period</p>
-      </div>
-
-      <div class="p-5 rounded-xl border-2 border-[rgb(var(--border))] bg-[rgb(var(--surface))]">
-        <div class="flex items-center justify-between mb-2">
-          <p class="text-sm font-medium text-[rgb(var(--text-muted))]">Requests Today</p>
-          <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        </div>
-        <p class="text-3xl font-bold text-[rgb(var(--text))]">{{ stats.requestsToday }}</p>
-        <p class="text-xs text-[rgb(var(--text-muted))] mt-1">Real-time</p>
       </div>
     </div>
 
     <!-- Charts Row -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <!-- Request Trend -->
-      <div class="p-6 rounded-xl border-2 border-[rgb(var(--border))] bg-[rgb(var(--surface))]">
-        <h2 class="text-lg font-semibold text-[rgb(var(--text))] mb-4">Request Trend</h2>
-        <div class="h-64">
-          <Bar :data="requestTrendChartData" :options="requestTrendChartOptions" />
+      <!-- Daily Cost Trend -->
+      <div class="card">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-sm font-bold text-[rgb(var(--text))]">Daily Cost Trend</h2>
+          <span class="badge badge-neutral">{{ timeRange === '7d' ? 'Last 7 days' : timeRange === '30d' ? 'Last 30 days' : timeRange === '90d' ? 'Last 90 days' : 'All time' }}</span>
         </div>
+        <div v-if="isLoading" class="h-40 flex items-center justify-center">
+          <UiLoadingSkeleton :lines="1" height="h-full" width="100%" />
+        </div>
+        <div v-else-if="dailyCostChartData.labels.length === 0" class="h-40 flex items-center justify-center text-[rgb(var(--text-muted))]">
+          No cost data available for selected period
+        </div>
+        <KeysSpendChart v-else type="line" :data="dailyCostChartData" color="green" />
       </div>
 
-      <!-- Hourly Distribution -->
-      <div class="p-6 rounded-xl border-2 border-[rgb(var(--border))] bg-[rgb(var(--surface))]">
-        <h2 class="text-lg font-semibold text-[rgb(var(--text))] mb-4">Hourly Distribution</h2>
-        <div class="h-64">
-          <Bar :data="hourlyChartData" :options="hourlyChartOptions" />
+      <!-- Cost by Provider -->
+      <div class="card">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-sm font-bold text-[rgb(var(--text))]">Cost by Provider</h2>
+          <span class="badge badge-neutral">{{ timeRange === '7d' ? 'Last 7 days' : timeRange === '30d' ? 'Last 30 days' : timeRange === '90d' ? 'Last 90 days' : 'All time' }}</span>
         </div>
+        <div v-if="isLoading" class="h-40 flex items-center justify-center">
+          <UiLoadingSkeleton :lines="1" height="h-full" width="100%" />
+        </div>
+        <div v-else-if="costByProviderChartData.labels.length === 0" class="h-40 flex items-center justify-center text-[rgb(var(--text-muted))]">
+          No provider data available
+        </div>
+        <KeysSpendChart v-else type="bar" :data="costByProviderChartData" color="blue" />
       </div>
     </div>
 
-    <!-- Tables Row -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <!-- Top Models -->
-      <div class="p-6 rounded-xl border-2 border-[rgb(var(--border))] bg-[rgb(var(--surface))]">
-        <h2 class="text-lg font-semibold text-[rgb(var(--text))] mb-4">Top Models</h2>
-        <div class="space-y-3">
-          <div 
-            v-for="model in topModels" 
-            :key="model.model"
-            class="flex items-center justify-between p-3 rounded-lg bg-[rgb(var(--surface-elevated))]"
-          >
-            <div class="flex-1">
-              <div class="flex items-center justify-between mb-1">
-                <p class="font-medium text-[rgb(var(--text))]">{{ model.model }}</p>
-                <span class="text-xs text-[rgb(var(--text-muted))]">{{ model.percentage }}%</span>
-              </div>
-              <div class="flex items-center gap-4 text-sm">
-                <span class="text-[rgb(var(--text-muted))]">{{ model.requests.toLocaleString() }} requests</span>
-                <span class="text-[rgb(var(--text-muted))]">{{ formatCurrency(model.spend) }}</span>
-              </div>
-              <div class="mt-2 progress-bar">
-                <div 
-                  class="progress-bar-fill bg-indigo-500" 
-                  :style="{ width: `${model.percentage}%` }"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
+    <!-- Cost by Model Chart -->
+    <div class="card">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-sm font-bold text-[rgb(var(--text))]">Cost by Model (Top 10)</h2>
+        <span class="badge badge-neutral">{{ timeRange === '7d' ? 'Last 7 days' : timeRange === '30d' ? 'Last 30 days' : timeRange === '90d' ? 'Last 90 days' : 'All time' }}</span>
       </div>
+      <div v-if="isLoading" class="h-40 flex items-center justify-center">
+        <UiLoadingSkeleton :lines="1" height="h-full" width="100%" />
+      </div>
+      <div v-else-if="costByModelChartData.labels.length === 0" class="h-40 flex items-center justify-center text-[rgb(var(--text-muted))]">
+        No model data available
+      </div>
+      <KeysSpendChart v-else type="bar" :data="costByModelChartData" color="purple" />
+    </div>
 
-      <!-- Top Users -->
-      <div class="p-6 rounded-xl border-2 border-[rgb(var(--border))] bg-[rgb(var(--surface))]">
-        <h2 class="text-lg font-semibold text-[rgb(var(--text))] mb-4">Top Users</h2>
-        <div class="space-y-3">
-          <div 
-            v-for="user in topUsers" 
-            :key="user.userId"
-            class="flex items-center justify-between p-3 rounded-lg bg-[rgb(var(--surface-elevated))]"
-          >
-            <div class="flex-1">
-              <div class="flex items-center justify-between mb-1">
-                <div>
-                  <p class="font-medium text-[rgb(var(--text))]">{{ user.name }}</p>
-                  <p class="text-xs text-[rgb(var(--text-muted))]">{{ user.userId }}</p>
-                </div>
-                <span class="text-xs text-[rgb(var(--text-muted))]">{{ user.percentage }}%</span>
-              </div>
-              <div class="flex items-center gap-4 text-sm mt-1">
-                <span class="text-[rgb(var(--text-muted))]">{{ user.requests.toLocaleString() }} requests</span>
-                <span class="text-[rgb(var(--text-muted))]">{{ formatCurrency(user.spend) }}</span>
-              </div>
-              <div class="mt-2 progress-bar">
-                <div 
-                  class="progress-bar-fill bg-green-500" 
-                  :style="{ width: `${user.percentage}%` }"
-                />
-              </div>
+    <!-- Cost by Provider Table -->
+    <div class="card">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-sm font-bold text-[rgb(var(--text))]">Cost by Provider</h2>
+        <span class="badge badge-neutral">Detailed breakdown</span>
+      </div>
+      <div v-if="isLoading" class="space-y-2">
+        <UiLoadingSkeleton :lines="3" height="h-16" />
+      </div>
+      <div v-else-if="costByProvider.length === 0" class="text-center py-8 text-[rgb(var(--text-muted))]">
+        No cost data available
+      </div>
+      <div v-else class="space-y-3">
+        <div 
+          v-for="provider in costByProvider" 
+          :key="provider.provider"
+          class="flex items-center justify-between p-3 rounded-lg bg-[rgb(var(--surface-elevated))]"
+        >
+          <div class="flex-1">
+            <div class="flex items-center justify-between mb-1">
+              <p class="font-medium text-[rgb(var(--text))]">{{ provider.provider || 'N/A' }}</p>
+            </div>
+            <div class="flex items-center gap-4 text-sm">
+              <span class="text-[rgb(var(--text-muted))]">{{ provider.request_count?.toLocaleString() || 0 }} requests</span>
+              <span class="text-[rgb(var(--text-muted))]">{{ formatCurrency(provider.total_cost || 0) }}</span>
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Status Codes -->
-    <div class="p-6 rounded-xl border-2 border-[rgb(var(--border))] bg-[rgb(var(--surface))]">
-      <h2 class="text-lg font-semibold text-[rgb(var(--text))] mb-4">Response Status Codes</h2>
-      <div class="grid grid-cols-3 gap-4">
-        <div class="text-center p-4 rounded-lg bg-green-50 dark:bg-green-900/20 border-2 border-green-200 dark:border-green-800">
-          <p class="text-2xl font-bold text-green-600 dark:text-green-400">{{ statusCodes['2xx'].toLocaleString() }}</p>
-          <p class="text-sm text-green-700 dark:text-green-300 mt-1">2xx Success</p>
-        </div>
-        <div class="text-center p-4 rounded-lg bg-amber-50 dark:bg-amber-900/20 border-2 border-amber-200 dark:border-amber-800">
-          <p class="text-2xl font-bold text-amber-600 dark:text-amber-400">{{ statusCodes['4xx'].toLocaleString() }}</p>
-          <p class="text-sm text-amber-700 dark:text-amber-300 mt-1">4xx Client Error</p>
-        </div>
-        <div class="text-center p-4 rounded-lg bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800">
-          <p class="text-2xl font-bold text-red-600 dark:text-red-400">{{ statusCodes['5xx'].toLocaleString() }}</p>
-          <p class="text-sm text-red-700 dark:text-red-300 mt-1">5xx Server Error</p>
+    <!-- Top Models Table -->
+    <div class="card">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-sm font-bold text-[rgb(var(--text))]">Top Models</h2>
+        <span class="badge badge-neutral">By spend</span>
+      </div>
+      <div v-if="isLoading" class="space-y-2">
+        <UiLoadingSkeleton :lines="5" height="h-16" />
+      </div>
+      <div v-else-if="topModels.length === 0" class="text-center py-8 text-[rgb(var(--text-muted))]">
+        No model data available
+      </div>
+      <div v-else class="space-y-3">
+        <div 
+          v-for="model in topModels" 
+          :key="model.model"
+          class="flex items-center justify-between p-3 rounded-lg bg-[rgb(var(--surface-elevated))]"
+        >
+          <div class="flex-1">
+            <div class="flex items-center justify-between mb-1">
+              <p class="font-medium text-[rgb(var(--text))]">{{ model.model }}</p>
+              <span class="text-xs text-[rgb(var(--text-muted))]">{{ model.percentage }}%</span>
+            </div>
+            <div class="flex items-center gap-4 text-sm">
+              <span class="text-[rgb(var(--text-muted))]">{{ model.requests.toLocaleString() }} requests</span>
+              <span class="text-[rgb(var(--text-muted))]">{{ formatCurrency(model.spend) }}</span>
+            </div>
+            <div class="mt-2 progress-bar">
+              <div 
+                class="progress-bar-fill bg-indigo-500" 
+                :style="{ width: `${model.percentage}%` }"
+              />
+            </div>
+          </div>
         </div>
       </div>
     </div>

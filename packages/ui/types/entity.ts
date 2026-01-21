@@ -59,6 +59,7 @@ export interface Entity {
 export interface Key {
     userId: string
     userKeyId?: string // UserKey entity ID
+    executionKey?: string // user_agent_keys.id for cost tracking
     apiKey: string
     currentDailySpend: number
     currentMonthlySpend: number

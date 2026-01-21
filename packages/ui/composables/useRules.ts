@@ -37,7 +37,7 @@ export function useRules() {
                 policy: p.policy,
                 description: p.description,
                 effect: extractPolicyEffect(p.policy),
-                isActive: true
+                isActive: p.isActive
             }))
 
             rulesStore.rules = rules
@@ -166,11 +166,46 @@ export function useRules() {
         }
     }
 
+    const setRuleStatus = async (policy: string, isActive: boolean) => {
+        rulesStore.loading = true
+        rulesStore.error = null
+        try {
+            const authHeader = getAuthHeader()
+            if (!authHeader) {
+                throw new Error('Please login first')
+            }
+
+            const response = await fetch('/api/policies/status', {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': authHeader
+                },
+                body: JSON.stringify({ policy, isActive })
+            })
+
+            if (!response.ok) {
+                const error = await response.json().catch(() => ({ error: response.statusText }))
+                throw new Error(error.error || 'Failed to update policy status')
+            }
+
+            await listRules()
+            toast.success(`Rule ${isActive ? 'activated' : 'deactivated'} successfully`)
+        } catch (e: any) {
+            rulesStore.error = e.message
+            toast.error('Failed to update rule status')
+            throw e
+        } finally {
+            rulesStore.loading = false
+        }
+    }
+
     return {
         listRules,
         createRule,
         updateRule,
         deleteRule,
+        setRuleStatus,
         loading: computed(() => rulesStore.loading),
         error: computed(() => rulesStore.error),
         rules: computed(() => rulesStore.rules)

@@ -432,7 +432,3 @@ npm run preview          # Preview built UI
 2. For Gmail: Use App Password (not regular password) if 2FA is enabled
 3. For SMTP: Use port 587 (STARTTLS) or 465 (SSL)
 4. Check proxy server logs for email errors
-
-## 📄 License
-
-Private - All rights reserved

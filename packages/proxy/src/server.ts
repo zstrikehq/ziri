@@ -63,6 +63,15 @@ export async function createServer(): Promise<Express> {
   
   const meRoutes = (await import('./routes/me.js')).default
   app.use('/api/me', meRoutes)
+  
+  const statsRoutes = (await import('./routes/stats.js')).default
+  app.use('/api/stats', statsRoutes)
+  
+  const auditRoutes = (await import('./routes/audit.js')).default
+  app.use('/api/audit', auditRoutes)
+  
+  const costsRoutes = (await import('./routes/costs.js')).default
+  app.use('/api/costs', costsRoutes)
 
   // Serve UI static files (after API routes)
   const possibleUiPaths = [

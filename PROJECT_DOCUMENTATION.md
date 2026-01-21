@@ -241,35 +241,172 @@ CREATE TABLE entities (
 - `UserKey`: API key information (current_daily_spend, current_monthly_spend, last_daily_reset, last_monthly_reset, status, user reference)
 - `Resource`: LLM resources (models, providers)
 
-#### 7. `cost_tracking` - Usage Cost Tracking
+#### 7. `model_pricing` - Model Pricing Data
 
 ```sql
-CREATE TABLE cost_tracking (
-    id TEXT PRIMARY KEY,                    -- UUID or generated ID
-    execution_key TEXT NOT NULL,            -- Foreign key to user_agent_keys.id
-    input_tokens INTEGER NOT NULL,
-    output_tokens INTEGER NOT NULL,
+CREATE TABLE model_pricing (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    provider TEXT NOT NULL,                  -- Provider name (openai, anthropic, etc.)
     model TEXT NOT NULL,                    -- Model name (e.g., 'gpt-4', 'claude-3-opus')
-    calculated_cost REAL NOT NULL,          -- Cost in USD
+    input_cost_per_token REAL NOT NULL,     -- Cost per input token (USD)
+    output_cost_per_token REAL NOT NULL,     -- Cost per output token (USD)
+    cache_write_cost_per_token REAL,         -- Cache write cost (if supported)
+    cache_read_cost_per_token REAL,          -- Cache read cost (if supported)
+    max_input_tokens INTEGER,                -- Maximum input tokens
+    max_output_tokens INTEGER,               -- Maximum output tokens
+    supports_vision INTEGER DEFAULT 0,      -- Vision support flag
+    supports_function_calling INTEGER DEFAULT 0, -- Function calling support
+    supports_streaming INTEGER DEFAULT 1,     -- Streaming support
+    effective_from TEXT NOT NULL DEFAULT (datetime('now')), -- Pricing effective date
+    effective_until TEXT,                     -- Pricing expiry date
+    source_url TEXT,                         -- Source URL for pricing data
+    notes TEXT,                              -- Additional notes
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    FOREIGN KEY (execution_key) REFERENCES user_agent_keys(id) ON DELETE CASCADE
+    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE(provider, model, effective_from)
 );
 ```
 
-#### 8. `audit_logs` - Authorization Audit Logs
+**Indexes:**
+- `idx_model_pricing_provider` - Filter by provider
+- `idx_model_pricing_provider_model` - Fast provider+model lookup
+- `idx_model_pricing_effective` - Filter by effective date range
+
+#### 8. `model_aliases` - Model Name Aliases
+
+```sql
+CREATE TABLE model_aliases (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    alias TEXT NOT NULL UNIQUE,             -- Alias name (e.g., 'gpt-4')
+    provider TEXT NOT NULL,                  -- Provider name
+    canonical_model TEXT NOT NULL,           -- Canonical model name (e.g., 'gpt-4-0613')
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+```
+
+**Purpose:** Maps model aliases to canonical model names for pricing lookup.
+
+#### 9. `audit_logs` - Comprehensive Authorization Audit Logs
 
 ```sql
 CREATE TABLE audit_logs (
-    id TEXT PRIMARY KEY,                    -- UUID or generated ID
-    principal TEXT NOT NULL,                -- Principal entity (e.g., 'UserKey::"uk-123"')
-    action TEXT NOT NULL,                   -- Action (e.g., 'completion', 'embedding')
-    resource TEXT NOT NULL,                 -- Resource (e.g., 'Resource::"gpt-4"')
-    decision TEXT NOT NULL,                 -- 'permit' or 'forbid'
-    policies TEXT,                          -- JSON array of policy IDs that were evaluated
-    execution_time TEXT NOT NULL,           -- ISO timestamp
-    context TEXT                            -- JSON context data (optional, for debugging)
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    request_id TEXT NOT NULL UNIQUE,         -- Unique request identifier
+    
+    -- Principal info
+    principal TEXT NOT NULL,                 -- Principal entity (e.g., 'UserKey::"uk-123"')
+    principal_type TEXT NOT NULL,            -- Principal type (User, UserKey)
+    auth_id TEXT,                            -- User ID (from auth table)
+    api_key_id TEXT,                         -- API key ID (from user_agent_keys table)
+    
+    -- Request details
+    action TEXT NOT NULL,                    -- Action (completion, embedding, etc.)
+    resource TEXT NOT NULL,                   -- Resource (e.g., 'Resource::"gpt-4"')
+    provider TEXT,                           -- LLM provider (openai, anthropic)
+    model TEXT,                              -- Model name
+    
+    -- Decision
+    decision TEXT NOT NULL CHECK (decision IN ('permit', 'forbid')),
+    decision_reason TEXT,                    -- Reason for decision
+    policies_evaluated TEXT,                  -- JSON array of all policies evaluated
+    determining_policies TEXT,                -- JSON array of policies that determined decision
+    
+    -- Request metadata
+    request_ip TEXT,                         -- Client IP address
+    user_agent TEXT,                         -- User agent string
+    request_method TEXT,                      -- HTTP method
+    request_path TEXT,                       -- Request path
+    request_body_hash TEXT,                  -- Hash of request body
+    
+    -- Cedar context
+    cedar_context TEXT,                      -- Full Cedar context as JSON
+    entity_snapshot TEXT,                    -- Entity snapshot at time of request
+    
+    -- Timing
+    request_timestamp TEXT NOT NULL,         -- Request timestamp
+    auth_start_time TEXT,                    -- Authorization start time
+    auth_end_time TEXT,                      -- Authorization end time
+    auth_duration_ms INTEGER,                -- Authorization duration in milliseconds
+    
+    -- Provider response (updated after LLM call)
+    provider_request_id TEXT,                -- Provider's request ID
+    cost_tracking_id INTEGER,                -- Foreign key to cost_tracking.id
+    
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 ```
+
+**Indexes:**
+- `idx_audit_logs_request_id` - Fast request lookup
+- `idx_audit_logs_auth_id` - Filter by user
+- `idx_audit_logs_api_key_id` - Filter by API key
+- `idx_audit_logs_decision` - Filter by decision
+- `idx_audit_logs_provider` - Filter by provider
+- `idx_audit_logs_model` - Filter by model
+- `idx_audit_logs_timestamp` - Time-based queries
+- `idx_audit_logs_auth_decision_time` - Combined auth/decision/time queries
+
+#### 10. `cost_tracking` - Comprehensive Cost Tracking
+
+```sql
+CREATE TABLE cost_tracking (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    request_id TEXT NOT NULL,                -- Request identifier (links to audit_logs)
+    execution_key TEXT NOT NULL,              -- Foreign key to user_agent_keys.id
+    audit_log_id INTEGER,                    -- Foreign key to audit_logs.id
+    
+    -- Provider info
+    provider TEXT NOT NULL,                   -- LLM provider
+    provider_request_id TEXT,                -- Provider's request ID
+    
+    -- Model info
+    model_requested TEXT NOT NULL,            -- Model requested by client
+    model_used TEXT,                          -- Model actually used (may differ)
+    
+    -- Token counts
+    input_tokens INTEGER NOT NULL,           -- Input tokens
+    output_tokens INTEGER NOT NULL,           -- Output tokens
+    total_tokens INTEGER NOT NULL,            -- Total tokens
+    cached_tokens INTEGER DEFAULT 0,          -- Cached tokens (for cost savings)
+    
+    -- Costs (USD)
+    input_cost REAL NOT NULL,                -- Input cost
+    output_cost REAL NOT NULL,                -- Output cost
+    cache_savings REAL DEFAULT 0,             -- Cache savings
+    total_cost REAL NOT NULL,                 -- Total cost
+    
+    -- Pricing reference
+    pricing_id INTEGER,                       -- Foreign key to model_pricing.id
+    pricing_source TEXT DEFAULT 'database',    -- Source of pricing (database, fallback)
+    input_rate_used REAL,                     -- Input rate used
+    output_rate_used REAL,                    -- Output rate used
+    
+    -- Timing
+    request_timestamp TEXT NOT NULL,          -- Request timestamp
+    response_timestamp TEXT,                  -- Response timestamp
+    latency_ms INTEGER,                       -- Request latency
+    
+    -- Status
+    status TEXT DEFAULT 'completed' CHECK (status IN ('completed', 'failed', 'partial', 'streaming')),
+    error_code TEXT,                          -- Error code (if failed)
+    error_message TEXT,                       -- Error message (if failed)
+    
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    
+    FOREIGN KEY (execution_key) REFERENCES user_agent_keys(id) ON DELETE CASCADE,
+    FOREIGN KEY (audit_log_id) REFERENCES audit_logs(id) ON DELETE SET NULL,
+    FOREIGN KEY (pricing_id) REFERENCES model_pricing(id) ON DELETE SET NULL
+);
+```
+
+**Indexes:**
+- `idx_cost_tracking_request_id` - Fast request lookup
+- `idx_cost_tracking_execution_key` - Filter by API key
+- `idx_cost_tracking_provider` - Filter by provider
+- `idx_cost_tracking_model` - Filter by model
+- `idx_cost_tracking_timestamp` - Time-based queries
+- `idx_cost_tracking_status` - Filter by status
+- `idx_cost_tracking_key_time` - Combined key/time queries
 
 ---
 
@@ -400,11 +537,18 @@ CREATE TABLE audit_logs (
 
 **Process:**
 1. Load Cedar schema from `schema_policy` table
-2. Load active policies from `schema_policy` table
+2. Load **active policies only** (status = 1) from `schema_policy` table
 3. Load relevant entities from `entities` table
-4. Evaluate authorization using Cedar-WASM (local mode) or external PDP (live mode)
-5. Return `Allow` or `Deny` decision
-6. Log decision in `audit_logs` table
+4. **Check and reset spend** (daily/monthly boundaries) before evaluation
+5. Build authorization request with `model_provider` in context
+6. Evaluate authorization using Cedar-WASM (local mode) or external PDP (live mode)
+7. **Log decision** in `audit_logs` table (permit/forbid) with full context
+8. Return `Allow` or `Deny` decision
+9. If allowed and request succeeds:
+   - Extract token usage from LLM response
+   - **Track cost** in `cost_tracking` table
+   - **Update UserKey entity** spend values
+   - Link audit log to cost tracking record
 
 **Cedar Actions:**
 - `completion` - Chat completions
@@ -546,20 +690,28 @@ CREATE TABLE audit_logs (
 
 #### `GET /api/policies`
 - **Auth:** Admin JWT
-- **Returns:** List of all policies
+- **Returns:** List of all policies (includes `isActive` status)
 
 #### `POST /api/policies`
 - **Auth:** Admin JWT
 - **Body:** `{ policy, description }`
 - **Returns:** Created policy
+- **Note:** Policies are created as active by default
 
-#### `PUT /api/policies/:id`
+#### `PUT /api/policies`
 - **Auth:** Admin JWT
-- **Body:** `{ policy, description, status }`
+- **Body:** `{ oldPolicy, policy, description }`
 - **Returns:** Updated policy
 
-#### `DELETE /api/policies/:id`
+#### `PATCH /api/policies/status`
 - **Auth:** Admin JWT
+- **Body:** `{ policy, isActive }`
+- **Returns:** Success message
+- **Note:** Activates/deactivates policies. Only active policies are evaluated during authorization.
+
+#### `DELETE /api/policies`
+- **Auth:** Admin JWT
+- **Body:** `{ policy }`
 - **Returns:** Success message
 
 ### Chat Routes (`/api/chat`)
@@ -567,14 +719,20 @@ CREATE TABLE audit_logs (
 #### `POST /api/chat/completions`
 - **Auth:** API Key (X-API-Key header)
 - **Body:** `{ provider, model, messages, ... }`
-- **Returns:** LLM completion response
+- **Returns:** LLM completion response with `_meta.requestId` and `_meta.cost`
 - **Process:**
-  1. Validate API key
-  2. Build authorization request
-  3. Evaluate with Cedar
-  4. If allowed, forward to LLM provider
-  5. Track cost in `cost_tracking` table
-  6. Update UserKey entity spend values
+  1. Generate unique `requestId`
+  2. Validate API key and load UserKey entity
+  3. **Check and reset spend** (daily/monthly boundaries)
+  4. Build Cedar authorization request with `model_provider` in context
+  5. **Log authorization decision** in `audit_logs` (permit/forbid)
+  6. If allowed:
+     - Forward request to LLM provider
+     - Extract token usage from response
+     - **Track cost** in `cost_tracking` table
+     - **Update UserKey entity** spend values
+     - Update audit log with `provider_request_id` and `cost_tracking_id`
+  7. Return response with metadata
 
 ### Me Routes (`/api/me`)
 
@@ -591,6 +749,29 @@ CREATE TABLE audit_logs (
 - **Returns:** Usage statistics from UserKey entity
 
 ### Config Routes (`/api/config`)
+
+#### `GET /api/stats/overview`
+- **Auth:** Admin JWT
+- **Returns:** Dashboard overview statistics
+  - `totalRequests`: Total number of requests
+  - `permitCount`: Number of permitted requests
+  - `forbidCount`: Number of forbidden requests
+  - `totalCost`: Total cost across all requests
+
+#### `GET /api/audit`
+- **Auth:** Admin JWT
+- **Query Params:** `limit`, `offset`, `decision`, `provider`, `model`, `startDate`, `endDate`
+- **Returns:** Paginated audit logs with filtering
+
+#### `GET /api/audit/statistics`
+- **Auth:** Admin JWT
+- **Query Params:** `startDate`, `endDate`
+- **Returns:** Audit statistics grouped by provider/model
+
+#### `GET /api/costs/summary`
+- **Auth:** Admin JWT
+- **Query Params:** `groupBy` (day, provider, model, key), `startDate`, `endDate`, `executionKey`
+- **Returns:** Cost summaries with optional grouping
 
 #### `GET /api/config`
 - **Auth:** Admin JWT
@@ -610,8 +791,9 @@ CREATE TABLE audit_logs (
 #### Admin Pages (Require Admin Role)
 
 1. **`/` (Dashboard)** - `packages/ui/pages/index.vue`
-   - Overview of users, keys, providers
-   - Usage statistics
+   - Overview statistics (total requests, permit/forbid counts, total cost)
+   - Requests today and average cost per request
+   - Recent activity feed from audit logs
    - Quick actions
 
 2. **`/users`** - `packages/ui/pages/users/index.vue`
@@ -637,15 +819,27 @@ CREATE TABLE audit_logs (
    - Test provider connections
 
 6. **`/rules`** - `packages/ui/pages/rules.vue`
-   - List all Cedar policies
+   - List all Cedar policies with active/inactive status
    - Create/edit/delete policies
-   - Enable/disable policies
+   - Toggle policy status (active/inactive) in create/edit modals
+   - Only active policies are evaluated during authorization
 
-7. **`/schema`** - `packages/ui/pages/schema.vue`
+7. **`/logs`** - `packages/ui/pages/logs.vue`
+   - View comprehensive audit logs
+   - Filter by decision, provider, model, date range
+   - Real-time authorization decision tracking
+
+8. **`/analytics`** - `packages/ui/pages/analytics.vue`
+   - Cost analytics and statistics
+   - Daily cost trend charts
+   - Cost breakdown by provider and model
+   - Usage statistics
+
+9. **`/schema`** - `packages/ui/pages/schema.vue`
    - View/edit Cedar schema
    - Schema validation
 
-8. **`/config`** - `packages/ui/pages/config.vue`
+10. **`/config`** - `packages/ui/pages/config.vue`
    - Configure server settings
    - Email service configuration
    - Public URL settings
@@ -832,6 +1026,64 @@ The service factory provides singleton access to services based on mode (local o
 - Converts Cedar text to JSON on retrieval using Cedar-WASM
 - Only one active schema allowed
 
+#### 9. PricingService (`packages/proxy/src/services/pricing-service.ts`)
+
+**Methods:**
+- `getPricing(provider, model)` - Get pricing for a model (with caching)
+- `calculateCost(provider, model, inputTokens, outputTokens, cachedTokens)` - Calculate request cost
+- `resolveAlias(provider, alias)` - Resolve model alias to canonical name
+
+**Key Features:**
+- Caches pricing data (5-minute TTL)
+- Supports model aliases (e.g., "gpt-4" → "gpt-4-0613")
+- Handles partial matching for date-suffixed models
+- Falls back to default rates if pricing not found
+
+#### 10. AuditLogService (`packages/proxy/src/services/audit-log-service.ts`)
+
+**Methods:**
+- `log(entry)` - Log authorization decision
+- `getLogs(filters)` - Query audit logs with filtering
+- `getStatistics(filters)` - Get audit statistics
+
+**Key Features:**
+- Logs all authorization decisions (permit/forbid)
+- Captures full request context and Cedar evaluation details
+- Links to cost tracking records
+- Supports comprehensive filtering and pagination
+
+#### 11. CostTrackingService (`packages/proxy/src/services/cost-tracking-service.ts`)
+
+**Methods:**
+- `trackCost(entry)` - Track LLM request cost
+
+**Key Features:**
+- Calculates cost using PricingService
+- Records detailed cost breakdown (input/output/cache savings)
+- Updates UserKey entity spend values automatically
+- Links to audit logs and provider request IDs
+
+#### 12. SpendResetService (`packages/proxy/src/services/spend-reset-service.ts`)
+
+**Methods:**
+- `checkAndResetSpend(userKeyId)` - Check and reset daily/monthly spend if needed
+
+**Key Features:**
+- Automatically resets daily spend at midnight boundary
+- Automatically resets monthly spend at month boundary
+- Updates UserKey entity in database
+- Called before authorization to ensure accurate spend values
+
+#### 13. SpendUpdateService (`packages/proxy/src/services/spend-update-service.ts`)
+
+**Methods:**
+- `updateSpend(userKeyId, cost)` - Update UserKey entity spend values
+
+**Key Features:**
+- Updates `current_daily_spend` and `current_monthly_spend`
+- Maintains spend values for policy evaluation
+- Called after successful LLM requests
+
 ---
 
 ## Cedar Authorization System
@@ -853,7 +1105,14 @@ The default Cedar schema defines:
 - `moderation` - Content moderation
 
 **Context:**
-- `RequestContext` - Request metadata (day_of_week, hour, ip_address, is_emergency, model_name, request_time)
+- `RequestContext` - Request metadata (day_of_week, hour, ip_address, is_emergency, model_name, model_provider, request_time)
+  - `day_of_week`: String (Monday, Tuesday, etc.)
+  - `hour`: Long (0-23)
+  - `ip_address`: IP address
+  - `is_emergency`: Boolean
+  - `model_name`: String (model identifier)
+  - `model_provider`: String (openai, anthropic, etc.)
+  - `request_time`: String (ISO timestamp)
 
 ### Entity Structure
 
@@ -1137,13 +1396,15 @@ User and UserKey entities are automatically created/updated when:
 - API key is rotated
 - User is deleted (entities cascade deleted)
 
-### 4. Cost Tracking
+### 4. Comprehensive Cost Tracking
 
 Every LLM request:
-- Calculates cost based on tokens and model
-- Tracks in `cost_tracking` table
-- Updates UserKey entity spend values
+- Calculates cost based on tokens and model pricing (from `model_pricing` table)
+- Tracks detailed cost breakdown in `cost_tracking` table (input/output/cache savings)
+- Updates UserKey entity spend values (`current_daily_spend`, `current_monthly_spend`)
+- Automatically resets daily/monthly spend at boundaries
 - Supports daily/monthly spend limits (enforced by Cedar policies)
+- Links cost records to audit logs and provider request IDs
 
 ### 5. Encryption at Rest
 
@@ -1164,14 +1425,32 @@ Refresh tokens are rotated on use:
 - New token generated
 - Prevents token reuse attacks
 
-### 8. Audit Logging
+### 8. Comprehensive Audit Logging
 
-All authorization decisions are logged:
-- Principal, action, resource
-- Decision (Allow/Deny)
-- Policies evaluated
-- Execution time
-- Context data
+All authorization decisions are logged in `audit_logs` table:
+- Principal, action, resource, provider, model
+- Decision (permit/forbid) with reason
+- All policies evaluated and determining policies
+- Full request context (IP, user agent, method, path)
+- Cedar context and entity snapshots
+- Authorization timing (start/end/duration)
+- Links to cost tracking records
+- Supports filtering by decision, provider, model, date range
+
+### 9. Model Pricing Management
+
+- Pre-seeded pricing data for OpenAI and Anthropic models
+- Model aliases support (e.g., "gpt-4" → "gpt-4-0613")
+- Pricing caching for performance
+- Automatic cost calculation based on token usage
+- Support for cache pricing (write/read costs)
+
+### 10. Policy Status Management
+
+- Policies can be activated/deactivated by admins
+- Only active policies (status = 1) are evaluated during authorization
+- Status toggle available in create/edit modals
+- Inactive policies remain in database for audit trail
 
 ---
 
@@ -1246,52 +1525,5 @@ All authorization decisions are logged:
 │   └── config/                   # Shared configuration
 ├── README.md                      # Main documentation
 ├── QUICKSTART.md                  # Quick start guide
-├── NEW_DATABASE_SCHEMA.md        # Database schema details
 └── PROJECT_DOCUMENTATION.md      # This file
 ```
-
----
-
-## Important Notes
-
-### Security Considerations
-
-1. **Master Key**: 
-   - Regenerated on every server restart (in-memory only)
-   - Can be made persistent via `ZS_AI_MASTER_KEY` environment variable
-   - Displayed in console on each start
-   - Used for admin authentication fallback
-2. **Encryption Keys**: 
-   - Generated once on first run and stored persistently
-   - NOT rotated periodically (same key reused)
-   - Stored in secure file or config file
-   - Can be overridden via `ZS_AI_ENCRYPTION_KEY` environment variable
-3. **API Keys**: Shown only once on creation. Cannot be retrieved later (only rotated).
-4. **Passwords**: Hashed with bcrypt, never encrypted.
-5. **Refresh Tokens**: Hashed before storage, rotated on use.
-
-### Data Privacy
-
-1. **Email Encryption**: User emails are encrypted for GDPR compliance.
-2. **API Key Encryption**: All API keys (user and provider) are encrypted.
-3. **Audit Logs**: May contain PII. Consider encryption if required by compliance.
-
-### Performance Considerations
-
-1. **Email Hash**: Used for fast email lookup without decryption.
-2. **Key Hash**: Used for fast API key validation without decryption.
-3. **Indexes**: All lookup fields are indexed for performance.
-4. **Cedar-WASM**: Authorization evaluation is fast (WASM-based).
-
-### Development vs Production
-
-1. **Local Mode**: Default for development, no external dependencies.
-2. **Live Mode**: For production, requires backend API and external PDP.
-3. **Email Service**: Optional, can be disabled for development.
-4. **Logging**: Configurable log levels.
-
----
-
-## Conclusion
-
-This documentation provides a comprehensive overview of the ZS AI Gateway project. For specific implementation details, refer to the source code in the respective packages. For setup instructions, see `QUICKSTART.md`. For database schema details, see `NEW_DATABASE_SCHEMA.md`.

@@ -8,7 +8,7 @@ import type { Policy, CreatePolicyInput } from '~/types/cedar'
 import type { ValidationError } from '~/composables/useCedarWasm'
 
 const configStore = useConfigStore()
-const { listRules, createRule, updateRule, deleteRule, rules, loading } = useRules()
+const { listRules, createRule, updateRule, deleteRule, setRuleStatus, rules, loading } = useRules()
 const { getSchema } = useSchema()
 const { validatePolicies, formatPolicy } = useCedarWasm()
 const toast = useToast()
@@ -42,9 +42,10 @@ const currentPage = ref(1)
 const itemsPerPage = ref(20)
 
 // Form state
-const newRule = reactive<CreatePolicyInput>({
+const newRule = reactive<CreatePolicyInput & { isActive: boolean }>({
   policy: '',
-  description: ''
+  description: '',
+  isActive: true // Default to active when creating
 })
 
 // Validation state
@@ -67,6 +68,7 @@ const displayRules = computed(() => {
 const columns = [
   { key: 'effect', header: 'Effect', class: 'w-24' },
   { key: 'description', header: 'Description' },
+  { key: 'status', header: 'Status', class: 'w-32' },
   { key: 'actions', header: '', class: 'w-32' }
 ]
 
@@ -177,9 +179,16 @@ const handleCreateRule = async () => {
   
   try {
     await createRule(newRule)
+    // Set status after creation (if disabled)
+    if (!newRule.isActive) {
+      // Use the formatted policy text
+      const policyToUse = newRule.policy.trim()
+      await setRuleStatus(policyToUse, false)
+    }
     showCreateModal.value = false
     newRule.policy = ''
     newRule.description = ''
+    newRule.isActive = true
     validationErrors.value = []
     validationWarnings.value = []
   } catch (e) {
@@ -190,6 +199,7 @@ const handleCreateRule = async () => {
 const handleEditRule = async (rule: Policy) => {
   ruleToEdit.value = rule
   newRule.description = rule.description
+  newRule.isActive = rule.isActive
   validationErrors.value = []
   validationWarnings.value = []
   
@@ -222,11 +232,20 @@ const handleUpdateRule = async () => {
   }
   
   try {
-    await updateRule(ruleToEdit.value.policy, newRule)
+    // Update status first (using old policy text) if it changed
+    // This ensures we can find the policy even if content changes
+    if (newRule.isActive !== ruleToEdit.value.isActive) {
+      await setRuleStatus(ruleToEdit.value.policy, newRule.isActive)
+    }
+    // Then update policy content (if policy text changed)
+    if (ruleToEdit.value.policy !== newRule.policy || ruleToEdit.value.description !== newRule.description) {
+      await updateRule(ruleToEdit.value.policy, newRule)
+    }
     showEditModal.value = false
     ruleToEdit.value = null
     newRule.policy = ''
     newRule.description = ''
+    newRule.isActive = true
     validationErrors.value = []
     validationWarnings.value = []
   } catch (e) {
@@ -239,6 +258,7 @@ const handleCancelEdit = () => {
   ruleToEdit.value = null
   newRule.policy = ''
   newRule.description = ''
+  newRule.isActive = true
   validationErrors.value = []
   validationWarnings.value = []
 }
@@ -348,6 +368,22 @@ const handleDeleteRule = async () => {
           </p>
         </div>
       </template>
+
+      <template #status="{ row }">
+        <!-- Status pill with improved styling -->
+        <span
+          class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold border-2 shadow-sm"
+          :class="row.isActive
+            ? 'border-emerald-500/50 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-500/60 shadow-emerald-500/10'
+            : 'border-amber-500/50 bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-500/60 shadow-amber-500/10'"
+        >
+          <span
+            class="h-2 w-2 rounded-full animate-pulse"
+            :class="row.isActive ? 'bg-emerald-500' : 'bg-amber-500'"
+          />
+          <span>{{ row.isActive ? 'Enabled' : 'Disabled' }}</span>
+        </span>
+      </template>
       
       <template #actions="{ row }">
         <div class="flex gap-1">
@@ -384,6 +420,25 @@ const handleDeleteRule = async () => {
             placeholder="Allow engineers to query LLM"
             class="input"
           />
+        </div>
+
+        <!-- Status Toggle -->
+        <div class="flex items-center justify-between p-4 rounded-lg border-2 border-[rgb(var(--border))] bg-[rgb(var(--surface-elevated))]">
+          <div>
+            <label class="block text-sm font-semibold text-[rgb(var(--text))] mb-0.5">Rule Status</label>
+            <p class="text-xs text-[rgb(var(--text-muted))]">Enable or disable this rule</p>
+          </div>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input 
+              type="checkbox" 
+              v-model="newRule.isActive"
+              class="sr-only peer"
+            />
+            <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-emerald-500 dark:peer-checked:bg-emerald-600"></div>
+            <span class="ml-3 text-sm font-medium text-[rgb(var(--text))]">
+              {{ newRule.isActive ? 'Enabled' : 'Disabled' }}
+            </span>
+          </label>
         </div>
         
         <div>
@@ -436,7 +491,7 @@ const handleDeleteRule = async () => {
         </div>
         
         <div class="flex gap-3 justify-end pt-2">
-          <UiButton type="button" variant="outline" @click="showCreateModal = false; validationErrors = []; validationWarnings = []">
+          <UiButton type="button" variant="outline" @click="showCreateModal = false; newRule.isActive = true; validationErrors = []; validationWarnings = []">
             Cancel
           </UiButton>
           <UiButton type="submit" :loading="loading" :disabled="validationErrors.length > 0">
@@ -457,6 +512,25 @@ const handleDeleteRule = async () => {
             placeholder="Allow engineers to query LLM"
             class="input"
           />
+        </div>
+
+        <!-- Status Toggle -->
+        <div class="flex items-center justify-between p-4 rounded-lg border-2 border-[rgb(var(--border))] bg-[rgb(var(--surface-elevated))]">
+          <div>
+            <label class="block text-sm font-semibold text-[rgb(var(--text))] mb-0.5">Rule Status</label>
+            <p class="text-xs text-[rgb(var(--text-muted))]">Enable or disable this rule</p>
+          </div>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input 
+              type="checkbox" 
+              v-model="newRule.isActive"
+              class="sr-only peer"
+            />
+            <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-emerald-500 dark:peer-checked:bg-emerald-600"></div>
+            <span class="ml-3 text-sm font-medium text-[rgb(var(--text))]">
+              {{ newRule.isActive ? 'Enabled' : 'Disabled' }}
+            </span>
+          </label>
         </div>
         
         <div>

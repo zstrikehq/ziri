@@ -20,6 +20,7 @@ export interface PoliciesResponse {
         policies: Array<{
             policy: string
             description: string
+            isActive: boolean
         }>
     }
 }

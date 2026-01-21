@@ -55,10 +55,11 @@ export class LocalPolicyStore implements IPolicyStore {
   async updatePolicy(oldPolicy: string, newPolicy: string, description: string): Promise<void> {
     const db = getDatabase()
     
+    // Remove status = 1 filter so we can update disabled policies too
     const result = db.prepare(`
       UPDATE schema_policy 
       SET content = ?, description = ?, updated_at = datetime('now')
-      WHERE obj_type = 'policy' AND content = ? AND status = 1
+      WHERE obj_type = 'policy' AND content = ?
     `).run(newPolicy, description, oldPolicy)
     
     if (result.changes === 0) {

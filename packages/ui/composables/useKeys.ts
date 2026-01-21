@@ -10,7 +10,7 @@ export function useKeys() {
     const keysStore = useKeysStore()
     const toast = useToast()
 
-    const mapEntityToKey = (entity: Entity & { apiKey?: string | null; userKeyId?: string }, allEntities?: Entity[]): Key => {
+    const mapEntityToKey = (entity: Entity & { apiKey?: string | null; userKeyId?: string; executionKey?: string | null }, allEntities?: Entity[]): Key => {
         // Entity UID is now UserKey::"userKeyId"
         // User info is in entity.attrs.user.__entity
         const userKeyId = entity.uid.type === 'UserKey' ? entity.uid.id : (entity as any).userKeyId
@@ -39,6 +39,7 @@ export function useKeys() {
         return {
             userId: userId,
             userKeyId: userKeyId, // UserKey entity ID
+            executionKey: (entity as any).executionKey || undefined, // user_agent_keys.id for cost tracking
             name: name,
             email: email,
             department: department,

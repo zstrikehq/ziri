@@ -22,6 +22,7 @@ type RequestContext = {
   "request_time": __cedar::String,
   "hour": __cedar::Long,
   "model_name": __cedar::String,
+  "model_provider": __cedar::String,
   "is_emergency": __cedar::Bool,
   "day_of_week": __cedar::String,
 };

@@ -31,7 +31,7 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
           // Find auth_id from UserKey entity's user reference
           const userEntityId = (entity.attrs as any).user?.__entity?.id
           if (userEntityId) {
-            const dbKey = db.prepare('SELECT key_value, key_hash FROM user_agent_keys WHERE auth_id = ? ORDER BY created_at DESC LIMIT 1').get(userEntityId) as { key_value: string; key_hash: string } | undefined
+            const dbKey = db.prepare('SELECT id, key_value, key_hash FROM user_agent_keys WHERE auth_id = ? ORDER BY created_at DESC LIMIT 1').get(userEntityId) as { id: string; key_value: string; key_hash: string } | undefined
             if (dbKey) {
               // Decrypt API key
               const { decrypt } = await import('../utils/encryption.js')
@@ -40,6 +40,7 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
                 ...entity,
                 apiKey: decryptedKey,
                 keyHash: dbKey.key_hash,
+                executionKey: dbKey.id, // user_agent_keys.id for cost tracking
                 userKeyId: userKeyId
               }
             }
@@ -49,6 +50,7 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
             ...entity,
             apiKey: null,
             keyHash: null,
+            executionKey: null,
             userKeyId: userKeyId
           }
         }
