@@ -28,10 +28,18 @@ export async function createServer(): Promise<Express> {
   app.use(express.json())
   app.use(express.urlencoded({ extended: true }))
 
-  // Health check endpoint
-  app.get('/health', (req, res) => {
-    res.json({ status: 'ok', timestamp: new Date().toISOString() })
-  })
+  // Health check endpoints (both /health and /api/health for compatibility)
+  const healthHandler = async (req: any, res: any) => {
+    const { getServerSessionId } = await import('./utils/server-session.js')
+    res.json({ 
+      status: 'ok', 
+      timestamp: new Date().toISOString(),
+      sessionId: getServerSessionId() || null
+    })
+  }
+  
+  app.get('/health', healthHandler)
+  app.get('/api/health', healthHandler)
 
   // API routes (before static files)
   const authRoutes = (await import('./routes/auth.js')).default

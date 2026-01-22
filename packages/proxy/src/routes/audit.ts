@@ -25,9 +25,14 @@ router.get('/', async (req: Request, res: Response) => {
       endDate,
       search,
       limit = '10',
-      offset = '0'
+      offset = '0',
+      sortBy,
+      sortOrder
     } = req.query
 
+    const sortByValue = sortBy ? (sortBy as string) : null
+    const sortOrderValue = (sortOrder === 'asc' || sortOrder === 'desc') ? sortOrder as 'asc' | 'desc' : null
+    
     const result = await auditLogService.query({
       authId: authId as string,
       apiKeyId: apiKeyId as string,
@@ -39,6 +44,8 @@ router.get('/', async (req: Request, res: Response) => {
       search: search as string,
       limit: parseInt(limit as string, 10),
       offset: parseInt(offset as string, 10),
+      sortBy: sortByValue,
+      sortOrder: sortOrderValue
     })
 
     res.json({

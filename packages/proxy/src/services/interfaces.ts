@@ -89,6 +89,8 @@ export interface IEntityStore {
     limit?: number
     offset?: number
     entityType?: string
+    sortBy?: string | null
+    sortOrder?: 'asc' | 'desc' | null
   }): Promise<{ data: Entity[]; total: number }>
   
   /**

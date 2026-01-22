@@ -20,7 +20,9 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
       search,
       limit,
       offset,
-      entityType
+      entityType,
+      sortBy,
+      sortOrder
     } = req.query
     
     const entityStore = serviceFactory.getEntityStore()
@@ -28,7 +30,9 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
       search: search as string | undefined,
       limit: limit ? parseInt(limit as string, 10) : undefined,
       offset: offset ? parseInt(offset as string, 10) : undefined,
-      entityType: entityType as string | undefined
+      entityType: entityType as string | undefined,
+      sortBy: sortBy as string | undefined || null,
+      sortOrder: (sortOrder === 'asc' || sortOrder === 'desc') ? sortOrder as 'asc' | 'desc' : null
     })
     
     const entities = result.data

@@ -42,6 +42,10 @@ const testingProvider = ref<string | null>(null)
 const currentPage = ref(1)
 const itemsPerPage = ref(20)
 
+// Sorting state
+const sortBy = ref<string | null>(null)
+const sortOrder = ref<'asc' | 'desc' | null>(null)
+
 // Form state
 const newProvider = reactive<CreateProviderInput & { providerType: string }>({
   name: '',
@@ -57,13 +61,15 @@ const totalProviders = ref(0)
 // Debounced search query
 const debouncedSearchQuery = useDebounce(searchQuery, 300)
 
-// Fetch providers with server-side search and pagination
+// Fetch providers with server-side search, pagination, and sorting
 const fetchProviders = async () => {
   try {
     const result = await listProviders({
       search: debouncedSearchQuery.value || undefined,
       limit: itemsPerPage.value,
-      offset: (currentPage.value - 1) * itemsPerPage.value
+      offset: (currentPage.value - 1) * itemsPerPage.value,
+      sortBy: sortBy.value,
+      sortOrder: sortOrder.value
     })
     totalProviders.value = result.total || 0
   } catch (e) {
@@ -71,8 +77,16 @@ const fetchProviders = async () => {
   }
 }
 
+// Handle sort change
+const handleSort = (newSortBy: string | null, newSortOrder: 'asc' | 'desc' | null) => {
+  sortBy.value = newSortBy
+  sortOrder.value = newSortOrder
+  // Reset to first page when sorting changes
+  currentPage.value = 1
+}
+
 // Watch for filter changes
-watch([debouncedSearchQuery, currentPage, itemsPerPage], () => {
+watch([debouncedSearchQuery, currentPage, itemsPerPage, sortBy, sortOrder], () => {
   fetchProviders()
 })
 
@@ -142,10 +156,10 @@ const handleOpenCreateModal = () => {
 }
 
 const columns = [
-  { key: 'displayName', header: 'Provider', sortable: true },
+  { key: 'name', header: 'Provider', sortable: true },
+  { key: 'displayName', header: 'Display Name', sortable: true },
   { key: 'baseUrl', header: 'Base URL', sortable: true },
-  { key: 'models', header: 'Models' },
-  { key: 'defaultModel', header: 'Default Model' },
+  // { key: 'models', header: 'Models' },
   { key: 'hasCredentials', header: 'Status' },
   { key: 'actions', header: 'Actions' }
 ]
@@ -204,9 +218,13 @@ const columns = [
       :paginated="true"
       :current-page="currentPage"
       :items-per-page="itemsPerPage"
+      :total-items="totalProviders"
+      :sort-by="sortBy"
+      :sort-order="sortOrder"
       :empty-message="searchQuery ? 'No providers match your search criteria.' : 'No providers configured. Add your first LLM provider to get started.'"
       @update:current-page="currentPage = $event"
       @update:items-per-page="itemsPerPage = $event"
+      @update:sort="handleSort"
     >
       <template #empty-action>
         <UiButton @click="handleOpenCreateModal">
@@ -217,16 +235,20 @@ const columns = [
         </UiButton>
       </template>
       
-      <template #displayName="{ row }">
+      <template #name="{ row }">
         <div class="font-medium text-[rgb(var(--text))]">{{ row.displayName }}</div>
         <div class="text-xs text-[rgb(var(--text-muted))]">{{ row.name }}</div>
+      </template>
+      
+      <template #displayName="{ row }">
+        <span class="text-[rgb(var(--text))]">{{ row.displayName }}</span>
       </template>
       
       <template #baseUrl="{ value }">
         <code class="text-xs font-mono text-[rgb(var(--text-muted))]">{{ value }}</code>
       </template>
       
-      <template #models="{ row }">
+      <!-- <template #models="{ row }">
         <div class="flex flex-wrap gap-1">
           <span 
             v-for="model in row.models.slice(0, 3)" 
@@ -242,12 +264,7 @@ const columns = [
             +{{ row.models.length - 3 }} more
           </span>
         </div>
-      </template>
-      
-      <template #defaultModel="{ value }">
-        <span v-if="value" class="text-xs text-[rgb(var(--text-secondary))]">{{ value }}</span>
-        <span v-else class="text-xs text-[rgb(var(--text-muted))]">N/A</span>
-      </template>
+      </template> -->
       
       <template #hasCredentials="{ row }">
         <span 

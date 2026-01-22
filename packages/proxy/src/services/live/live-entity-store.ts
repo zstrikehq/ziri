@@ -27,6 +27,8 @@ export class LiveEntityStore implements IEntityStore {
     limit?: number
     offset?: number
     entityType?: string
+    sortBy?: string | null
+    sortOrder?: 'asc' | 'desc' | null
   }): Promise<{ data: Entity[]; total: number }> {
     const config = loadConfig()
     
@@ -92,6 +94,68 @@ export class LiveEntityStore implements IEntityStore {
     }
     
     const total = entities.length
+    
+    // Apply sorting (client-side since backend API may not support it)
+    if (params?.sortBy && params?.sortOrder) {
+      const sortKey = params.sortBy
+      entities.sort((a, b) => {
+        let aVal: any
+        let bVal: any
+        
+        // Handle different sort fields
+        if (sortKey === 'userId') {
+          if (a.uid.type === 'UserKey' && (a.attrs as any).user?.__entity?.id) {
+            aVal = (a.attrs as any).user.__entity.id
+          } else if (a.uid.type === 'User') {
+            aVal = (a.attrs as any).user_id || a.uid.id
+          } else {
+            aVal = a.uid.id
+          }
+          
+          if (b.uid.type === 'UserKey' && (b.attrs as any).user?.__entity?.id) {
+            bVal = (b.attrs as any).user.__entity.id
+          } else if (b.uid.type === 'User') {
+            bVal = (b.attrs as any).user_id || b.uid.id
+          } else {
+            bVal = b.uid.id
+          }
+        } else if (sortKey === 'name' || sortKey === 'email') {
+          if (a.uid.type === 'User') {
+            aVal = (a.attrs as any)[sortKey] || ''
+          } else {
+            aVal = ''
+          }
+          
+          if (b.uid.type === 'User') {
+            bVal = (b.attrs as any)[sortKey] || ''
+          } else {
+            bVal = ''
+          }
+        } else if (sortKey === 'currentDailySpend' || sortKey === 'currentMonthlySpend') {
+          const aAttrKey = sortKey === 'currentDailySpend' ? 'current_daily_spend' : 'current_monthly_spend'
+          const bAttrKey = sortKey === 'currentDailySpend' ? 'current_daily_spend' : 'current_monthly_spend'
+          const aAttr = (a.attrs as any)[aAttrKey]
+          const bAttr = (b.attrs as any)[bAttrKey]
+          aVal = typeof aAttr === 'object' && aAttr?.__extn?.arg ? parseFloat(aAttr.__extn.arg) : (typeof aAttr === 'string' ? parseFloat(aAttr) : 0)
+          bVal = typeof bAttr === 'object' && bAttr?.__extn?.arg ? parseFloat(bAttr.__extn.arg) : (typeof bAttr === 'string' ? parseFloat(bAttr) : 0)
+        } else if (sortKey === 'status') {
+          aVal = (a.attrs as any).status || 'active'
+          bVal = (b.attrs as any).status || 'active'
+        } else {
+          aVal = (a.attrs as any)[sortKey] || a.uid.id
+          bVal = (b.attrs as any)[sortKey] || b.uid.id
+        }
+        
+        if (aVal === undefined || aVal === null) return 1
+        if (bVal === undefined || bVal === null) return -1
+        if (typeof aVal === 'string' && typeof bVal === 'string') {
+          const comparison = aVal.toLowerCase().localeCompare(bVal.toLowerCase())
+          return params.sortOrder === 'asc' ? comparison : -comparison
+        }
+        const comparison = aVal < bVal ? -1 : aVal > bVal ? 1 : 0
+        return params.sortOrder === 'asc' ? comparison : -comparison
+      })
+    }
     
     // Apply pagination
     if (params?.limit || params?.offset) {

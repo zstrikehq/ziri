@@ -30,6 +30,10 @@ const currentPage = ref(1)
 const itemsPerPage = ref(20)
 const totalRules = ref(0)
 
+// Sorting state
+const sortBy = ref<string | null>(null)
+const sortOrder = ref<'asc' | 'desc' | null>(null)
+
 // Form state
 const newRule = reactive<CreatePolicyInput & { isActive: boolean }>({
   policy: '',
@@ -45,14 +49,16 @@ const isValidating = ref(false)
 // Debounced search query
 const debouncedSearchQuery = useDebounce(searchQuery, 300)
 
-// Fetch rules with server-side search and pagination
+// Fetch rules with server-side search, pagination, and sorting
 const fetchRules = async () => {
   try {
     const result = await listRules({
       search: debouncedSearchQuery.value || undefined,
       effect: filterEffect.value || undefined,
       limit: itemsPerPage.value,
-      offset: (currentPage.value - 1) * itemsPerPage.value
+      offset: (currentPage.value - 1) * itemsPerPage.value,
+      sortBy: sortBy.value,
+      sortOrder: sortOrder.value
     })
     totalRules.value = result.total || 0
   } catch (e) {
@@ -60,9 +66,30 @@ const fetchRules = async () => {
   }
 }
 
+// Handle sort change
+const handleSort = (newSortBy: string | null, newSortOrder: 'asc' | 'desc' | null) => {
+  sortBy.value = newSortBy
+  sortOrder.value = newSortOrder
+  // Reset to first page when sorting changes
+  currentPage.value = 1
+}
+
 // Watch for filter changes
-watch([debouncedSearchQuery, filterEffect, currentPage, itemsPerPage], () => {
+watch([debouncedSearchQuery, filterEffect, currentPage, itemsPerPage, sortBy, sortOrder], () => {
   fetchRules()
+})
+
+// Reset form when opening create modal
+watch(showCreateModal, (isOpen) => {
+  if (isOpen) {
+    // Reset form to empty state when opening create modal
+    newRule.policy = ''
+    newRule.description = ''
+    newRule.isActive = true
+    validationErrors.value = []
+    validationWarnings.value = []
+    ruleToEdit.value = null
+  }
 })
 
 // Auto-load rules when page mounts (if config is set)
@@ -75,9 +102,9 @@ onMounted(async () => {
 })
 
 const columns = [
-  { key: 'effect', header: 'Effect', class: 'w-24' },
-  { key: 'description', header: 'Description' },
-  { key: 'status', header: 'Status', class: 'w-32' },
+  { key: 'effect', header: 'Effect', class: 'w-24', sortable: true },
+  { key: 'description', header: 'Description', sortable: true },
+  { key: 'status', header: 'Status', class: 'w-32', sortable: true },
   { key: 'actions', header: '', class: 'w-32' }
 ]
 
@@ -352,9 +379,12 @@ const handleDeleteRule = async () => {
       :current-page="currentPage"
       :items-per-page="itemsPerPage"
       :total-items="totalRules"
+      :sort-by="sortBy"
+      :sort-order="sortOrder"
       :empty-message="searchQuery || filterEffect ? 'No rules match your search criteria.' : 'No rules found. Create your first rule to get started.'"
       @update:current-page="currentPage = $event"
       @update:items-per-page="itemsPerPage = $event"
+      @update:sort="handleSort"
     >
       <template #empty-action>
         <UiButton @click="showCreateModal = true">
@@ -471,7 +501,7 @@ const handleDeleteRule = async () => {
           />
           
           <!-- Validation Errors -->
-          <div v-if="validationErrors.length > 0" class="mt-2 space-y-1">
+          <div v-if="validationErrors.length > 0" class="mt-2 space-y-1 max-h-40 overflow-y-auto">
             <div 
               v-for="(error, idx) in validationErrors" 
               :key="idx"
@@ -488,7 +518,7 @@ const handleDeleteRule = async () => {
           </div>
           
           <!-- Validation Warnings -->
-          <div v-if="validationWarnings.length > 0" class="mt-2 space-y-1">
+          <div v-if="validationWarnings.length > 0" class="mt-2 space-y-1 max-h-40 overflow-y-auto">
             <div 
               v-for="(warning, idx) in validationWarnings" 
               :key="idx"
@@ -563,7 +593,7 @@ const handleDeleteRule = async () => {
           />
           
           <!-- Validation Errors -->
-          <div v-if="validationErrors.length > 0" class="mt-2 space-y-1">
+          <div v-if="validationErrors.length > 0" class="mt-2 space-y-1 max-h-40 overflow-y-auto">
             <div 
               v-for="(error, idx) in validationErrors" 
               :key="idx"
@@ -580,7 +610,7 @@ const handleDeleteRule = async () => {
           </div>
           
           <!-- Validation Warnings -->
-          <div v-if="validationWarnings.length > 0" class="mt-2 space-y-1">
+          <div v-if="validationWarnings.length > 0" class="mt-2 space-y-1 max-h-40 overflow-y-auto">
             <div 
               v-for="(warning, idx) in validationWarnings" 
               :key="idx"

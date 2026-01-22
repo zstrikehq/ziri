@@ -30,6 +30,22 @@ export default defineNuxtRouteMiddleware(async (to) => {
     // Wait for Pinia reactivity to update
     await nextTick()
     
+    // Check server session for admin (detect server restart)
+    if (adminAuthStore.isAuthenticated) {
+      try {
+        const sessionValid = await adminAuthStore.checkServerSession()
+        if (!sessionValid) {
+          // Server restarted, user was logged out
+          const toast = useToast()
+          toast.warning('Server restarted. Please login again.')
+          return navigateTo('/login')
+        }
+      } catch (error) {
+        // If check fails, don't block navigation but log error
+        console.error('[AUTH] Failed to check server session:', error)
+      }
+    }
+    
     const isAdminAuthenticated = adminAuthStore.isAuthenticated
     const isUserAuthenticated = userAuthStore.isAuthenticated
     const userRole = userAuthStore.user?.role || adminAuthStore.user?.role

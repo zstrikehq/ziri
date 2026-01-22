@@ -36,6 +36,7 @@ export const useAdminAuthStore = defineStore('adminAuth', {
     refreshToken: null as string | null,
     tokenExpiry: null as Date | null,
     user: null as AdminUser | null,
+    serverSessionId: null as string | null, // Server session ID for restart detection
     isLoading: false,
     error: null as string | null
   }),
@@ -62,7 +63,8 @@ export const useAdminAuthStore = defineStore('adminAuth', {
           accessToken,
           refreshToken,
           tokenExpiry: this.tokenExpiry.toISOString(),
-          user
+          user,
+          serverSessionId: this.serverSessionId
         }
         setCookie(COOKIE_NAME, JSON.stringify(authData), 30)
       }
@@ -73,6 +75,7 @@ export const useAdminAuthStore = defineStore('adminAuth', {
       this.refreshToken = null
       this.tokenExpiry = null
       this.user = null
+      this.serverSessionId = null
       this.error = null
       
       // Clear cookie
@@ -96,6 +99,7 @@ export const useAdminAuthStore = defineStore('adminAuth', {
             this.refreshToken = data.refreshToken
             this.tokenExpiry = expiry
             this.user = data.user
+            this.serverSessionId = data.serverSessionId || null
           } else {
             // Token expired, clear it
             this.clearAuth()
@@ -112,6 +116,50 @@ export const useAdminAuthStore = defineStore('adminAuth', {
 
     setError(error: string | null) {
       this.error = error
+    },
+
+    setServerSessionId(sessionId: string | null) {
+      this.serverSessionId = sessionId
+      // Update cookie with new session ID
+      if (process.client && this.accessToken && this.refreshToken && this.tokenExpiry && this.user) {
+        const authData = {
+          accessToken: this.accessToken,
+          refreshToken: this.refreshToken,
+          tokenExpiry: this.tokenExpiry.toISOString(),
+          user: this.user,
+          serverSessionId: sessionId
+        }
+        setCookie(COOKIE_NAME, JSON.stringify(authData), 30)
+      }
+    },
+
+    async checkServerSession(): Promise<boolean> {
+      // Check if server session changed (server restarted)
+      try {
+        const response = await fetch('/api/health')
+        if (!response.ok) {
+          return false
+        }
+        const data = await response.json()
+        const currentSessionId = data.sessionId
+
+        // If we have a stored session ID and it changed, server restarted
+        if (this.serverSessionId && currentSessionId && this.serverSessionId !== currentSessionId) {
+          console.warn('[AUTH] Server session changed - server restarted, logging out')
+          this.clearAuth()
+          return false
+        }
+
+        // Update stored session ID if we don't have one or if it's new
+        if (currentSessionId && (!this.serverSessionId || this.serverSessionId !== currentSessionId)) {
+          this.setServerSessionId(currentSessionId)
+        }
+
+        return true
+      } catch (error) {
+        console.error('[AUTH] Failed to check server session:', error)
+        return false
+      }
     }
   }
 })

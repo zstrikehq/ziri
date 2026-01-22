@@ -37,16 +37,22 @@ const currentPage = ref(1)
 const itemsPerPage = ref(20)
 const totalUsers = ref(0)
 
+// Sorting state
+const sortBy = ref<string | null>(null)
+const sortOrder = ref<'asc' | 'desc' | null>(null)
+
 // Debounced search query
 const debouncedSearchQuery = useDebounce(searchQuery, 300)
 
-// Fetch users with server-side search and pagination
+// Fetch users with server-side search, pagination, and sorting
 const fetchUsers = async () => {
   try {
     const result = await loadUsers({
       search: debouncedSearchQuery.value || undefined,
       limit: itemsPerPage.value,
-      offset: (currentPage.value - 1) * itemsPerPage.value
+      offset: (currentPage.value - 1) * itemsPerPage.value,
+      sortBy: sortBy.value,
+      sortOrder: sortOrder.value
     })
     totalUsers.value = result.total || 0
   } catch (e) {
@@ -54,8 +60,16 @@ const fetchUsers = async () => {
   }
 }
 
+// Handle sort change
+const handleSort = (newSortBy: string | null, newSortOrder: 'asc' | 'desc' | null) => {
+  sortBy.value = newSortBy
+  sortOrder.value = newSortOrder
+  // Reset to first page when sorting changes
+  currentPage.value = 1
+}
+
 // Watch for filter changes
-watch([debouncedSearchQuery, currentPage, itemsPerPage], () => {
+watch([debouncedSearchQuery, currentPage, itemsPerPage, sortBy, sortOrder], () => {
   fetchUsers()
 })
 
@@ -211,11 +225,11 @@ const copyPassword = () => {
     <!-- Users Table -->
     <UiTable
       :columns="[
-        { key: 'userId', header: 'User ID' },
-        { key: 'name', header: 'Name' },
-        { key: 'email', header: 'Email' },
-        { key: 'status', header: 'Status' },
-        { key: 'createdAt', header: 'Created' },
+        { key: 'userId', header: 'User ID', sortable: true },
+        { key: 'name', header: 'Name', sortable: true },
+        { key: 'email', header: 'Email', sortable: true },
+        { key: 'status', header: 'Status', sortable: true },
+        { key: 'createdAt', header: 'Created', sortable: true },
         { key: 'actions', header: '', class: 'w-32' }
       ]"
       :data="users"
@@ -224,9 +238,12 @@ const copyPassword = () => {
       :current-page="currentPage"
       :items-per-page="itemsPerPage"
       :total-items="totalUsers"
+      :sort-by="sortBy"
+      :sort-order="sortOrder"
       :empty-message="searchQuery ? 'No users match your search criteria.' : 'No users found. Create your first user to get started.'"
       @update:current-page="currentPage = $event"
       @update:items-per-page="itemsPerPage = $event"
+      @update:sort="handleSort"
     >
         <template #userId="{ row }">
           <code class="text-xs font-mono">{{ row.userId }}</code>

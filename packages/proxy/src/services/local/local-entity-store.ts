@@ -18,6 +18,8 @@ export class LocalEntityStore implements IEntityStore {
     limit?: number
     offset?: number
     entityType?: string // Filter by entity type (e.g., 'UserKey')
+    sortBy?: string | null
+    sortOrder?: 'asc' | 'desc' | null
   }): Promise<{ data: Entity[]; total: number }> {
     const db = getDatabase()
     
@@ -46,10 +48,26 @@ export class LocalEntityStore implements IEntityStore {
     const countResult = db.prepare(countSql).get(...args) as { total: number }
     let total = countResult.total
     
+    // Build ORDER BY clause
+    let orderByClause = 'ORDER BY created_at DESC' // Default sort
+    if (params?.sortBy && params?.sortOrder) {
+      // Map frontend column names to database column names
+      const columnMap: Record<string, string> = {
+        'createdAt': 'created_at',
+        'updatedAt': 'updated_at',
+        'status': 'status'
+      }
+      const dbColumn = columnMap[params.sortBy]
+      if (dbColumn) {
+        const order = params.sortOrder.toUpperCase()
+        orderByClause = `ORDER BY ${dbColumn} ${order}`
+      }
+    }
+    
     // Get paginated data
     const limit = params?.limit || 100
     const offset = params?.offset || 0
-    const dataSql = `SELECT ejson, status FROM entities ${whereClause} ORDER BY created_at DESC LIMIT ? OFFSET ?`
+    const dataSql = `SELECT ejson, status, created_at, updated_at FROM entities ${whereClause} ${orderByClause} LIMIT ? OFFSET ?`
     const rows = db.prepare(dataSql).all(...args, limit, offset) as any[]
     
     // Parse entities
@@ -119,6 +137,133 @@ export class LocalEntityStore implements IEntityStore {
         return entity.uid.id.toLowerCase().includes(searchLower)
       })
       total = filtered.length
+      
+      // If sorting is applied, re-sort the filtered results (for fields not in DB)
+      if (params?.sortBy && params?.sortOrder) {
+        const sortKey = params.sortBy
+        entities.sort((a, b) => {
+          let aVal: any
+          let bVal: any
+          
+        // Handle different sort fields
+        if (sortKey === 'userId') {
+          // For UserKey: get userId from user reference
+          if (a.uid.type === 'UserKey' && (a.attrs as any).user?.__entity?.id) {
+            aVal = (a.attrs as any).user.__entity.id
+          } else if (a.uid.type === 'User') {
+            aVal = (a.attrs as any).user_id || a.uid.id
+          } else {
+            aVal = a.uid.id
+          }
+          
+          if (b.uid.type === 'UserKey' && (b.attrs as any).user?.__entity?.id) {
+            bVal = (b.attrs as any).user.__entity.id
+          } else if (b.uid.type === 'User') {
+            bVal = (b.attrs as any).user_id || b.uid.id
+          } else {
+            bVal = b.uid.id
+          }
+        } else if (sortKey === 'name' || sortKey === 'email') {
+          // For User entities
+          if (a.uid.type === 'User') {
+            aVal = (a.attrs as any)[sortKey] || ''
+          } else {
+            aVal = ''
+          }
+          
+          if (b.uid.type === 'User') {
+            bVal = (b.attrs as any)[sortKey] || ''
+          } else {
+            bVal = ''
+          }
+        } else if (sortKey === 'currentDailySpend' || sortKey === 'currentMonthlySpend') {
+          // For UserKey entities - extract decimal value
+          const aAttrKey = sortKey === 'currentDailySpend' ? 'current_daily_spend' : 'current_monthly_spend'
+          const bAttrKey = sortKey === 'currentDailySpend' ? 'current_daily_spend' : 'current_monthly_spend'
+          const aAttr = (a.attrs as any)[aAttrKey]
+          const bAttr = (b.attrs as any)[bAttrKey]
+          // Extract decimal value from CedarDecimal format
+          aVal = typeof aAttr === 'object' && aAttr?.__extn?.arg ? parseFloat(aAttr.__extn.arg) : (typeof aAttr === 'string' ? parseFloat(aAttr) : 0)
+          bVal = typeof bAttr === 'object' && bAttr?.__extn?.arg ? parseFloat(bAttr.__extn.arg) : (typeof bAttr === 'string' ? parseFloat(bAttr) : 0)
+        } else if (sortKey === 'status') {
+          // For UserKey entities
+          aVal = (a.attrs as any).status || 'active'
+          bVal = (b.attrs as any).status || 'active'
+        } else {
+          // For other fields, try to get from attrs or uid
+          aVal = (a.attrs as any)[sortKey] || a.uid.id
+          bVal = (b.attrs as any)[sortKey] || b.uid.id
+        }
+          
+          if (aVal === undefined || aVal === null) return 1
+          if (bVal === undefined || bVal === null) return -1
+          if (typeof aVal === 'string' && typeof bVal === 'string') {
+            const comparison = aVal.toLowerCase().localeCompare(bVal.toLowerCase())
+            return params.sortOrder === 'asc' ? comparison : -comparison
+          }
+          const comparison = aVal < bVal ? -1 : aVal > bVal ? 1 : 0
+          return params.sortOrder === 'asc' ? comparison : -comparison
+        })
+      }
+    } else if (params?.sortBy && params?.sortOrder) {
+      // Sort even when no search (for fields not in DB)
+      const sortKey = params.sortBy
+      entities.sort((a, b) => {
+        let aVal: any
+        let bVal: any
+        
+        if (sortKey === 'userId') {
+          if (a.uid.type === 'UserKey' && (a.attrs as any).user?.__entity?.id) {
+            aVal = (a.attrs as any).user.__entity.id
+          } else if (a.uid.type === 'User') {
+            aVal = (a.attrs as any).user_id || a.uid.id
+          } else {
+            aVal = a.uid.id
+          }
+          
+          if (b.uid.type === 'UserKey' && (b.attrs as any).user?.__entity?.id) {
+            bVal = (b.attrs as any).user.__entity.id
+          } else if (b.uid.type === 'User') {
+            bVal = (b.attrs as any).user_id || b.uid.id
+          } else {
+            bVal = b.uid.id
+          }
+        } else if (sortKey === 'name' || sortKey === 'email') {
+          if (a.uid.type === 'User') {
+            aVal = (a.attrs as any)[sortKey] || ''
+          } else {
+            aVal = ''
+          }
+          
+          if (b.uid.type === 'User') {
+            bVal = (b.attrs as any)[sortKey] || ''
+          } else {
+            bVal = ''
+          }
+        } else if (sortKey === 'currentDailySpend' || sortKey === 'currentMonthlySpend') {
+          const aAttrKey = sortKey === 'currentDailySpend' ? 'current_daily_spend' : 'current_monthly_spend'
+          const bAttrKey = sortKey === 'currentDailySpend' ? 'current_daily_spend' : 'current_monthly_spend'
+          const aAttr = (a.attrs as any)[aAttrKey]
+          const bAttr = (b.attrs as any)[bAttrKey]
+          aVal = typeof aAttr === 'object' && aAttr?.__extn?.arg ? parseFloat(aAttr.__extn.arg) : (typeof aAttr === 'string' ? parseFloat(aAttr) : 0)
+          bVal = typeof bAttr === 'object' && bAttr?.__extn?.arg ? parseFloat(bAttr.__extn.arg) : (typeof bAttr === 'string' ? parseFloat(bAttr) : 0)
+        } else if (sortKey === 'status') {
+          aVal = (a.attrs as any).status || 'active'
+          bVal = (b.attrs as any).status || 'active'
+        } else {
+          aVal = (a.attrs as any)[sortKey] || a.uid.id
+          bVal = (b.attrs as any)[sortKey] || b.uid.id
+        }
+        
+        if (aVal === undefined || aVal === null) return 1
+        if (bVal === undefined || bVal === null) return -1
+        if (typeof aVal === 'string' && typeof bVal === 'string') {
+          const comparison = aVal.toLowerCase().localeCompare(bVal.toLowerCase())
+          return params.sortOrder === 'asc' ? comparison : -comparison
+        }
+        const comparison = aVal < bVal ? -1 : aVal > bVal ? 1 : 0
+        return params.sortOrder === 'asc' ? comparison : -comparison
+      })
     }
     
     return { data: entities, total }

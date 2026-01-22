@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import UiPagination from './Pagination.vue'
 
+export type SortOrder = 'asc' | 'desc' | null
+
 interface Column {
   key: string
   header: string
   class?: string
+  sortable?: boolean // Whether this column can be sorted
 }
 
 interface Props {
@@ -17,6 +20,8 @@ interface Props {
   itemsPerPage?: number
   currentPage?: number
   totalItems?: number // For server-side pagination (total count from API)
+  sortBy?: string | null // Current sort column
+  sortOrder?: SortOrder // Current sort order
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -25,13 +30,16 @@ const props = withDefaults(defineProps<Props>(), {
   clickable: false,
   paginated: false,
   itemsPerPage: 10,
-  currentPage: 1
+  currentPage: 1,
+  sortBy: null,
+  sortOrder: null
 })
 
 const emit = defineEmits<{
   'row-click': [row: any]
   'update:currentPage': [page: number]
   'update:itemsPerPage': [items: number]
+  'update:sort': [sortBy: string | null, sortOrder: SortOrder]
 }>()
 
 const paginatedData = computed(() => {
@@ -60,6 +68,39 @@ const handleRowClick = (row: any) => {
     emit('row-click', row)
   }
 }
+
+/**
+ * Handle column header click for sorting
+ * Three-state sorting: asc → desc → null
+ */
+const handleSort = (column: Column) => {
+  if (!column.sortable) return
+  
+  let newSortBy: string | null = column.key
+  let newSortOrder: SortOrder = 'asc'
+  
+  // If clicking the same column, cycle through states
+  if (props.sortBy === column.key) {
+    if (props.sortOrder === 'asc') {
+      newSortOrder = 'desc'
+    } else if (props.sortOrder === 'desc') {
+      newSortBy = null
+      newSortOrder = null
+    }
+  }
+  
+  emit('update:sort', newSortBy, newSortOrder)
+}
+
+/**
+ * Get sort icon for a column
+ */
+const getSortIcon = (column: Column) => {
+  if (!column.sortable || props.sortBy !== column.key) {
+    return 'sort-default'
+  }
+  return props.sortOrder === 'asc' ? 'sort-asc' : 'sort-desc'
+}
 </script>
 
 <template>
@@ -71,9 +112,45 @@ const handleRowClick = (row: any) => {
             v-for="column in columns" 
             :key="column.key"
             class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-[rgb(var(--text-muted))]"
-            :class="column.class"
+            :class="[
+              column.class,
+              column.sortable && 'cursor-pointer select-none hover:bg-[rgb(var(--surface-elevated))] transition-colors'
+            ]"
+            @click="handleSort(column)"
           >
-            {{ column.header }}
+            <div class="flex items-center gap-2">
+              <span>{{ column.header }}</span>
+              <span v-if="column.sortable" class="flex flex-col items-center justify-center">
+                <!-- Sort icons -->
+                <svg 
+                  v-if="getSortIcon(column) === 'sort-default'"
+                  class="w-3 h-3 opacity-30"
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                </svg>
+                <svg 
+                  v-else-if="getSortIcon(column) === 'sort-asc'"
+                  class="w-3 h-3 text-indigo-500"
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+                </svg>
+                <svg 
+                  v-else-if="getSortIcon(column) === 'sort-desc'"
+                  class="w-3 h-3 text-indigo-500"
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </span>
+            </div>
           </th>
         </tr>
       </thead>

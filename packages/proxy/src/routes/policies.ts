@@ -19,7 +19,9 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
       search,
       limit,
       offset,
-      effect
+      effect,
+      sortBy,
+      sortOrder
     } = req.query
     
     const db = getDatabase()
@@ -27,6 +29,24 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
     // Build WHERE clause
     let whereClause = "WHERE obj_type = 'policy'"
     const args: any[] = []
+    
+    // Build ORDER BY clause
+    let orderByClause = 'ORDER BY created_at ASC' // Default sort
+    if (sortBy && sortOrder && (sortOrder === 'asc' || sortOrder === 'desc')) {
+      // Map frontend column names to database column names
+      const columnMap: Record<string, string> = {
+        'description': 'description',
+        'status': 'status',
+        'effect': 'content', // Effect is derived from content, but we'll sort by content
+        'createdAt': 'created_at',
+        'updatedAt': 'updated_at'
+      }
+      const dbColumn = columnMap[sortBy as string]
+      if (dbColumn) {
+        const order = sortOrder.toUpperCase()
+        orderByClause = `ORDER BY ${dbColumn} ${order}`
+      }
+    }
     
     // Get total count first
     let countSql = `SELECT COUNT(*) as total FROM schema_policy ${whereClause}`
@@ -37,19 +57,20 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
     const limitValue = limit ? parseInt(limit as string, 10) : 100
     const offsetValue = offset ? parseInt(offset as string, 10) : 0
     const dataSql = `
-      SELECT content, description, status 
+      SELECT content, description, status, created_at, updated_at
       FROM schema_policy 
       ${whereClause}
-      ORDER BY created_at ASC
+      ${orderByClause}
       LIMIT ? OFFSET ?
     `
-    const rows = db.prepare(dataSql).all(...args, limitValue, offsetValue) as { content: string; description: string | null; status: number }[]
+    const rows = db.prepare(dataSql).all(...args, limitValue, offsetValue) as { content: string; description: string | null; status: number; created_at: string; updated_at: string }[]
 
     // Map policies
     let policies = rows.map(row => ({
       policy: row.content,
       description: row.description || '',
-      isActive: row.status === 1
+      isActive: row.status === 1,
+      effect: row.content.toLowerCase().includes('permit(') ? 'permit' : 'forbid' as 'permit' | 'forbid'
     }))
     
     // Apply search filter (client-side since we need to search policy content)
@@ -69,7 +90,8 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
       const allPolicies = allRows.map(row => ({
         policy: row.content,
         description: row.description || '',
-        isActive: row.status === 1
+        isActive: row.status === 1,
+        effect: row.content.toLowerCase().includes('permit(') ? 'permit' : 'forbid' as 'permit' | 'forbid'
       }))
       const filtered = allPolicies.filter(p => 
         p.description.toLowerCase().includes(searchLower) ||
@@ -80,15 +102,29 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
     
     // Apply effect filter (permit/forbid) - extract from policy content
     if (effect && (effect === 'permit' || effect === 'forbid')) {
-      policies = policies.filter(p => {
-        const policyLower = p.policy.toLowerCase()
-        return effect === 'permit' 
-          ? policyLower.includes('permit(')
-          : policyLower.includes('forbid(')
-      })
+      policies = policies.filter(p => p.effect === effect)
       // Recalculate total if search was also applied
       if (search) {
-        // Already filtered above
+        // Already filtered above, but need to re-filter by effect
+        const allRows = db.prepare(`
+          SELECT content, description, status 
+          FROM schema_policy 
+          ${whereClause}
+          ORDER BY created_at ASC
+        `).all(...args) as { content: string; description: string | null; status: number }[]
+        const allPolicies = allRows.map(row => ({
+          policy: row.content,
+          description: row.description || '',
+          isActive: row.status === 1,
+          effect: row.content.toLowerCase().includes('permit(') ? 'permit' : 'forbid' as 'permit' | 'forbid'
+        }))
+        const searchLower = (search as string).toLowerCase()
+        const filtered = allPolicies.filter(p => 
+          (p.description.toLowerCase().includes(searchLower) ||
+          p.policy.toLowerCase().includes(searchLower)) &&
+          p.effect === effect
+        )
+        total = filtered.length
       } else {
         const allRows = db.prepare(`
           SELECT content, description, status 
@@ -99,16 +135,20 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
         const allPolicies = allRows.map(row => ({
           policy: row.content,
           description: row.description || '',
-          isActive: row.status === 1
+          isActive: row.status === 1,
+          effect: row.content.toLowerCase().includes('permit(') ? 'permit' : 'forbid' as 'permit' | 'forbid'
         }))
-        const filtered = allPolicies.filter(p => {
-          const policyLower = p.policy.toLowerCase()
-          return effect === 'permit' 
-            ? policyLower.includes('permit(')
-            : policyLower.includes('forbid(')
-        })
+        const filtered = allPolicies.filter(p => p.effect === effect)
         total = filtered.length
       }
+    }
+    
+    // Apply client-side sorting if sortBy is 'effect' (since effect is derived from content)
+    if (sortBy === 'effect' && sortOrder && (sortOrder === 'asc' || sortOrder === 'desc')) {
+      policies.sort((a, b) => {
+        const comparison = a.effect.localeCompare(b.effect)
+        return sortOrder === 'asc' ? comparison : -comparison
+      })
     }
     
     res.json({

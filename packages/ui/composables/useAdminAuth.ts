@@ -39,6 +39,19 @@ export function useAdminAuth() {
         data.user
       )
       
+      // Get and store server session ID after login
+      try {
+        const healthResponse = await fetch('/api/health')
+        if (healthResponse.ok) {
+          const healthData = await healthResponse.json()
+          if (healthData.sessionId) {
+            adminAuthStore.setServerSessionId(healthData.sessionId)
+          }
+        }
+      } catch (error) {
+        console.warn('[AUTH] Failed to get server session ID:', error)
+      }
+      
       toast.success('Login successful!')
       
       // Redirect to config page after login
@@ -75,6 +88,13 @@ export function useAdminAuth() {
 
   const refreshToken = async (): Promise<boolean> => {
     if (!adminAuthStore.refreshToken) {
+      return false
+    }
+    
+    // Check server session before refreshing (detect server restart)
+    const sessionValid = await adminAuthStore.checkServerSession()
+    if (!sessionValid) {
+      // Server restarted, already logged out by checkServerSession
       return false
     }
     

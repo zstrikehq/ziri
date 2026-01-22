@@ -15,6 +15,8 @@ export function useRules() {
         limit?: number
         offset?: number
         effect?: 'permit' | 'forbid'
+        sortBy?: string | null
+        sortOrder?: 'asc' | 'desc' | null
     }) => {
         rulesStore.loading = true
         rulesStore.error = null
@@ -30,6 +32,8 @@ export function useRules() {
             if (params?.limit) queryParams.set('limit', params.limit.toString())
             if (params?.offset) queryParams.set('offset', params.offset.toString())
             if (params?.effect) queryParams.set('effect', params.effect)
+            if (params?.sortBy) queryParams.set('sortBy', params.sortBy)
+            if (params?.sortOrder) queryParams.set('sortOrder', params.sortOrder)
             
             const url = `/api/policies${queryParams.toString() ? '?' + queryParams.toString() : ''}`
             

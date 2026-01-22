@@ -18,13 +18,17 @@ router.get('/', (req: Request, res: Response) => {
     const {
       search,
       limit,
-      offset
+      offset,
+      sortBy,
+      sortOrder
     } = req.query
     
     const result = userService.listUsers({
       search: search as string | undefined,
       limit: limit ? parseInt(limit as string, 10) : undefined,
-      offset: offset ? parseInt(offset as string, 10) : undefined
+      offset: offset ? parseInt(offset as string, 10) : undefined,
+      sortBy: sortBy as string | undefined || null,
+      sortOrder: (sortOrder === 'asc' || sortOrder === 'desc') ? sortOrder as 'asc' | 'desc' : null
     })
     
     res.json({

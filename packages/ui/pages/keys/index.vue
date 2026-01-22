@@ -55,6 +55,10 @@ const currentPage = ref(1)
 const itemsPerPage = ref(20)
 const totalKeys = ref(0)
 
+// Sorting state
+const sortBy = ref<string | null>(null)
+const sortOrder = ref<'asc' | 'desc' | null>(null)
+
 // Form state - only userId needed (UserKey is created with user)
 const newKey = reactive<{
   userId: string
@@ -80,18 +84,28 @@ const selectedUser = computed(() => {
 // Debounced search query
 const debouncedSearchQuery = useDebounce(searchQuery, 300)
 
-// Fetch keys with server-side search and pagination
+// Fetch keys with server-side search, pagination, and sorting
 const fetchKeys = async () => {
   try {
     const result = await listKeys({
       search: debouncedSearchQuery.value || undefined,
       limit: itemsPerPage.value,
-      offset: (currentPage.value - 1) * itemsPerPage.value
+      offset: (currentPage.value - 1) * itemsPerPage.value,
+      sortBy: sortBy.value,
+      sortOrder: sortOrder.value
     })
     totalKeys.value = result.total || 0
   } catch (e) {
     // Error already handled in composable
   }
+}
+
+// Handle sort change
+const handleSort = (newSortBy: string | null, newSortOrder: 'asc' | 'desc' | null) => {
+  sortBy.value = newSortBy
+  sortOrder.value = newSortOrder
+  // Reset to first page when sorting changes
+  currentPage.value = 1
 }
 
 // Client-side filter by status (since status filtering isn't implemented server-side yet)
@@ -111,7 +125,7 @@ const displayKeys = computed(() => {
 })
 
 // Watch for filter changes
-watch([debouncedSearchQuery, currentPage, itemsPerPage], () => {
+watch([debouncedSearchQuery, currentPage, itemsPerPage, sortBy, sortOrder], () => {
   fetchKeys()
 })
 
@@ -120,11 +134,13 @@ watch([filterStatus], () => {
 })
 
 const columns = [
-  { key: 'userId', header: 'User ID' },
+  { key: 'userId', header: 'User ID', sortable: true },
+  { key: 'name', header: 'Name', sortable: true },
+  { key: 'email', header: 'Email', sortable: true },
   { key: 'apiKey', header: 'API Key' },
-  { key: 'currentDailySpend', header: 'Daily Spend' },
-  { key: 'currentMonthlySpend', header: 'Monthly Spend' },
-  { key: 'status', header: 'Status', class: 'w-24' },
+  { key: 'status', header: 'Status', class: 'w-24', sortable: true },
+  { key: 'currentDailySpend', header: 'Daily Spend', sortable: true },
+  { key: 'currentMonthlySpend', header: 'Monthly Spend', sortable: true },
   { key: 'actions', header: '', class: 'w-32' }
 ]
 
@@ -402,11 +418,14 @@ const { getAuthHeader } = useAdminAuth()
       :current-page="currentPage"
       :items-per-page="itemsPerPage"
       :total-items="totalKeys"
+      :sort-by="sortBy"
+      :sort-order="sortOrder"
       clickable 
       @row-click="viewKeyDetail" 
       :empty-message="searchQuery || filterStatus ? 'No keys match your search criteria.' : 'No API keys found. Create your first key to get started.'"
       @update:current-page="currentPage = $event"
       @update:items-per-page="itemsPerPage = $event"
+      @update:sort="handleSort"
     >
       <template #empty-action>
         <!-- <UiButton @click="showCreateModal = true">
@@ -418,6 +437,12 @@ const { getAuthHeader } = useAdminAuth()
       </template>
       <template #userId="{ value }">
         <code class="px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-900/30 font-mono text-xs text-indigo-600 dark:text-indigo-400 font-semibold">{{ value }}</code>
+      </template>
+      
+      <template #name="{ row }">
+        <span class="text-sm text-[rgb(var(--text))] font-medium">
+          {{ users.find(u => u.userId === row.userId)?.name || row.name || 'N/A' }}
+        </span>
       </template>
       
       <template #apiKey="{ row }">

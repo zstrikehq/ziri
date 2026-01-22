@@ -116,6 +116,8 @@ export class AuditLogService {
     search?: string // Generic search across multiple fields
     limit?: number
     offset?: number
+    sortBy?: string | null
+    sortOrder?: 'asc' | 'desc' | null
   }): Promise<{ data: any[]; total: number }> {
     // Build WHERE clause for both count and data queries
     let whereClause = 'WHERE 1=1'
@@ -161,10 +163,31 @@ export class AuditLogService {
     const countResult = this.db.prepare(countSql).get(...args) as { total: number }
     const total = countResult.total
 
+    // Build ORDER BY clause
+    let orderByClause = 'ORDER BY request_timestamp DESC' // Default sort
+    if (params?.sortBy && params?.sortOrder) {
+      // Map frontend column names to database column names
+      // Frontend uses snake_case keys that match database columns
+      const columnMap: Record<string, string> = {
+        'request_timestamp': 'request_timestamp',
+        'auth_id': 'auth_id',
+        'provider': 'provider',
+        'model': 'model',
+        'decision': 'decision',
+        'auth_duration_ms': 'auth_duration_ms',
+        'request_id': 'request_id'
+      }
+      const dbColumn = columnMap[params.sortBy]
+      if (dbColumn) {
+        const order = params.sortOrder.toUpperCase()
+        orderByClause = `ORDER BY ${dbColumn} ${order}`
+      }
+    }
+
     // Get paginated data (use provided limit, or default to 100 if not specified)
     const limit = params.limit || 100
     const offset = params.offset || 0
-    const dataSql = `SELECT * FROM audit_logs ${whereClause} ORDER BY request_timestamp DESC LIMIT ? OFFSET ?`
+    const dataSql = `SELECT * FROM audit_logs ${whereClause} ${orderByClause} LIMIT ? OFFSET ?`
     const data = this.db.prepare(dataSql).all(...args, limit, offset) as any[]
 
     return { data, total }

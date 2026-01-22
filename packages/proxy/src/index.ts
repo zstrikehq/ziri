@@ -14,6 +14,14 @@ const masterKey = initializeMasterKey()
 // Initialize encryption key on startup (for data encryption)
 const encryptionKey = initializeEncryptionKey()
 
+// Initialize server session (for restart detection)
+import('./utils/server-session.js').then(({ initializeServerSession }) => {
+  const sessionId = initializeServerSession()
+  console.log(`[PROXY] Server session initialized: ${sessionId}`)
+}).catch((error) => {
+  console.warn('[PROXY] Failed to initialize server session:', error)
+})
+
 // Initialize database
 getDatabase()
 

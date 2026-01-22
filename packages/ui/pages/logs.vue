@@ -19,6 +19,10 @@ const dateRange = ref<'today' | '7d' | '30d' | 'all'>('7d')
 const currentPage = ref(1)
 const itemsPerPage = ref(10) // Default to 10 items per page
 
+// Sorting state
+const sortBy = ref<string | null>(null)
+const sortOrder = ref<'asc' | 'desc' | null>(null)
+
 // Loading state
 const isLoading = ref(true)
 const allLogs = ref<any[]>([])
@@ -62,17 +66,24 @@ const fetchLogs = async () => {
     if (!authHeader) return
 
     const dateRangeParams = getDateRange()
-    const params = new URLSearchParams({
-      limit: itemsPerPage.value.toString(),
-      offset: ((currentPage.value - 1) * itemsPerPage.value).toString(),
-      ...(filterDecision.value && { decision: filterDecision.value }),
-      ...(filterProvider.value && { provider: filterProvider.value }),
-      ...(filterModel.value && { model: filterModel.value }),
-      ...(dateRangeParams.startDate && { startDate: dateRangeParams.startDate }),
-      ...(dateRangeParams.endDate && { endDate: dateRangeParams.endDate }),
-      // Send search query to backend for server-side filtering
-      ...(searchQuery.value && { search: searchQuery.value }),
-    })
+    const params = new URLSearchParams()
+    params.set('limit', itemsPerPage.value.toString())
+    params.set('offset', ((currentPage.value - 1) * itemsPerPage.value).toString())
+    
+    if (filterDecision.value) params.set('decision', filterDecision.value)
+    if (filterProvider.value) params.set('provider', filterProvider.value)
+    if (filterModel.value) params.set('model', filterModel.value)
+    if (dateRangeParams.startDate) params.set('startDate', dateRangeParams.startDate)
+    if (dateRangeParams.endDate) params.set('endDate', dateRangeParams.endDate)
+    if (searchQuery.value) params.set('search', searchQuery.value)
+    
+    // Send sort parameters
+    if (sortBy.value) {
+      params.set('sortBy', sortBy.value)
+    }
+    if (sortOrder.value) {
+      params.set('sortOrder', sortOrder.value)
+    }
 
     const response = await fetch(`/api/audit?${params.toString()}`, {
       headers: {
@@ -92,8 +103,16 @@ const fetchLogs = async () => {
   }
 }
 
-// Watch for filter changes (including debounced search query)
-watch([filterDecision, filterProvider, filterModel, dateRange, currentPage, itemsPerPage, debouncedSearchQuery], () => {
+// Handle sort change
+const handleSort = (newSortBy: string | null, newSortOrder: 'asc' | 'desc' | null) => {
+  sortBy.value = newSortBy
+  sortOrder.value = newSortOrder
+  // Reset to first page when sorting changes
+  currentPage.value = 1
+}
+
+// Watch for filter changes (including debounced search query and sorting)
+watch([filterDecision, filterProvider, filterModel, dateRange, currentPage, itemsPerPage, debouncedSearchQuery, sortBy, sortOrder], () => {
   fetchLogs()
 })
 
@@ -142,12 +161,12 @@ const getStatusBadgeClass = (decision: string) => {
 }
 
 const columns = [
-  { key: 'request_timestamp', header: 'Time', class: 'w-40' },
-  { key: 'auth_id', header: 'User', class: 'w-32' },
-  { key: 'model', header: 'Model', class: 'w-36' },
-  { key: 'decision', header: 'Decision', class: 'w-24' },
-  { key: 'auth_duration_ms', header: 'Duration', class: 'w-28' },
-  { key: 'provider', header: 'Provider', class: 'w-24' },
+  { key: 'request_timestamp', header: 'Time', class: 'w-40', sortable: true },
+  { key: 'auth_id', header: 'User', class: 'w-32', sortable: true },
+  { key: 'model', header: 'Model', class: 'w-36', sortable: true },
+  { key: 'decision', header: 'Decision', class: 'w-24', sortable: true },
+  { key: 'auth_duration_ms', header: 'Duration', class: 'w-28', sortable: true },
+  { key: 'provider', header: 'Provider', class: 'w-24', sortable: true },
   { key: 'actions', header: '', class: 'w-20' }
 ]
 
@@ -214,13 +233,17 @@ onMounted(() => {
       v-else
       :columns="columns" 
       :data="allLogs" 
+      :loading="isLoading"
       :paginated="true"
       :current-page="currentPage"
       :items-per-page="itemsPerPage"
       :total-items="totalLogs !== undefined ? totalLogs : allLogs.length"
+      :sort-by="sortBy"
+      :sort-order="sortOrder"
       empty-message="No logs found"
       @update:current-page="currentPage = $event"
       @update:items-per-page="itemsPerPage = $event"
+      @update:sort="handleSort"
     >
       <template #request_timestamp="{ row }">
         <div class="text-sm">

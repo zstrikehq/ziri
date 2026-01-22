@@ -97,12 +97,14 @@ export function createOrUpdateProvider(input: CreateProviderInput): Provider {
 }
 
 /**
- * List all providers with optional search, limit, and offset
+ * List all providers with optional search, limit, offset, and sorting
  */
 export function listProviders(params?: {
   search?: string
   limit?: number
   offset?: number
+  sortBy?: string | null
+  sortOrder?: 'asc' | 'desc' | null
 }): { data: Provider[]; total: number } {
   const db = getDatabase()
   
@@ -118,6 +120,23 @@ export function listProviders(params?: {
     args.push(searchPattern)
   }
   
+  // Build ORDER BY clause
+  let orderByClause = 'ORDER BY created_at DESC' // Default sort
+  if (params?.sortBy && params?.sortOrder) {
+    // Map frontend column names to database column names
+    const columnMap: Record<string, string> = {
+      'name': 'provider',
+      'displayName': 'provider', // Will sort by provider name (displayName is in metadata)
+      'createdAt': 'created_at',
+      'updatedAt': 'updated_at'
+    }
+    const dbColumn = columnMap[params.sortBy]
+    if (dbColumn) {
+      const order = params.sortOrder.toUpperCase()
+      orderByClause = `ORDER BY ${dbColumn} ${order}`
+    }
+  }
+  
   // Get total count (before metadata filtering)
   const countSql = `SELECT COUNT(*) as total FROM provider_keys ${whereClause}`
   const countResult = db.prepare(countSql).get(...args) as { total: number }
@@ -126,7 +145,7 @@ export function listProviders(params?: {
   // Get paginated data
   const limit = params?.limit || 100
   const offset = params?.offset || 0
-  const dataSql = `SELECT * FROM provider_keys ${whereClause} ORDER BY created_at DESC LIMIT ? OFFSET ?`
+  const dataSql = `SELECT * FROM provider_keys ${whereClause} ${orderByClause} LIMIT ? OFFSET ?`
   const providers = db.prepare(dataSql).all(...args, limit, offset) as any[]
   
   // Map providers
@@ -148,6 +167,25 @@ export function listProviders(params?: {
       provider.displayName.toLowerCase().includes(searchLower) ||
       provider.baseUrl.toLowerCase().includes(searchLower)
     )
+    
+    // If sorting is applied, re-sort the filtered results
+    if (params?.sortBy && params?.sortOrder) {
+      const sortKey = params.sortBy as keyof Provider
+      mappedProviders.sort((a, b) => {
+        const aVal = a[sortKey]
+        const bVal = b[sortKey]
+        if (aVal === undefined || aVal === null) return 1
+        if (bVal === undefined || bVal === null) return -1
+        // Handle string comparison
+        if (typeof aVal === 'string' && typeof bVal === 'string') {
+          const comparison = aVal.toLowerCase().localeCompare(bVal.toLowerCase())
+          return params.sortOrder === 'asc' ? comparison : -comparison
+        }
+        const comparison = aVal < bVal ? -1 : aVal > bVal ? 1 : 0
+        return params.sortOrder === 'asc' ? comparison : -comparison
+      })
+    }
+    
     return { data: mappedProviders, total: filtered.length }
   }
   

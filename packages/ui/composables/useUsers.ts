@@ -38,6 +38,8 @@ export function useUsers() {
     search?: string
     limit?: number
     offset?: number
+    sortBy?: string | null
+    sortOrder?: 'asc' | 'desc' | null
   }) => {
     loading.value = true
     try {
@@ -51,6 +53,8 @@ export function useUsers() {
       if (params?.search) queryParams.set('search', params.search)
       if (params?.limit) queryParams.set('limit', params.limit.toString())
       if (params?.offset) queryParams.set('offset', params.offset.toString())
+      if (params?.sortBy) queryParams.set('sortBy', params.sortBy)
+      if (params?.sortOrder) queryParams.set('sortOrder', params.sortOrder)
       
       const url = `/api/users${queryParams.toString() ? '?' + queryParams.toString() : ''}`
       

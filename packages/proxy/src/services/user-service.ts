@@ -210,12 +210,14 @@ export async function createUser(input: CreateUserInput): Promise<{ user: User; 
 }
 
 /**
- * List all users with optional search, limit, and offset
+ * List all users with optional search, limit, offset, and sorting
  */
 export function listUsers(params?: {
   search?: string
   limit?: number
   offset?: number
+  sortBy?: string | null
+  sortOrder?: 'asc' | 'desc' | null
 }): { data: User[]; total: number } {
   const db = getDatabase()
   
@@ -231,6 +233,27 @@ export function listUsers(params?: {
     args.push(searchPattern, searchPattern)
   }
   
+  // Build ORDER BY clause
+  let orderByClause = 'ORDER BY created_at DESC' // Default sort
+  if (params?.sortBy && params?.sortOrder) {
+    // Map frontend column names to database column names
+    const columnMap: Record<string, string> = {
+      'name': 'name',
+      'email': 'email', // Note: This will sort by encrypted email (not ideal but works)
+      'userId': 'id',
+      'department': 'dept',
+      'createdAt': 'created_at',
+      'updatedAt': 'updated_at',
+      'lastSignIn': 'last_sign_in',
+      'status': 'status'
+    }
+    const dbColumn = columnMap[params.sortBy]
+    if (dbColumn) {
+      const order = params.sortOrder.toUpperCase()
+      orderByClause = `ORDER BY ${dbColumn} ${order}`
+    }
+  }
+  
   // Get total count
   const countSql = `SELECT COUNT(*) as total FROM auth ${whereClause}`
   const countResult = db.prepare(countSql).get(...args) as { total: number }
@@ -239,7 +262,7 @@ export function listUsers(params?: {
   // Get paginated data
   const limit = params?.limit || 100
   const offset = params?.offset || 0
-  const dataSql = `SELECT * FROM auth ${whereClause} ORDER BY created_at DESC LIMIT ? OFFSET ?`
+  const dataSql = `SELECT * FROM auth ${whereClause} ${orderByClause} LIMIT ? OFFSET ?`
   const users = db.prepare(dataSql).all(...args, limit, offset) as any[]
   
   // Map and filter by search if needed (for email search since it's encrypted)
@@ -262,6 +285,20 @@ export function listUsers(params?: {
       user.email.toLowerCase().includes(searchLower) ||
       user.userId.toLowerCase().includes(searchLower)
     )
+    
+    // If sorting is applied, re-sort the filtered results
+    if (params?.sortBy && params?.sortOrder) {
+      const sortKey = params.sortBy as keyof User
+      mappedUsers.sort((a, b) => {
+        const aVal = a[sortKey]
+        const bVal = b[sortKey]
+        if (aVal === undefined || aVal === null) return 1
+        if (bVal === undefined || bVal === null) return -1
+        const comparison = aVal < bVal ? -1 : aVal > bVal ? 1 : 0
+        return params.sortOrder === 'asc' ? comparison : -comparison
+      })
+    }
+    
     return { data: mappedUsers, total: filtered.length }
   }
   
