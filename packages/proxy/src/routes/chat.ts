@@ -10,6 +10,7 @@ import * as llmService from '../services/llm-service.js'
 import { getDatabase } from '../db/index.js'
 import { auditLogService } from '../services/audit-log-service.js'
 import { costTrackingService } from '../services/cost-tracking-service.js'
+import { costEstimatorService } from '../services/cost-estimator-service.js'
 import { spendResetService } from '../services/spend-reset-service.js'
 import { rateLimiterService } from '../services/rate-limiter-service.js'
 import { queueManagerService } from '../services/queue-manager-service.js'
@@ -200,7 +201,28 @@ router.post('/completions', async (req: Request, res: Response) => {
       return
     }
     
-    // 3.3. ACQUIRE QUEUE SLOT (will queue if at capacity)
+    // 3.3. ESTIMATE COST (before queueing)
+    let costEstimate
+    try {
+      costEstimate = await costEstimatorService.estimateCost(
+        provider,
+        model,
+        messages,
+        req.body.max_tokens
+      )
+      console.log(`[CHAT] Cost estimate: $${costEstimate.estimatedCost.toFixed(4)} (input: ${costEstimate.estimatedInputTokens}, output: ${costEstimate.estimatedOutputTokens}, confidence: ${costEstimate.confidence})`)
+    } catch (error: any) {
+      console.error(`[CHAT] Cost estimation failed:`, error)
+      // Continue without estimation if it fails (non-critical)
+      costEstimate = {
+        estimatedInputTokens: 0,
+        estimatedOutputTokens: 0,
+        estimatedCost: 0,
+        confidence: 'low' as const
+      }
+    }
+    
+    // 3.4. ACQUIRE QUEUE SLOT (will queue if at capacity)
     try {
       await queueManagerService.acquireSlot(
         userKeyId,
@@ -213,7 +235,7 @@ router.post('/completions', async (req: Request, res: Response) => {
           provider,
           model,
           requestBody: req.body,
-          estimatedCost: 0, // Cost estimation deferred
+          estimatedCost: costEstimate.estimatedCost,
         }
       )
     } catch (error: any) {
@@ -230,11 +252,138 @@ router.post('/completions', async (req: Request, res: Response) => {
     // Ensure slot is released on error
     slotAcquired = true
     
-      // 4. CHECK SPEND RESET (BEFORE Cedar auth)
+    // 4. CHECK SPEND RESET (BEFORE Cedar auth)
     const spendResetResult = await spendResetService.checkAndResetSpend(userKeyEntity as any)
     const activeEntity = spendResetResult.updatedEntity || userKeyEntity
     
-    // 5. Build Cedar authorization context (with updated spend values)
+    // 4.5. RESERVE ESTIMATED COST (temporarily inflate spend in database for authorization check)
+    // This prevents users from exceeding limits by making concurrent requests
+    // Uses FULL PRECISION values (like SpendUpdateService) - only rounds when storing to entity
+    const { toDecimalFour } = await import('../utils/cedar.js')
+    
+    // Get current spend with FULL PRECISION from cost_tracking table (not from entity)
+    // This matches the approach in SpendUpdateService to avoid rounding errors
+    const userEntityId = (activeEntity.attrs as any).user?.__entity?.id
+    if (!userEntityId) {
+      throw new Error(`UserKey entity missing user reference: ${userKeyId}`)
+    }
+    
+    // Declare variables outside if/else for later use
+    let reservedDailySpend: number
+    let reservedMonthlySpend: number
+    let currentDailySpendFullPrecision: number
+    let currentMonthlySpendFullPrecision: number
+    
+    // Get all execution keys for this user
+    const executionKeys = db.prepare(`
+      SELECT id FROM user_agent_keys WHERE auth_id = ?
+    `).all(userEntityId) as { id: string }[]
+    
+    const executionKeyIds = executionKeys.map(k => k.id)
+    
+    if (executionKeyIds.length === 0) {
+      console.warn(`[CHAT] No execution keys found for user ${userEntityId}, using entity values`)
+      // Fallback to entity values if no execution keys
+      const parseDecimal = (value: any): number => {
+        if (!value) return 0
+        if (typeof value === 'string') return parseFloat(value) || 0
+        if (value.__extn && value.__extn.arg) return parseFloat(value.__extn.arg) || 0
+        return 0
+      }
+      currentDailySpendFullPrecision = parseDecimal(activeEntity.attrs.current_daily_spend)
+      currentMonthlySpendFullPrecision = parseDecimal(activeEntity.attrs.current_monthly_spend)
+      reservedDailySpend = currentDailySpendFullPrecision + costEstimate.estimatedCost
+      reservedMonthlySpend = currentMonthlySpendFullPrecision + costEstimate.estimatedCost
+      
+      console.log(`[CHAT] Cost reservation (fallback): estimated=$${costEstimate.estimatedCost}, daily: $${currentDailySpendFullPrecision} → $${reservedDailySpend}, monthly: $${currentMonthlySpendFullPrecision} → $${reservedMonthlySpend}`)
+    } else {
+      // Get last reset times from entity
+      const lastDailyResetStr = activeEntity.attrs.last_daily_reset
+      const lastMonthlyResetStr = activeEntity.attrs.last_monthly_reset
+      
+      // Calculate daily spend period
+      const now = new Date()
+      let dailyStartISO: string
+      if (lastDailyResetStr) {
+        const lastDailyReset = new Date(lastDailyResetStr)
+        const resetDate = new Date(Date.UTC(
+          lastDailyReset.getUTCFullYear(),
+          lastDailyReset.getUTCMonth(),
+          lastDailyReset.getUTCDate()
+        ))
+        dailyStartISO = resetDate.toISOString()
+      } else {
+        const todayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()))
+        dailyStartISO = todayStart.toISOString()
+      }
+      
+      // Calculate monthly spend period
+      let monthlyStartISO: string
+      if (lastMonthlyResetStr) {
+        const lastMonthlyReset = new Date(lastMonthlyResetStr)
+        const resetMonth = new Date(Date.UTC(
+          lastMonthlyReset.getUTCFullYear(),
+          lastMonthlyReset.getUTCMonth(),
+          1
+        ))
+        monthlyStartISO = resetMonth.toISOString()
+      } else {
+        const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1))
+        monthlyStartISO = monthStart.toISOString()
+      }
+      
+      // Get current spend with FULL PRECISION from cost_tracking table
+      const placeholders = executionKeyIds.map(() => '?').join(',')
+      
+      const dailySpendResult = db.prepare(`
+        SELECT COALESCE(SUM(total_cost), 0) as total
+        FROM cost_tracking
+        WHERE execution_key IN (${placeholders})
+          AND request_timestamp >= ?
+          AND status = 'completed'
+      `).get(...executionKeyIds, dailyStartISO) as { total: number }
+      
+      const monthlySpendResult = db.prepare(`
+        SELECT COALESCE(SUM(total_cost), 0) as total
+        FROM cost_tracking
+        WHERE execution_key IN (${placeholders})
+          AND request_timestamp >= ?
+          AND status = 'completed'
+      `).get(...executionKeyIds, monthlyStartISO) as { total: number }
+      
+      // Full precision values (no rounding yet)
+      currentDailySpendFullPrecision = dailySpendResult.total || 0
+      currentMonthlySpendFullPrecision = monthlySpendResult.total || 0
+      
+      // Calculate reserved spend with FULL PRECISION
+      reservedDailySpend = currentDailySpendFullPrecision + costEstimate.estimatedCost
+      reservedMonthlySpend = currentMonthlySpendFullPrecision + costEstimate.estimatedCost
+      
+      console.log(`[CHAT] Cost reservation (full precision): estimated=$${costEstimate.estimatedCost}, daily: $${currentDailySpendFullPrecision} → $${reservedDailySpend}, monthly: $${currentMonthlySpendFullPrecision} → $${reservedMonthlySpend}`)
+    }
+    
+    // Temporarily update entity in database with reserved cost (authorization will read from DB)
+    const entityWithReservation = {
+      ...activeEntity,
+      attrs: {
+        ...activeEntity.attrs,
+        current_daily_spend: toDecimalFour(reservedDailySpend),
+        current_monthly_spend: toDecimalFour(reservedMonthlySpend),
+      }
+    }
+    
+    // Update entity in database temporarily (reuse existing db variable)
+    const updateStmt = db.prepare(`
+      UPDATE entities 
+      SET ejson = ?, updated_at = datetime('now')
+      WHERE etype = 'UserKey' AND eid = ?
+    `)
+    updateStmt.run(JSON.stringify(entityWithReservation), userKeyId)
+    
+    // Store original values for potential rollback (full precision)
+    let costReserved = true
+    
+    // 5. Build Cedar authorization context (authorization will read entity with RESERVED spend from DB)
     const principal = `UserKey::"${userKeyId}"`
     const action = 'Action::"completion"'
     const resource = `Resource::"${model}"`
@@ -347,6 +496,7 @@ router.post('/completions', async (req: Request, res: Response) => {
     const usage = extractUsage(llmResponse, provider)
     
     // 11. TRACK COST (calculates cost, saves entry, updates UserKey spend)
+    // Note: This will replace the reserved cost with actual cost
     const costTrackingId = await costTrackingService.trackCost({
       requestId,
       executionKey: apiKeyId,
@@ -390,10 +540,17 @@ router.post('/completions', async (req: Request, res: Response) => {
       _meta: {
         requestId,
         cost: {
+          estimated: costEstimate?.estimatedCost || 0,
+          actual: costCalc.totalCost,
           inputTokens: usage.inputTokens,
           outputTokens: usage.outputTokens,
           cachedTokens: usage.cachedTokens,
           totalCost: costCalc.totalCost,
+          estimation: costEstimate ? {
+            estimatedInputTokens: costEstimate.estimatedInputTokens,
+            estimatedOutputTokens: costEstimate.estimatedOutputTokens,
+            confidence: costEstimate.confidence,
+          } : undefined,
         },
         timing: {
           totalMs: Date.now() - requestStartTime,

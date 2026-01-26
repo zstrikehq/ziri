@@ -77,7 +77,7 @@ export class CostEstimatorService {
     return {
       estimatedInputTokens,
       estimatedOutputTokens,
-      estimatedCost: Math.round(estimatedCost * 10000) / 10000, // 4 decimal places
+      estimatedCost, // Full precision - will be rounded only when storing to entity
       confidence,
     }
   }
