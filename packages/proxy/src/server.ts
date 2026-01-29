@@ -91,9 +91,11 @@ export async function createServer(): Promise<Express> {
 
   const possibleUiPaths = [
     path.resolve(__dirname, '../ui'),
+    path.resolve(__dirname, './ui'),
     path.resolve(__dirname, '../../ui/.output/public'),
     path.resolve(__dirname, '../../../packages/ui/.output/public'),
     path.resolve(process.cwd(), 'packages/ui/.output/public'),
+    path.resolve(process.cwd(), 'dist/ui'),
   ]
   
   let uiPath: string | null = null
@@ -130,7 +132,6 @@ let initialized = false
 function ensureInitialization() {
   if (initialized) return
   
-  initializeMasterKey()
   initializeEncryptionKey()
   getDatabase()
   serviceFactory.initialize()
@@ -147,14 +148,6 @@ function ensureInitialization() {
       console.warn('[PROXY] Failed to load seed defaults:', error)
     })
   }
-  
-  import('./db/index.js').then(({ initializeAdminUser }) => {
-    initializeAdminUser().catch((error: any) => {
-      console.warn('[PROXY] Failed to initialize admin user:', error)
-    })
-  }).catch((error) => {
-    console.warn('[PROXY] Failed to load admin user initialization:', error)
-  })
   
   initialized = true
 }
@@ -182,7 +175,7 @@ export async function startServer(): Promise<{ port: number; url: string }> {
       return new Promise((resolve, reject) => {
         server = app.listen(port, host, () => {
           console.log('='.repeat(70))
-          console.log('🚀 ZS AI GATEWAY PROXY SERVER')
+                console.log('🚀 ZIRI PROXY SERVER')
           console.log('='.repeat(70))
           console.log(`Mode: ${serverConfig.mode || 'local'}`)
           console.log(`Local URL: ${localUrl}`)
@@ -216,7 +209,7 @@ export async function startServer(): Promise<{ port: number; url: string }> {
               const retryConfig = loadConfig()
               server = app.listen(newPort, host, () => {
                 console.log('='.repeat(70))
-                console.log('🚀 ZS AI GATEWAY PROXY SERVER')
+                console.log('🚀 ZIRI PROXY SERVER')
                 console.log('='.repeat(70))
                 console.log(`Mode: ${retryConfig.mode || 'local'}`)
                 console.log(`Local URL: ${newLocalUrl}`)

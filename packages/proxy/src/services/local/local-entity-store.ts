@@ -13,7 +13,8 @@ export class LocalEntityStore implements IEntityStore {
   }): Promise<{ data: Entity[]; total: number }> {
     const db = getDatabase()
     
-    let whereClause = 'WHERE 1=1'
+    // Only return active entities (status = 1), exclude soft-deleted ones (status = 0)
+    let whereClause = 'WHERE status = 1'
     const args: any[] = []
     
     if (uid) {

@@ -25,11 +25,11 @@ export default defineNuxtConfig({
 
   app: {
     head: {
-      title: 'ZS AI Gateway',
+      title: 'ZIRI',
       meta: [
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-        { name: 'description', content: 'ZS AI Gateway Management Interface with Cedar Authorization' }
+        { name: 'description', content: 'ZIRI Management Interface with Cedar Authorization' }
       ],
       link: [
         { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }

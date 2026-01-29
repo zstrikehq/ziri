@@ -168,7 +168,7 @@ const useTemplate = async (template: PolicyTemplate) => {
   
   isOpeningFromTemplate.value = true
   newRule.policy = template.policy
-  newRule.description = template.description
+  newRule.description = template.title
   newRule.isActive = true
   validationErrors.value = []
   validationWarnings.value = []
@@ -512,7 +512,7 @@ const handleDeleteRule = async () => {
       
       <template #description="{ row }">
         <div>
-          <p class="text-[rgb(var(--text))] font-medium">{{ row.description }}</p>
+          <p class="text-[rgb(var(--text))] font-medium truncate max-w-md">{{ row.description }}</p>
           <p class="text-[rgb(var(--text-muted))] text-xs font-mono mt-1 truncate max-w-lg">
             {{ row.policy.substring(0, 70) }}...
           </p>

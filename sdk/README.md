@@ -1,28 +1,28 @@
-# @zs-ai/sdk
+# @ziri/sdk
 
-**ZS AI Gateway User SDK** - Lightweight client library for end users to make authorized LLM calls through the gateway.
+**ZIRI User SDK** - Lightweight client library for end users to make authorized LLM calls through the gateway.
 
 ## ✨ Features
 
 - **Zero Dependencies** - No external dependencies, minimal bundle size
 - **TypeScript Support** - Full TypeScript types included
 - **Simple API** - Easy-to-use interface for making LLM requests
-- **Environment Variable Support** - Configure via `ZS_AI_PROXY_URL` env var
+- **Environment Variable Support** - Configure via `ZIRI_PROXY_URL` env var
 
 ## 📦 Installation
 
 ```bash
-npm install @zs-ai/sdk
+npm install @ziri/sdk
 ```
 
 ## 🚀 Quick Start
 
 ```javascript
-import { UserSDK } from '@zs-ai/sdk'
+import { UserSDK } from '@ziri/sdk'
 
 const sdk = new UserSDK({
   apiKey: 'sk-zs-your-api-key-here',
-  proxyUrl: 'http://localhost:3100' // Optional, defaults to process.env.ZS_AI_PROXY_URL || 'http://localhost:3100'
+  proxyUrl: 'http://localhost:3100' // Optional, defaults to process.env.ZIRI_PROXY_URL || 'http://localhost:3100'
 })
 
 const response = await sdk.chatCompletions({
@@ -90,7 +90,7 @@ const response = await sdk.chatCompletions({
 ### Basic Usage
 
 ```javascript
-import { UserSDK } from '@zs-ai/sdk'
+import { UserSDK } from '@ziri/sdk'
 
 const sdk = new UserSDK({
   apiKey: process.env.ZS_AI_API_KEY,

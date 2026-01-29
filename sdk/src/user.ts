@@ -11,7 +11,7 @@ export class UserSDK {
     let finalConfig = { ...config }
     
     if (!finalConfig.proxyUrl) {
-      finalConfig.proxyUrl = process.env.ZS_AI_PROXY_URL || 'http://localhost:3100'
+      finalConfig.proxyUrl = process.env.ZIRI_PROXY_URL || 'http://localhost:3100'
     }
     
  
@@ -20,7 +20,7 @@ export class UserSDK {
     }
     
     if (!finalConfig.proxyUrl) {
-      throw new Error('proxyUrl is required. Provide in config or set ZS_AI_PROXY_URL env var')
+      throw new Error('proxyUrl is required. Provide in config or set ZIRI_PROXY_URL env var')
     }
     
  

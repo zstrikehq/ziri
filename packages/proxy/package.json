@@ -1,12 +1,12 @@
 {
-  "name": "@zs-ai/proxy",
+  "name": "@ziri/proxy",
   "version": "1.0.0",
-  "description": "ZS AI Gateway Proxy Server - Local server with SQLite database",
+  "description": "ZIRI Proxy Server - Local server with SQLite database",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
-    "zs-ai": "./dist/cli/cli.js"
+    "ziri": "./dist/cli/cli.js"
   },
   "scripts": {
     "build": "npm run build:ui && npm run build:proxy",

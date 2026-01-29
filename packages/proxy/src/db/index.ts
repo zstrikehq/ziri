@@ -8,6 +8,7 @@ const CONFIG_DIR = getConfigDir()
 const DB_PATH = join(CONFIG_DIR, 'proxy.db')
 
 let db: Database.Database | null = null
+let schemaInitPromise: Promise<void> | null = null
 
 export function getDatabase(): Database.Database {
   if (db) {
@@ -22,14 +23,24 @@ export function getDatabase(): Database.Database {
 
   db.pragma('foreign_keys = ON')
 
-  initializeSchema(db).catch((error) => {
+  schemaInitPromise = initializeSchema(db).catch((error) => {
     console.error('[DB] ❌ Schema initialization failed:', error.message)
     console.error('[DB] Stack:', error.stack)
+    throw error
   })
 
   console.log(`[DB] Database initialized at: ${DB_PATH}`)
 
   return db
+}
+
+export async function ensureSchemaInitialized(): Promise<void> {
+  if (!schemaInitPromise) {
+    getDatabase()
+  }
+  if (schemaInitPromise) {
+    await schemaInitPromise
+  }
 }
 
 async function initializeSchema(database: Database.Database): Promise<void> {
@@ -126,7 +137,7 @@ export async function initializeAdminUser(): Promise<void> {
     return
   }
   
-  const adminEmail = 'admin@zs-ai.local'
+  const adminEmail = 'admin@ziri.local'
   const adminId = 'admin'
   const masterKeyHash = await hashPassword(masterKey)
   

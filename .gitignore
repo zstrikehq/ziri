@@ -85,3 +85,6 @@ RATE_LIMITING_QUEUEING_PLAN.md
 
 # Cursor rules
 .cursor/rules/
+
+# Docs
+docs/.vitepress/cache/

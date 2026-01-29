@@ -135,17 +135,17 @@ export function generateUserCredentialsEmail(data: {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Your ZS AI Gateway Credentials</title>
+  <title>Your ZIRI Credentials</title>
 </head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
   <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
-    <h1 style="color: white; margin: 0; font-size: 24px;">ZS AI Gateway</h1>
+    <h1 style="color: white; margin: 0; font-size: 24px;">ZIRI</h1>
   </div>
   
   <div style="background: #f9fafb; padding: 30px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px;">
     <h2 style="color: #1f2937; margin-top: 0;">Welcome, ${data.name}!</h2>
     
-    <p>Your ZS AI Gateway account has been created. Here are your credentials:</p>
+    <p>Your ZIRI account has been created. Here are your credentials:</p>
     
     <div style="background: white; border: 2px solid #e5e7eb; border-radius: 6px; padding: 20px; margin: 20px 0;">
       <div style="margin-bottom: 15px;">
@@ -174,7 +174,7 @@ export function generateUserCredentialsEmail(data: {
     <p>To use the gateway, you'll need to:</p>
     
     <ol style="padding-left: 20px;">
-      <li style="margin-bottom: 10px;">Install the SDK: <code style="background: #f3f4f6; padding: 2px 6px; border-radius: 3px; font-size: 12px;">npm install @zs-ai/sdk</code></li>
+      <li style="margin-bottom: 10px;">Install the SDK: <code style="background: #f3f4f6; padding: 2px 6px; border-radius: 3px; font-size: 12px;">npm install @ziri/sdk</code></li>
       <li style="margin-bottom: 10px;">Authenticate with your User ID and password to get an access token</li>
       <li style="margin-bottom: 10px;">Create an API key through the admin interface</li>
       <li style="margin-bottom: 10px;">Use your API key and access token to make LLM requests</li>
@@ -182,9 +182,9 @@ export function generateUserCredentialsEmail(data: {
     
     <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 15px; margin: 20px 0;">
       <strong style="color: #1e40af; display: block; margin-bottom: 5px;">Example SDK Usage</strong>
-      <pre style="background: #1f2937; color: #f9fafb; padding: 15px; border-radius: 4px; overflow-x: auto; font-size: 12px; margin: 10px 0 0 0;"><code>import { ZsAiClient } from '@zs-ai/sdk'
+      <pre style="background: #1f2937; color: #f9fafb; padding: 15px; border-radius: 4px; overflow-x: auto; font-size: 12px; margin: 10px 0 0 0;"><code>import { UserSDK } from '@ziri/sdk'
 
-const client = new ZsAiClient({
+const client = new UserSDK({
   gatewayUrl: '${data.gatewayUrl}',
   userId: '${data.userId}',
   password: '${data.password}'
@@ -212,11 +212,11 @@ const response = await client.chat.completions({
   `.trim()
   
   const text = `
-ZS AI Gateway - Your Credentials
+ZIRI - Your Credentials
 
 Welcome, ${data.name}!
 
-Your ZS AI Gateway account has been created. Here are your credentials:
+Your ZIRI account has been created. Here are your credentials:
 
 User ID: ${data.userId}
 Password: ${data.password}
@@ -226,16 +226,16 @@ Gateway URL: ${data.gatewayUrl}
 
 Getting Started:
 
-1. Install the SDK: npm install @zs-ai/sdk
+1. Install the SDK: npm install @ziri/sdk
 2. Authenticate with your User ID and password to get an access token
 3. Create an API key through the admin interface
 4. Use your API key and access token to make LLM requests
 
 Example SDK Usage:
 
-import { ZsAiClient } from '@zs-ai/sdk'
+import { UserSDK } from '@ziri/sdk'
 
-const client = new ZsAiClient({
+const client = new UserSDK({
   gatewayUrl: '${data.gatewayUrl}',
   userId: '${data.userId}',
   password: '${data.password}'
@@ -282,7 +282,7 @@ export function generatePasswordResetEmail(data: {
   <div style="background: #f9fafb; padding: 30px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px;">
     <h2 style="color: #1f2937; margin-top: 0;">Hello, ${data.name}!</h2>
     
-    <p>Your ZS AI Gateway password has been reset. Here are your new credentials:</p>
+    <p>Your ZIRI password has been reset. Here are your new credentials:</p>
     
     <div style="background: white; border: 2px solid #e5e7eb; border-radius: 6px; padding: 20px; margin: 20px 0;">
       <div style="margin-bottom: 15px;">
@@ -315,11 +315,11 @@ export function generatePasswordResetEmail(data: {
   `.trim()
   
   const text = `
-Password Reset - ZS AI Gateway
+Password Reset - ZIRI
 
 Hello, ${data.name}!
 
-Your ZS AI Gateway password has been reset. Here are your new credentials:
+Your ZIRI password has been reset. Here are your new credentials:
 
 User ID: ${data.userId}
 New Password: ${data.password}

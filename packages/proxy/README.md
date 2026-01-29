@@ -1,6 +1,6 @@
-# @zs-ai/proxy
+# @ziri/proxy
 
-**ZS AI Gateway Proxy Server** - Complete admin package with proxy server, CLI, UI, and all management tools bundled together.
+**ZIRI Proxy Server** - Complete admin package with proxy server, CLI, UI, and all management tools bundled together.
 
 ## ✨ Features
 
@@ -13,30 +13,30 @@
 ## 📦 Installation
 
 ```bash
-npm install @zs-ai/proxy
+npm install @ziri/proxy
 ```
 
 ## 🚀 Quick Start
 
 ### Using the CLI
 
-After installation, the `zs-ai` CLI is available:
+After installation, the `ziri` CLI is available:
 
 ```bash
 # Start the server
-zs-ai start
+ziri start
 
 # Start on custom port
-zs-ai start --port 3100 --host localhost
+ziri start --port 3100 --host localhost
 
 # View help
-zs-ai --help
+ziri --help
 ```
 
 ### Programmatic Usage
 
 ```javascript
-import { startServer } from '@zs-ai/proxy'
+import { startServer } from '@ziri/proxy'
 
 const { port, url } = await startServer()
 console.log(`Server running at ${url}`)
@@ -49,7 +49,7 @@ console.log(`Server running at ${url}`)
 Start the proxy server with bundled UI.
 
 ```bash
-zs-ai start [options]
+ziri start [options]
 
 Options:
   -p, --port <port>    Port to run on (default: 3100, auto-finds free port if in use)
@@ -58,9 +58,9 @@ Options:
 
 **Examples:**
 ```bash
-zs-ai start
-zs-ai start --port 3100
-zs-ai start --port 3100 --host 0.0.0.0
+ziri start
+ziri start --port 3100
+ziri start --port 3100 --host 0.0.0.0
 ```
 
 ### `config`
@@ -73,12 +73,12 @@ On first run, the server will:
 
 1. **Generate a master key** - Displayed in console, save this for admin login
 2. **Initialize database** - Created at:
-   - **Windows**: `%APPDATA%\zs-ai\proxy.db`
-   - **macOS/Linux**: `~/.zs-ai/proxy.db`
+   - **Windows**: `%APPDATA%\ziri\proxy.db`
+   - **macOS/Linux**: `~/.ziri/proxy.db`
 3. **Create admin user**:
    - **User ID**: `admin`
    - **Password**: Same as master key
-   - **Email**: `admin@zs-ai.local`
+   - **Email**: `admin@ziri.local`
 
 ## 🌐 Access Points
 
@@ -91,7 +91,7 @@ Once started, the server provides:
 ## 📁 Package Structure
 
 ```
-@zs-ai/proxy/
+@ziri/proxy/
 ├── dist/
 │   ├── cli/
 │   │   └── cli.js          # CLI executable
@@ -112,8 +112,8 @@ Once started, the server provides:
 ## 🔧 Configuration
 
 Configuration is stored at:
-- **Windows**: `%APPDATA%\zs-ai\config.json`
-- **macOS/Linux**: `~/.zs-ai/config.json`
+- **Windows**: `%APPDATA%\ziri\config.json`
+- **macOS/Linux**: `~/.ziri/config.json`
 
 Default configuration:
 ```json
@@ -162,10 +162,10 @@ npm start
 This package bundles:
 
 - ✅ **Proxy Server** - Express server with API routes
-- ✅ **CLI Tool** - `zs-ai` command-line interface
+- ✅ **CLI Tool** - `ziri` command-line interface
 - ✅ **Management UI** - Nuxt-based web interface (bundled as static assets)
-- ✅ **Config Module** - Configuration management (`@zs-ai/config`)
-- ✅ **Auth Plugin** - Authentication provider (`@zs-ai/auth-plugin`)
+- ✅ **Config Module** - Configuration management (`@ziri/config`)
+- ✅ **Auth Plugin** - Authentication provider (`@ziri/auth-plugin`)
 
 ## 🔐 Security
 
@@ -197,8 +197,8 @@ The server automatically finds the next available port if the configured port is
 ### Database Issues
 
 Delete the database file and restart - it will be recreated:
-- **Windows**: `%APPDATA%\zs-ai\proxy.db`
-- **macOS/Linux**: `~/.zs-ai/proxy.db`
+- **Windows**: `%APPDATA%\ziri\proxy.db`
+- **macOS/Linux**: `~/.ziri/proxy.db`
 
 ## 📄 License
 

@@ -51,9 +51,11 @@ import('./db/index.js').then(({ initializeAdminUser }) => {
 
  
 if (config.mode === 'local') {
-  seedDefaults().catch((error) => {
+  import('./db/index.js').then(async ({ ensureSchemaInitialized }) => {
+    await ensureSchemaInitialized()
+    return seedDefaults()
+  }).catch((error) => {
     console.warn('[PROXY] Failed to seed default data:', error)
- 
   })
 }
 

@@ -21,7 +21,7 @@ export function generateMasterKey(): string {
  
 export function getMasterKey(): string | null {
  
-  const envKey = process.env.ZS_AI_MASTER_KEY
+  const envKey = process.env.ZIRI_MASTER_KEY || process.env.ZS_AI_MASTER_KEY
   if (envKey) {
     return envKey
   }
@@ -44,11 +44,14 @@ export function saveMasterKey(key: string): void {
 
  
 export function initializeMasterKey(): string {
+  if (currentMasterKey) {
+    return currentMasterKey
+  }
  
-  const envKey = process.env.ZS_AI_MASTER_KEY
+  const envKey = process.env.ZIRI_MASTER_KEY || process.env.ZS_AI_MASTER_KEY
   if (envKey) {
     currentMasterKey = envKey
-    console.log('[MASTER KEY] Using master key from ZS_AI_MASTER_KEY environment variable')
+    console.log('[MASTER KEY] Using master key from ZIRI_MASTER_KEY environment variable')
     return envKey
   }
 
@@ -63,9 +66,9 @@ export function initializeMasterKey(): string {
   console.log('')
   console.log('⚠️  This master key is valid for this session only.')
   console.log('⚠️  Admin can login with:')
-  console.log('    - Username: admin or admin@zs-ai.local')
+  console.log('    - Username: admin or admin@ziri.local')
   console.log('    - Password: (the master key shown above)')
-  console.log('⚠️  Or set ZS_AI_MASTER_KEY env var for persistent key.')
+  console.log('⚠️  Or set ZIRI_MASTER_KEY env var for persistent key.')
   console.log('='.repeat(70))
   console.log('')
   

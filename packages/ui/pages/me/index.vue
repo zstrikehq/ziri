@@ -99,12 +99,12 @@
               <span class="font-semibold text-[rgb(var(--text))]">Current: {{ formatCurrency(usage.currentDailySpend) }}</span>
               <span class="text-[rgb(var(--text-muted))]">Reset: {{ formatDate(usage.lastDailyReset) }}</span>
             </div>
-            <div class="progress-bar h-3">
+            <!-- <div class="progress-bar h-3">
               <div 
                 class="progress-bar-fill bg-gradient-to-r from-indigo-500 to-purple-500" 
                 :style="{ width: `${Math.min(100, (usage.currentDailySpend / 100) * 100)}%` }"
               />
-            </div>
+            </div> -->
           </div>
         </div>
         
@@ -120,12 +120,12 @@
               <span class="font-semibold text-[rgb(var(--text))]">Current: {{ formatCurrency(usage.currentMonthlySpend) }}</span>
               <span class="text-[rgb(var(--text-muted))]">Reset: {{ formatDate(usage.lastMonthlyReset) }}</span>
             </div>
-            <div class="progress-bar h-3">
+            <!-- <div class="progress-bar h-3">
               <div 
                 class="progress-bar-fill bg-gradient-to-r from-green-500 to-emerald-500" 
                 :style="{ width: `${Math.min(100, (usage.currentMonthlySpend / 1000) * 100)}%` }"
               />
-            </div>
+            </div> -->
           </div>
         </div>
 
@@ -163,7 +163,7 @@
         </div>
       </div>
     </div>
-  </div>
+   </div>
 </template>
 
 <script setup lang="ts">
@@ -242,29 +242,50 @@ const loadProfile = async () => {
     }
 
  
-    const keysResponse = await fetch('/api/me/keys', {
-      headers: {
-        'Authorization': authHeader
-      }
-    })
+    // Fetch API key and usage statistics in parallel
+    const [keysResponse, usageResponse] = await Promise.all([
+      fetch('/api/me/keys', {
+        headers: {
+          'Authorization': authHeader
+        }
+      }),
+      fetch('/api/me/usage', {
+        headers: {
+          'Authorization': authHeader
+        }
+      })
+    ])
 
     if (keysResponse.ok) {
       const keysData = await keysResponse.json()
- 
       if (keysData.data && keysData.data.length > 0) {
         const keyEntity = keysData.data[0]
         apiKey.value = keyEntity.apiKey || null
         
- 
-        usage.value = {
-          currentDailySpend: typeof keyEntity.currentDailySpend === 'number' ? keyEntity.currentDailySpend : parseFloat(keyEntity.currentDailySpend) || 0,
-          currentMonthlySpend: typeof keyEntity.currentMonthlySpend === 'number' ? keyEntity.currentMonthlySpend : parseFloat(keyEntity.currentMonthlySpend) || 0,
-          lastDailyReset: keyEntity.lastDailyReset || '',
-          lastMonthlyReset: keyEntity.lastMonthlyReset || '',
-          limitRequestsPerMinute: keyEntity.limitRequestsPerMinute || 0,
-          totalRequests: 0,
-          totalTokens: 0
-        }
+        // Update spend values from keys response
+        usage.value.currentDailySpend = typeof keyEntity.currentDailySpend === 'number' ? keyEntity.currentDailySpend : parseFloat(keyEntity.currentDailySpend) || 0
+        usage.value.currentMonthlySpend = typeof keyEntity.currentMonthlySpend === 'number' ? keyEntity.currentMonthlySpend : parseFloat(keyEntity.currentMonthlySpend) || 0
+        usage.value.lastDailyReset = keyEntity.lastDailyReset || ''
+        usage.value.lastMonthlyReset = keyEntity.lastMonthlyReset || ''
+      }
+    }
+    
+    if (usageResponse.ok) {
+      const usageData = await usageResponse.json()
+      usage.value.totalRequests = usageData.totalRequests || 0
+      usage.value.totalTokens = usageData.totalTokens || 0
+      // Update spend values if not already set from keys
+      if (usage.value.currentDailySpend === 0) {
+        usage.value.currentDailySpend = usageData.currentDailySpend || 0
+      }
+      if (usage.value.currentMonthlySpend === 0) {
+        usage.value.currentMonthlySpend = usageData.currentMonthlySpend || 0
+      }
+      if (!usage.value.lastDailyReset) {
+        usage.value.lastDailyReset = usageData.lastDailyReset || ''
+      }
+      if (!usage.value.lastMonthlyReset) {
+        usage.value.lastMonthlyReset = usageData.lastMonthlyReset || ''
       }
     }
   } catch (e: any) {

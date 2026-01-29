@@ -9,9 +9,9 @@ import { existsSync } from 'fs'
  
 function getConfigDir() {
   if (process.platform === 'win32') {
-    return join(process.env.APPDATA || homedir(), 'zs-ai')
+    return join(process.env.APPDATA || homedir(), 'ziri')
   }
-  return join(homedir(), '.zs-ai')
+  return join(homedir(), '.ziri')
 }
 
 const DB_PATH = join(getConfigDir(), 'proxy.db')

@@ -25,8 +25,8 @@ import {
 const program = new Command()
 
 program
-  .name('zs-ai')
-  .description('ZS AI Gateway - Management and SDK')
+  .name('ziri')
+  .description('ZIRI - Management and CLI')
   .version('1.0.0')
 
 program
@@ -80,9 +80,9 @@ program
   .option('-i, --init', 'Initialize configuration interactively')
   .action((options) => {
     if (options.init) {
-      console.log('🔧 Initializing ZS AI Gateway configuration...\n')
+      console.log('🔧 Initializing ZIRI configuration...\n')
       console.log('Please provide the following information:')
-      console.log('Use: zs-ai config set <key>=<value> to set values')
+      console.log('Use: ziri config set <key>=<value> to set values')
       console.log('Required keys: backendUrl, orgId, projectId, clientId, clientSecret')
       console.log('Optional keys: pdpUrl (for live mode)')
       return
@@ -91,7 +91,7 @@ program
     if (options.list) {
       const config = readConfig()
       if (!config) {
-        console.log('No configuration found. Run "zs-ai config init" to set up.')
+        console.log('No configuration found. Run "ziri config init" to set up.')
         return
       }
       console.log(JSON.stringify(config, null, 2))
@@ -225,7 +225,7 @@ providersCmd
       if (Object.keys(metadataList).length === 0) {
         console.log('No providers configured.')
         console.log('\nTo add a provider:')
-        console.log('  zs-ai providers add <name>')
+        console.log('  ziri providers add <name>')
         console.log('\nSupported providers:')
         Object.keys(PROVIDER_TEMPLATES).forEach(name => {
           console.log(`  - ${name}`)
@@ -282,7 +282,7 @@ providersCmd
       
       if (!metadata) {
         console.error(`❌ Provider '${name}' not found`)
-        console.error(`   Run: zs-ai providers add ${name}`)
+        console.error(`   Run: ziri providers add ${name}`)
         process.exit(1)
       }
       
@@ -291,7 +291,7 @@ providersCmd
       
       if (!credentials) {
         console.error(`❌ API key for '${name}' not configured`)
-        console.error(`   Run: zs-ai providers add ${name}`)
+        console.error(`   Run: ziri providers add ${name}`)
         process.exit(1)
       }
       

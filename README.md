@@ -1,509 +1,246 @@
-# ZS AI Gateway
+# ZIRI
 
-A production-grade LLM Gateway management interface with Cedar-based authorization. This monorepo contains two main packages: a proxy server (with bundled CLI, UI, and admin tools) and a lightweight SDK for end users.
+ZIRI is a production-grade LLM gateway that sits between your applications and providers like OpenAI and Anthropic. It adds authorization, rate limiting, cost tracking, and audit logging on top of standard LLM APIs.
 
-> 💡 **New to the project?** Check out the [QUICKSTART.md](./QUICKSTART.md) guide for a streamlined setup process.
+This repository contains:
+- A proxy server, delivered to end users as a Docker image
+- A lightweight SDK, delivered as the `@ziri/sdk` npm package
+- Documentation, built with VitePress
 
-## ✨ Features
 
-- **Local Proxy Server**: Runs on your machine, manages users, API keys, and LLM provider credentials
-- **Authorization Gateway**: Intercepts LLM requests, validates them through Cedar policies, and routes authorized requests to LLM providers
-- **Management UI**: Web-based interface with role-based access (admin and user roles)
-- **Dual Mode Support**: 
-  - **Local Mode**: SQLite storage + Cedar-WASM authorization (default, no external dependencies)
-  - **Live Mode (coming soon)**: Backend API storage + external PDP authorization
-- **Email Service**: Optional email notifications for user credentials and password resets
-- **User SDK**: Client library for end-users to make authorized LLM calls using API keys
-- **Server-Side Search & Pagination**: All list pages support efficient server-side search and pagination with debounced inputs
-- **Server-Side Sorting**: All data tables support server-side sorting by clicking column headers
-- **Rate Limiting**: Per-user and per-API-key rate limiting with persistent state
-- **Queue Management**: Per-user concurrent request limiting with persistent queueing
-- **Cost Estimation & Reservation**: Estimates request costs before authorization and temporarily reserves them to prevent concurrent request bypass
-- **Precise Cost Tracking**: Full-precision cost storage with accurate daily/monthly spend calculation
-- **Comprehensive Audit Logging**: All authorization decisions logged with full context and searchable history
-- **Real-Time Updates**: Server-Sent Events (SSE) for automatic updates on Logs, Analytics, and Dashboard pages
+## What ZIRI Provides
 
-## 📦 Prerequisites
+- **Policy-based access control** using Cedar
+- **API key management** for your users and teams
+- **Per-user and per-key rate limiting**
+- **Cost tracking** with daily/monthly summaries
+- **Audit logs** for every authorization decision
+- **Web-based admin UI** bundled with the proxy server
+- **SDK** for simple, type-safe integration from Node.js/TypeScript
 
-- **Node.js** >= 18.0.0
-- **npm** or **yarn**
-- **Git**
+You run the proxy wherever you like (laptop, VM, container host), then share its URL with your end users or services. They talk to ZIRI directly over HTTP or via the SDK.
 
-For Local Mode (default):
-- No additional dependencies required
+## How You Use ZIRI
 
-For Live Mode:
-- Backend API endpoint
-- External Policy Decision Point (PDP)
-- M2M credentials (clientId, clientSecret, orgId, projectId)
+At a high level:
 
-## 🚀 Installation
+1. **Run the proxy** using the official Docker image (usually via Docker Compose)
+2. **Log in to the admin UI** with the master key printed in the logs
+3. **Configure a provider** (e.g., OpenAI API key)
+4. **Create a user**, which automatically gets an API key
+5. **Give the API key and proxy URL** to your application or team
+6. **Make requests** to `/api/chat/completions`, `/api/embeddings`, or `/api/images` through ZIRI
 
-### 1. Clone the Repository
+The sections below show this end to end.
+
+## Running the Proxy (Docker)
+
+ZIRI is designed to be run as a container.
+
+### Minimal docker-compose.yml
+
+Create a `docker-compose.yml`:
+
+```yaml
+services:
+  proxy:
+    image: ziri/proxy:latest
+    ports:
+      - "3100:3100"
+    volumes:
+      - ziri-data:/data
+    environment:
+      - CONFIG_DIR=/data
+      - PORT=3100
+      - HOST=0.0.0.0
+    restart: unless-stopped
+
+volumes:
+  ziri-data:
+```
+
+Start the proxy:
 
 ```bash
-git clone <repository-url>
-cd zs-llm-ai-gateway-I
+docker compose up -d
 ```
 
-### 2. Install Dependencies
+View logs and capture the master key:
 
 ```bash
-# Install all dependencies for all packages
-npm install
+docker compose logs | grep "MASTER KEY"
 ```
 
-This will install dependencies for:
-- Root workspace
-- `packages/proxy` - Proxy server (includes CLI, UI, config, and auth-plugin bundled)
-- `packages/sdk` - User SDK (zero dependencies, for end users)
-- `packages/ui` - Management UI (development only, bundled into proxy for production)
-- `packages/config` - Config module (internal, used by proxy)
-- `packages/auth-plugin` - Auth plugin (internal, used by proxy)
+You should see a line like:
 
-### 3. Build All Packages
+```text
+Master Key: a751bf51140e64f315c8bf6f643c643a59aeba54e506c04cccfca6105f15198e
+```
+
+Save this key; it is your initial admin password.
+
+### Accessing the Admin UI
+
+Open the UI in your browser:
+
+- URL: `http://localhost:3100`
+
+Log in with:
+- **Username/Email**: `admin` or `admin@ziri.local`
+- **Password**: the master key from the logs
+
+From the UI you can:
+- Add LLM providers (OpenAI, Anthropic, etc.)
+- Create users and manage their API keys
+- Define Cedar policies (rules)
+- Inspect logs, costs, and statistics
+
+## First-Time Setup
+
+Once the proxy is running and you are logged in:
+
+1. **Configure a provider**
+   - Go to `Providers`
+   - Click `Add Provider`
+   - Set `name` (e.g., `openai`), display name, and your provider API key
+
+2. **Create a user**
+   - Go to `Users`
+   - Click `Create User`
+   - Enter email, name, and any other requested fields
+   - A password and API key will be generated (you can always rotate keys later)
+
+3. **Get the API key**
+   - Go to `Keys`
+   - Find the key for your new user
+   - Open it and copy the API key (it will only be shown once)
+
+4. **Create a simple policy**
+   - Go to `Rules`
+   - Click `Create Rule`
+   - Use a simple template such as:
+
+   ```cedar
+   permit (
+       principal,
+       action == Action::"completion",
+       resource
+   )
+   when {
+       principal.status == "active"
+   };
+   ```
+
+5. **Make your first request** (see next section).
+
+## Making Requests Through ZIRI
+
+With the proxy running and an API key ready:
 
 ```bash
-# Build all packages
-npm run build
-```
-
-Or build individually:
-```bash
-npm run build:proxy  # Build proxy server
-npm run build:ui     # Build UI
-npm run build:sdk    # Build SDKs
-```
-
-## 🎯 Quick Start
-
-### Step 1: Start the Proxy Server
-
-The proxy server runs in **local mode** by default (no configuration needed). The proxy includes the CLI, UI, and all admin tools bundled together.
-
-**Option A: Using the CLI (Recommended)**
-```bash
-# From project root
-npm run start
-
-# Or using the CLI directly
-npx zs-ai start
-
-# Or with custom port/host
-npx zs-ai start --port 3100 --host localhost
-```
-
-**Option B: Development Mode**
-```bash
-cd packages/proxy
-npm run dev
-```
-
-**First Run:**
-- A master key will be generated and displayed in the console
-- **Save this master key** - you'll need it for admin authentication
-- Database will be initialized at:
-  - **Windows**: `%APPDATA%\zs-ai\proxy.db`
-  - **macOS/Linux**: `~/.zs-ai/proxy.db`
-- Default admin user is created:
-  - **User ID**: `admin`
-  - **Password**: Same as the master key
-  - **Email**: `admin@zs-ai.local`
-
-**Expected Output:**
-```
-======================================================================
-🚀 ZS AI GATEWAY PROXY SERVER
-======================================================================
-Mode: local
-Local URL: http://127.0.0.1:3100
-API Endpoints: http://127.0.0.1:3100/api/*
-Health Check: http://127.0.0.1:3100/health
-📧 Email: Disabled
-======================================================================
-```
-
-### Step 2: Access the Management UI
-
-The UI is **bundled with the proxy server** and served automatically.
-
-1. Open `http://localhost:3100` (or the port shown in the console) in your browser
-2. You'll be redirected to `/config` if this is the first run
-3. Click "Skip Configuration" or configure email service (optional)
-4. Login with admin credentials:
-   - **Username/Email**: `admin` or `admin@zs-ai.local`
-   - **Password**: The master key displayed when you started the proxy
-
-**Note:** For development, you can run the UI separately with hot reload:
-```bash
-# Terminal 1: Start proxy (API only)
-npm run dev:proxy
-
-# Terminal 2: Start UI with hot reload
-npm run dev
-```
-
-### Step 4: Create Your First User
-
-1. Navigate to **Users** page
-2. Click **Create User**
-3. Fill in:
-   - Email
-   - Name
-4. Click **Create User**
-5. If email is disabled, copy the generated password from the popup
-
-### Step 5: View API Keys
-
-1. Navigate to **Keys** page
-2. API keys are automatically created when users are created
-3. Click on a key to view details:
-   - Current daily/monthly spend
-   - Rate limits
-   - Reset times
-   - Status
-4. You can rotate keys (old key is deleted, new one is created)
-
-## 📖 Usage
-
-### Making LLM Requests
-
-Once you have an API key, you can make LLM requests through the gateway:
-
-```bash
-curl -X POST http://127.0.0.1:3100/api/chat/completions \
+curl -X POST http://localhost:3100/api/chat/completions \
   -H "Content-Type: application/json" \
   -H "X-API-Key: sk-zs-your-api-key-here" \
   -d '{
     "provider": "openai",
-    "model": "gpt-4",
+    "model": "gpt-4o-mini",
     "messages": [
-      {"role": "user", "content": "Hello!"}
+      {"role": "user", "content": "Hello, ZIRI!"}
     ]
   }'
 ```
 
-**Note**: You need to configure LLM provider API keys first:
-1. Navigate to **Providers** page in the UI
-2. Add provider credentials (OpenAI, Anthropic, etc.)
-3. These are encrypted and stored locally
+If your policy allows the request and the provider is configured correctly, you will see a normal chat completion response. The decision, cost, and metadata will be recorded in the audit logs and can be viewed in the UI.
 
-### Using the User SDK
-
-The SDK has **zero dependencies** and can be installed independently:
+Health check:
 
 ```bash
-npm install @zs-ai/sdk
+curl http://localhost:3100/health
 ```
 
-**Usage:**
-```javascript
-import { UserSDK } from '@zs-ai/sdk'
+## Using the SDK (`@ziri/sdk`)
+
+For applications running on Node.js or in TypeScript/JavaScript:
+
+```bash
+npm install @ziri/sdk
+```
+
+Basic usage:
+
+```ts
+import { UserSDK } from '@ziri/sdk'
 
 const sdk = new UserSDK({
   apiKey: 'sk-zs-your-api-key-here',
-  proxyUrl: process.env.ZS_AI_PROXY_URL || 'http://localhost:3100'
+  proxyUrl: 'http://localhost:3100'
 })
 
 const response = await sdk.chatCompletions({
   provider: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4o-mini',
   messages: [
-    { role: 'user', content: 'Hello!' }
+    { role: 'user', content: 'Hello, ZIRI!' }
   ]
 })
+
+console.log(response.choices[0].message.content)
 ```
 
-**Configuration:**
-- `proxyUrl`: Proxy server URL (defaults to `http://localhost:3100` or `process.env.ZS_AI_PROXY_URL`)
-- `apiKey`: Your API key (starts with `sk-zs-`)
+You can also call embeddings and image generation through the SDK. See the SDK documentation for a full API reference.
 
-### Management Operations
+## Configuration Overview
 
-Use the UI for:
-- **Users**: Create, delete, reset passwords (API keys auto-created)
-  - Server-side search across name, email, userId
-  - Pagination with total count
-- **Keys**: View, rotate (old key deleted, new one created)
-  - Server-side search across userId, name, email, API key
-  - Client-side status filtering (active/revoked/disabled)
-  - Pagination with total count
-- **Providers**: Add/update LLM provider API keys (encrypted storage)
-  - Server-side search across name, displayName, baseUrl
-  - Pagination with total count
-- **Rules**: Create and manage Cedar authorization policies
-  - Server-side search across description and policy content
-  - Filter by effect (permit/forbid)
-  - Pagination with total count
-- **Schema**: View and update Cedar schema
-- **Logs**: View comprehensive audit logs
-  - Server-side search across auth_id, model, request_id
-  - Filter by decision, provider, model, date range
-  - Pagination with total count (default: 10 items per page)
-- **Config**: Configure email service, public URL, etc.
+The proxy is configured via:
+- Environment variables (e.g., `CONFIG_DIR`, `PORT`, `HOST`, `ZIRI_MASTER_KEY`)
+- A `config.json` file stored in the config directory (inside the Docker volume by default)
 
-**Search Features:**
-- All search inputs use 300ms debounce to reduce API calls
-- Search bars remain visible even when no results are found
-- Server-side filtering searches entire database, not just loaded rows
+Common patterns:
 
-## 🧪 Testing
+- Use `CONFIG_DIR=/data` in the container so config and data live in the `ziri-data` volume
+- Use a `.env` file next to your `docker-compose.yml` for secrets:
 
-### Quick Health Check
+  ```bash
+  # .env
+  MASTER_KEY=your-master-key
+  ENCRYPTION_KEY=your-encryption-key
+  ```
+
+  ```yaml
+  environment:
+    - CONFIG_DIR=/data
+    - PORT=3100
+    - HOST=0.0.0.0
+    - ZIRI_MASTER_KEY=${MASTER_KEY}
+    - ZIRI_ENCRYPTION_KEY=${ENCRYPTION_KEY}
+  ```
+
+For more details, see the configuration section of the documentation.
+
+## Development
+
+If you are working on ZIRI itself (not just using it), you will need:
+
+- Node.js 20+
+- npm
+
+Clone and set up:
 
 ```bash
-# Check if proxy server is running
-curl http://127.0.0.1:3100/health
-
-# Expected response:
-# {"status":"ok","timestamp":"2025-01-XX..."}
+git clone https://github.com/zstrikehq/ziri.git
+cd ziri
+npm install
 ```
 
-### Test User Creation
+Useful scripts:
 
 ```bash
-# Login as admin (get token)
-curl -X POST http://127.0.0.1:3100/api/auth/admin/login \
-  -H "Content-Type: application/json" \
-  -d '{
-    "username": "admin",
-    "password": "your-master-key"
-  }'
-
-# Create a user (use token from above)
-curl -X POST http://127.0.0.1:3100/api/users \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -d '{
-    "email": "test@example.com",
-    "name": "Test User",
-    "department": "Engineering",
-    "isAgent": false,
-    "limitRequestsPerMinute": 100
-  }'
-```
-
-**Note:** API keys are automatically created when a user is created. No separate key creation step is needed.
-
-### Test Chat Completion
-
-```bash
-# Make an LLM request
-curl -X POST http://127.0.0.1:3100/api/chat/completions \
-  -H "Content-Type: application/json" \
-  -H "X-API-Key: YOUR_API_KEY" \
-  -d '{
-    "provider": "openai",
-    "model": "gpt-4",
-    "messages": [{"role": "user", "content": "Hello!"}]
-  }'
-```
-
-For testing, use the UI to create users, manage keys, and make test LLM requests through the gateway.
-
-## 📁 Project Structure
-
-```
-.
-├── packages/
-│   ├── proxy/          # Proxy server (includes CLI, UI, config, auth-plugin)
-│   │   ├── src/
-│   │   │   ├── cli/     # CLI commands (bundled)
-│   │   │   ├── routes/  # API routes
-│   │   │   ├── services/ # Business logic
-│   │   │   ├── db/      # Database schema & migrations
-│   │   │   └── server.ts # Server setup
-│   │   ├── dist/
-│   │   │   ├── ui/      # Bundled UI assets (production)
-│   │   │   └── cli/     # CLI executable
-│   │   └── package.json # Includes CLI bin entry
-│   ├── sdk/             # User SDK (zero dependencies)
-│   │   ├── src/
-│   │   │   ├── user.ts  # User SDK implementation
-│   │   │   ├── types.ts # TypeScript types
-│   │   │   └── index.ts # Exports (UserSDK only)
-│   │   └── package.json # Zero dependencies
-│   ├── ui/              # Management UI (development)
-│   │   └── .output/     # Built UI (bundled into proxy)
-│   ├── config/          # Config module (internal, private)
-│   └── auth-plugin/     # Auth plugin (internal, private)
-├── package.json         # Root workspace config
-└── README.md           # This file
-```
-
-**Package Overview:**
-- **`@zs-ai/proxy`**: Admin package - includes proxy server, CLI (`zs-ai`), UI (bundled), config, and auth-plugin
-- **`@zs-ai/sdk`**: End-user package - lightweight SDK with zero dependencies
-- **`@zs-ai/ui`**: Development UI package (bundled into proxy for production)
-- **`@zs-ai/config`**: Internal config module (private, used by proxy)
-- **`@zs-ai/auth-plugin`**: Internal auth plugin (private, used by proxy)
-
-## 📚 Documentation
-
-- **[PROJECT_DOCUMENTATION.md](./PROJECT_DOCUMENTATION.md)** - Complete project documentation including architecture, API endpoints, and features
-- **[QUICKSTART.md](./QUICKSTART.md)** - Quick start guide for getting up and running
-- **[NEW_DATABASE_SCHEMA.md](./NEW_DATABASE_SCHEMA.md)** - Complete database schema documentation with encryption details (if exists)
-
-## 🔧 Configuration
-
-### Proxy Server Configuration
-
-Configuration is stored at:
-- **Windows**: `%APPDATA%\zs-ai\config.json`
-- **macOS/Linux**: `~/.zs-ai/config.json`
-
-Default configuration:
-```json
-{
-  "mode": "local",
-  "server": {
-    "host": "127.0.0.1",
-    "port": 3100
-  },
-  "publicUrl": "",
-  "email": {
-    "enabled": false
-  }
-}
-```
-
-You can configure:
-- **Mode**: `local` or `live`
-- **Server**: Host and port
-- **Public URL**: For sharing with end-users
-- **Email**: SMTP or SendGrid configuration
-
-Configuration can be updated via the UI's **Config** page.
-
-### Database Location
-
-Database is stored at:
-- **Windows**: `%APPDATA%\zs-ai\proxy.db`
-- **macOS/Linux**: `~/.zs-ai/proxy.db`
-
-**Note:** The database uses a new schema with encryption for sensitive data. See [NEW_DATABASE_SCHEMA.md](./NEW_DATABASE_SCHEMA.md) for complete details.
-
-### Encryption Key
-
-The system uses a persistent encryption key for sensitive data (emails, API keys). The key is stored in:
-1. **Environment Variable** (`ZS_AI_ENCRYPTION_KEY`) - Recommended for production
-2. **Secure File** (`~/.zs-ai/encryption.key`) - For local development
-3. **Config File** (`encryptionKey` field) - Fallback option
-
-If no key exists, one will be auto-generated on first run and stored in the config file.
-
-## 🛠️ Development
-
-### Running in Development Mode
-
-**Option 1: Integrated Mode (UI bundled)**
-```bash
-# Start proxy with bundled UI
-npm run dev:proxy
-# Access UI at http://localhost:3100
-```
-
-**Option 2: Separate UI Development (with hot reload)**
-```bash
-# Terminal 1: Proxy server (API only)
+# Run proxy in development mode
 npm run dev:proxy
 
-# Terminal 2: UI with hot reload
-npm run dev
-# UI runs at http://localhost:3000 (proxies API to :3100)
-```
+# Run documentation
+cd docs && npm run dev
 
-**SDK Development:**
-```bash
-cd packages/sdk
-npm run dev  # TypeScript watch mode
-```
-
-### Building for Production
-
-```bash
-# Build all packages
-npm run build
-
-# Build individual packages
-npm run build:proxy
-npm run build:ui
-npm run build:sdk
-```
-
-### Running Production Builds
-
-```bash
 # Build everything
 npm run build
-
-# Start proxy (includes bundled UI)
-npm run start
-
-# Or use the CLI
-npx zs-ai start
 ```
-
-The UI is automatically served from the proxy server at `http://localhost:3100`.
-
-## 📝 Scripts
-
-```bash
-# Development
-npm run dev              # Run UI dev server (separate from proxy)
-npm run dev:proxy        # Run proxy dev server (with bundled UI)
-npm run build            # Build all packages (config → auth-plugin → ui → proxy → sdk)
-npm run build:proxy      # Build proxy (compiles TS + copies UI)
-npm run build:ui         # Build UI package
-npm run build:sdk        # Build SDK package
-npm run start            # Start proxy server (production)
-```
-
-**Note:** The root `build` script builds packages in the correct order to avoid duplicate builds.
-
-## 🔐 Security Notes
-
-- **Master Key**: Generated on first run, stored securely. Use for admin authentication.
-- **API Keys**: Stored as hashes in the database. Original keys are only shown once.
-- **Provider Keys**: Encrypted before storage in the database.
-- **Passwords**: Hashed using bcrypt before storage.
-
-## 🐛 Troubleshooting
-
-### Proxy Server Won't Start
-
-1. Check if port 3100 is already in use:
-   ```bash
-   # Windows
-   netstat -ano | findstr :3100
-   
-   # macOS/Linux
-   lsof -i :3100
-   ```
-2. The server will automatically find the next available port if 3100 is taken.
-
-### Database Issues
-
-1. Delete the database file and restart:
-   ```bash
-   # Windows
-   del %APPDATA%\zs-ai\proxy.db
-   
-   # macOS/Linux
-   rm ~/.zs-ai/proxy.db
-   ```
-2. Restart the proxy server - it will recreate the database.
-
-### UI Won't Connect to Proxy
-
-1. Ensure proxy server is running
-2. Check the proxy URL in UI configuration
-3. Check browser console for CORS errors
-4. Verify proxy is accessible: `curl http://127.0.0.1:3100/health`
-
-### Email Service Not Working
-
-1. Check email configuration in the Config page
-2. For Gmail: Use App Password (not regular password) if 2FA is enabled
-3. For SMTP: Use port 587 (STARTTLS) or 465 (SSL)
-4. Check proxy server logs for email errors

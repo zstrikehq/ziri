@@ -3,7 +3,7 @@ import { join } from 'path'
 import { homedir } from 'os'
 import type { ProviderMetadata } from './providers.js'
 
-export interface ZsAiConfig {
+export interface ZiriConfig {
   mode?: 'local' | 'live'
   
   server?: {
@@ -45,10 +45,13 @@ export interface ZsAiConfig {
 }
 
 export function getConfigDir(): string {
-  if (process.platform === 'win32') {
-    return join(process.env.APPDATA || homedir(), 'zs-ai')
+  if (process.env.CONFIG_DIR) {
+    return process.env.CONFIG_DIR
   }
-  return join(homedir(), '.zs-ai')
+  if (process.platform === 'win32') {
+    return join(process.env.APPDATA || homedir(), 'ziri')
+  }
+  return join(homedir(), '.ziri')
 }
 
 export function getConfigPath(): string {
@@ -61,7 +64,7 @@ export function getConfigPath(): string {
   return join(configDir, 'config.json')
 }
 
-export function readConfig(): ZsAiConfig | null {
+export function readConfig(): ZiriConfig | null {
   const configPath = getConfigPath()
   
   if (!existsSync(configPath)) {
@@ -70,7 +73,7 @@ export function readConfig(): ZsAiConfig | null {
   
   try {
     const content = readFileSync(configPath, 'utf-8')
-    const config = JSON.parse(content) as Partial<ZsAiConfig>
+    const config = JSON.parse(content) as Partial<ZiriConfig>
     
     const mode = config.mode || 'local'
     
@@ -80,14 +83,14 @@ export function readConfig(): ZsAiConfig | null {
       }
     }
     
-    return config as ZsAiConfig
+    return config as ZiriConfig
   } catch (error) {
     console.error('Failed to read config:', error)
     return null
   }
 }
 
-export function writeConfig(config: Partial<ZsAiConfig>): void {
+export function writeConfig(config: Partial<ZiriConfig>): void {
   const configPath = getConfigPath()
   const existing = readConfig() || {}
   
@@ -104,7 +107,7 @@ export function writeConfig(config: Partial<ZsAiConfig>): void {
   }
 }
 
-export function validateConfig(config: any): ZsAiConfig {
+export function validateConfig(config: any): ZiriConfig {
   if (!config.backendUrl) {
     throw new Error('backendUrl is required')
   }
@@ -121,15 +124,15 @@ export function validateConfig(config: any): ZsAiConfig {
     throw new Error('clientSecret is required')
   }
   
-  return config as ZsAiConfig
+  return config as ZiriConfig
 }
 
-export function getConfigValue(key: keyof ZsAiConfig): any {
+export function getConfigValue(key: keyof ZiriConfig): any {
   const config = readConfig()
   return config ? config[key] : undefined
 }
 
-export function setConfigValue(key: keyof ZsAiConfig, value: any): void {
+export function setConfigValue(key: keyof ZiriConfig, value: any): void {
   writeConfig({ [key]: value })
 }
 
@@ -144,7 +147,7 @@ export function getProviderMetadata(providerName: string): ProviderMetadata | nu
 }
 
 export function setProviderMetadata(providerName: string, metadata: ProviderMetadata): void {
-  const config = readConfig() || ({} as ZsAiConfig)
+  const config = readConfig() || ({} as ZiriConfig)
   if (!config.providers) {
     config.providers = {}
   }

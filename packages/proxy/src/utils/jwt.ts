@@ -31,7 +31,7 @@ export function generateAccessToken(payload: TokenPayload): string {
   const secret = getJwtSecret()
   return jwt.sign(payload, secret, {
     expiresIn: ACCESS_TOKEN_EXPIRY,
-    issuer: 'zs-ai-proxy'
+    issuer: 'ziri-proxy'
   })
 }
 
@@ -40,7 +40,7 @@ export function generateRefreshToken(payload: TokenPayload): string {
   const secret = getJwtSecret()
   return jwt.sign(payload, secret, {
     expiresIn: REFRESH_TOKEN_EXPIRY,
-    issuer: 'zs-ai-proxy'
+    issuer: 'ziri-proxy'
   })
 }
 
@@ -49,7 +49,7 @@ export function verifyAccessToken(token: string): TokenPayload {
   const secret = getJwtSecret()
   try {
     const decoded = jwt.verify(token, secret, {
-      issuer: 'zs-ai-proxy'
+      issuer: 'ziri-proxy'
     }) as TokenPayload
     return decoded
   } catch (error: any) {
@@ -68,7 +68,7 @@ export function verifyRefreshToken(token: string): TokenPayload {
   const secret = getJwtSecret()
   try {
     const decoded = jwt.verify(token, secret, {
-      issuer: 'zs-ai-proxy'
+      issuer: 'ziri-proxy'
     }) as TokenPayload
     return decoded
   } catch (error: any) {

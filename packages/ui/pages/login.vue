@@ -9,7 +9,7 @@
           </svg>
         </div>
         <h1 class="text-lg font-bold text-[rgb(var(--text))]">
-          ZS AI Gateway
+          ZIRI
         </h1>
       </div>
       

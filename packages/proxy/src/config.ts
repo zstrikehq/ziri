@@ -1,6 +1,6 @@
  
  
-import { readConfig, type ZsAiConfig } from './config/index.js'
+import { readConfig, type ZiriConfig } from './config/index.js'
 import { getMasterKey, initializeMasterKey } from './utils/master-key.js'
 
 export interface ProxyConfig {
@@ -41,7 +41,7 @@ const DEFAULT_MODE = 'local' as const
 const DEFAULT_LOG_LEVEL = 'info' as const
 
 export function loadConfig(): ProxyConfig {
-  let fileConfig: ZsAiConfig | null = null
+  let fileConfig: ZiriConfig | null = null
   
   try {
     fileConfig = readConfig()
@@ -57,8 +57,8 @@ export function loadConfig(): ProxyConfig {
 
   const mode = fileConfig?.mode || DEFAULT_MODE
   const serverConfig = fileConfig?.server || {}
-  const port = serverConfig.port || (fileConfig as any)?.port || DEFAULT_PORT
-  const host = serverConfig.host || DEFAULT_HOST
+  const port = process.env.PORT ? parseInt(process.env.PORT, 10) : (serverConfig.port || (fileConfig as any)?.port || DEFAULT_PORT)
+  const host = process.env.HOST || serverConfig.host || DEFAULT_HOST
 
  
   let emailConfig: ProxyConfig['email'] = undefined

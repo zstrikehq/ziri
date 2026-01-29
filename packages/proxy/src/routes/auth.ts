@@ -116,7 +116,7 @@ router.post('/admin/login', async (req: Request, res: Response) => {
  
         const tokenPayload: TokenPayload = {
           userId: 'admin',
-          email: 'admin@zs-ai.local',
+          email: 'admin@ziri.local',
           role: 'admin',
           name: 'Administrator'
         }
@@ -142,7 +142,7 @@ router.post('/admin/login', async (req: Request, res: Response) => {
           tokenType: 'Bearer',
           user: {
             userId: 'admin',
-            email: 'admin@zs-ai.local',
+            email: 'admin@ziri.local',
             role: 'admin',
             name: 'Administrator'
           }

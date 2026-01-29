@@ -1,7 +1,7 @@
 {
-  "name": "@zs-ai/sdk",
+  "name": "@ziri/sdk",
   "version": "1.0.0",
-  "description": "ZS AI Gateway User SDK - For end users to make authorized LLM calls",
+  "description": "ZIRI User SDK - For end users to make authorized LLM calls",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

@@ -26,7 +26,7 @@ export function requireAdmin(
       if (payload.role === 'admin') {
         req.admin = {
           userId: payload.userId,
-          email: payload.email || 'admin@zs-ai.local',
+          email: payload.email || 'admin@ziri.local',
           role: payload.role || 'admin',
           name: payload.name
         }
@@ -44,7 +44,7 @@ export function requireAdmin(
     if (expectedKey && masterKey === expectedKey) {
       req.admin = {
         userId: 'admin',
-        email: 'admin@zs-ai.local',
+        email: 'admin@ziri.local',
         role: 'admin',
         name: 'Administrator'
       }

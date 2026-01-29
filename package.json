@@ -1,27 +1,21 @@
 {
-  "name": "@zs-ai",
+  "name": "@ziri",
   "version": "1.0.0",
-  "description": "ZS AI Gateway - All-in-one package with management UI, CLI, and SDK",
+  "description": "ZIRI - Proxy server with management UI and CLI",
   "private": true,
   "type": "module",
   "workspaces": [
     "packages/*"
   ],
   "bin": {
-    "zs-ai": "./packages/proxy/dist/cli/cli.js"
-  },
-  "exports": {
-    ".": "./packages/sdk/dist/index.js",
-    "./sdk": "./packages/sdk/dist/index.js"
+    "ziri": "./packages/proxy/dist/cli/cli.js"
   },
   "scripts": {
-    "dev": "npm run dev --workspace=packages/ui",
     "dev:proxy": "npm run dev --workspace=packages/proxy",
-    "build": "npm run build:ui && npm run build:proxy && npm run build:sdk",
+    "build": "npm run build:ui && npm run build:proxy",
+    "build": "npm run build:ui && npm run build:proxy",
     "build:ui": "npm run build --workspace=packages/ui",
     "build:proxy": "npm run build:proxy --workspace=packages/proxy",
-    "build:sdk": "npm run build --workspace=packages/sdk",
-    "preview": "npm run preview --workspace=packages/ui",
     "prepare": "npm run postinstall --workspace=packages/ui || true",
     "start": "node packages/proxy/dist/cli/cli.js start",
     "ui": "node packages/proxy/dist/cli/cli.js start"
@@ -30,6 +24,6 @@
     "typescript": "^5.8.3"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=20.0.0"
   }
 }
