@@ -15,6 +15,7 @@ const { checkAction } = useInternalAuth()
 
 const isSaving = ref(false)
 const showRootKey = ref(false)
+const permissionsLoading = ref(true)
 const canUpdateConfig = ref(false)
 
  
@@ -46,9 +47,14 @@ const form = reactive({
 })
 
 onMounted(async () => {
-  // Check permission to update config
-  const check = await checkAction('update_config', 'config')
-  canUpdateConfig.value = check.allowed
+
+  permissionsLoading.value = true
+  try {
+    const check = await checkAction('update_config', 'config')
+    canUpdateConfig.value = check.allowed
+  } finally {
+    permissionsLoading.value = false
+  }
  
   try {
     const response = await fetch('/api/config')
@@ -99,7 +105,7 @@ onMounted(async () => {
 })
 
 const saveConfig = async () => {
-  // Pre-action check (Layer 2)
+
   const check = await checkAction('update_config', 'config')
   if (!check.allowed) {
     toast.error('You do not have permission to update configuration')
@@ -146,7 +152,84 @@ const copyRootKey = () => {
 </script>
 
 <template>
-  <form @submit.prevent="saveConfig" class="max-w-2xl space-y-6">
+  <div class="max-w-4xl space-y-6">
+    <!-- Permissions Loading Skeleton -->
+    <div v-if="permissionsLoading" class="max-w-2xl space-y-6">
+      <!-- Header Skeleton -->
+      <div class="skeleton-shimmer h-8 w-48 rounded-lg"></div>
+      
+      <!-- Server Settings Card Skeleton -->
+      <section class="card">
+        <div class="flex items-center gap-3 mb-5">
+          <div class="skeleton-shimmer h-10 w-10 rounded-lg"></div>
+          <div class="skeleton-shimmer h-5 w-32 rounded"></div>
+        </div>
+        <div class="space-y-4">
+          <div class="grid grid-cols-2 gap-4">
+            <div class="space-y-2">
+              <div class="skeleton-shimmer h-4 w-16 rounded"></div>
+              <div class="skeleton-shimmer h-10 w-full rounded-lg"></div>
+              <div class="skeleton-shimmer h-3 w-48 rounded"></div>
+            </div>
+            <div class="space-y-2">
+              <div class="skeleton-shimmer h-4 w-16 rounded"></div>
+              <div class="skeleton-shimmer h-10 w-full rounded-lg"></div>
+              <div class="skeleton-shimmer h-3 w-40 rounded"></div>
+            </div>
+          </div>
+          <div class="space-y-2">
+            <div class="skeleton-shimmer h-4 w-24 rounded"></div>
+            <div class="skeleton-shimmer h-10 w-full rounded-lg"></div>
+            <div class="skeleton-shimmer h-3 w-64 rounded"></div>
+          </div>
+          <div class="space-y-2">
+            <div class="skeleton-shimmer h-4 w-20 rounded"></div>
+            <div class="skeleton-shimmer h-10 w-full rounded-lg"></div>
+          </div>
+        </div>
+      </section>
+      
+      <!-- Email Settings Card Skeleton -->
+      <section class="card">
+        <div class="flex items-center gap-3 mb-5">
+          <div class="skeleton-shimmer h-10 w-10 rounded-lg"></div>
+          <div class="skeleton-shimmer h-5 w-32 rounded"></div>
+        </div>
+        <div class="space-y-4">
+          <div class="flex items-center gap-2">
+            <div class="skeleton-shimmer h-5 w-5 rounded"></div>
+            <div class="skeleton-shimmer h-5 w-32 rounded"></div>
+          </div>
+          <div class="space-y-2">
+            <div class="skeleton-shimmer h-4 w-24 rounded"></div>
+            <div class="skeleton-shimmer h-10 w-full rounded-lg"></div>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div class="space-y-2">
+              <div class="skeleton-shimmer h-4 w-20 rounded"></div>
+              <div class="skeleton-shimmer h-10 w-full rounded-lg"></div>
+            </div>
+            <div class="space-y-2">
+              <div class="skeleton-shimmer h-4 w-20 rounded"></div>
+              <div class="skeleton-shimmer h-10 w-full rounded-lg"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      <!-- Actions Skeleton -->
+      <div class="flex gap-3">
+        <div class="skeleton-shimmer h-10 w-40 rounded-lg"></div>
+        <div class="skeleton-shimmer h-10 w-24 rounded-lg"></div>
+      </div>
+    </div>
+
+    <!-- Main Content (only show after permissions load) -->
+    <template v-else>
+      <!-- <div class="flex items-center justify-between mb-6">
+        <h1 class="text-2xl font-bold text-[rgb(var(--text))]">Configuration</h1>
+      </div> -->
+      <form @submit.prevent="saveConfig" class="max-w-2xl space-y-6">
     <!-- Mode Display (Read-only for now) -->
     <!-- <section class="card">
       <div class="flex items-center gap-3 mb-5">
@@ -353,5 +436,7 @@ const copyRootKey = () => {
         Reset
       </UiButton>
     </div>
-  </form>
+      </form>
+    </template>
+  </div>
 </template>

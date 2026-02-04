@@ -23,7 +23,7 @@ const { providers, listProviders: loadProviders } = useProviders()
 const { getSchema } = useSchema()
 const toast = useToast()
 
-// Model options based on configured providers
+
 const AVAILABLE_MODELS = {
   openai: [
     { value: 'gpt-5.1', label: 'GPT-5.1' },
@@ -43,7 +43,7 @@ const isLoading = ref(false)
 const generatedPolicy = ref<string>('')
 const schemaText = ref<string>('')
 
-// Available models based on configured providers
+
 const availableModels = computed(() => {
   const models: Array<{ value: string; label: string; provider: string }> = []
   
@@ -65,7 +65,7 @@ const availableModels = computed(() => {
   return models
 })
 
-// Set default provider/model when models become available
+
 watch(availableModels, (models) => {
   if (models.length > 0 && !selectedProvider.value) {
     selectedProvider.value = models[0].provider
@@ -73,7 +73,7 @@ watch(availableModels, (models) => {
   }
 }, { immediate: true })
 
-// Update model when provider changes
+
 watch(selectedProvider, (provider) => {
   const providerModels = availableModels.value.filter(m => m.provider === provider)
   if (providerModels.length > 0) {
@@ -81,7 +81,7 @@ watch(selectedProvider, (provider) => {
   }
 })
 
-// Load schema and providers on mount
+
 onMounted(async () => {
   try {
     const schemaData = await getSchema('cedar')
@@ -156,7 +156,7 @@ const sendMessage = async () => {
 const handleUsePolicy = (policyText?: string) => {
   const policy = policyText || generatedPolicy.value
   if (policy) {
-    // Open in new tab for editing - don't close the chat modal
+
     const url = `/rules?create=true&policy=${encodeURIComponent(policy)}`
     window.open(url, '_blank')
   }

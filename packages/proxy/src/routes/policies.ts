@@ -3,10 +3,12 @@ import { requireAdmin } from '../middleware/auth.js'
 import { serviceFactory } from '../services/service-factory.js'
 import { getDatabase } from '../db/index.js'
 import { getPolicyTemplates } from '../services/policy-template-service.js'
+import { logInternalOutcome } from '../utils/internal-audit-helpers.js'
 
 const router: Router = Router()
 
 router.get('/', requireAdmin, async (req: Request, res: Response) => {
+  const actionStart = Date.now()
   try {
     const {
       search,
@@ -133,6 +135,13 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
       })
     }
     
+    await logInternalOutcome(req, {
+      status: 'success',
+      code: '200',
+      message: `Retrieved ${policies.length} policies`,
+      actionDurationMs: Date.now() - actionStart
+    })
+    
     res.json({
       data: {
         policies
@@ -140,6 +149,13 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
       total
     })
   } catch (error: any) {
+    await logInternalOutcome(req, {
+      status: 'failed',
+      code: '500',
+      message: error.message || 'Failed to get policies',
+      actionDurationMs: Date.now() - actionStart
+    })
+    
     res.status(500).json({
       error: 'Failed to get policies',
       message: error.message
@@ -148,6 +164,7 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
 })
 
 router.post('/', requireAdmin, async (req: Request, res: Response) => {
+  const actionStart = Date.now()
   try {
     const { policy, description } = req.body
     
@@ -165,15 +182,33 @@ router.post('/', requireAdmin, async (req: Request, res: Response) => {
       success: true,
       message: 'Policy created successfully'
     })
+
+    await logInternalOutcome(req, {
+      status: 'success',
+      code: 'POLICY_CREATED',
+      resourceId: undefined,
+      resourceDetails: {
+        description
+      },
+      actionDurationMs: Date.now() - actionStart
+    })
   } catch (error: any) {
     res.status(500).json({
       error: 'Failed to create policy',
       message: error.message
     })
+
+    await logInternalOutcome(req, {
+      status: 'failed',
+      code: 'POLICY_CREATE_ERROR',
+      message: error.message,
+      actionDurationMs: Date.now() - actionStart
+    })
   }
 })
 
 router.put('/', requireAdmin, async (req: Request, res: Response) => {
+  const actionStart = Date.now()
   try {
     const { oldPolicy, policy, description } = req.body
     
@@ -191,15 +226,32 @@ router.put('/', requireAdmin, async (req: Request, res: Response) => {
       success: true,
       message: 'Policy updated successfully'
     })
+
+    await logInternalOutcome(req, {
+      status: 'success',
+      code: 'POLICY_UPDATED',
+      resourceDetails: {
+        description
+      },
+      actionDurationMs: Date.now() - actionStart
+    })
   } catch (error: any) {
     res.status(500).json({
       error: 'Failed to update policy',
       message: error.message
     })
+
+    await logInternalOutcome(req, {
+      status: 'failed',
+      code: 'POLICY_UPDATE_ERROR',
+      message: error.message,
+      actionDurationMs: Date.now() - actionStart
+    })
   }
 })
 
 router.patch('/status', requireAdmin, async (req: Request, res: Response) => {
+  const actionStart = Date.now()
   try {
     const { policy, isActive } = req.body as { policy?: string; isActive?: boolean }
 
@@ -221,6 +273,13 @@ router.patch('/status', requireAdmin, async (req: Request, res: Response) => {
       res.status(404).json({
         error: 'Policy not found'
       })
+
+      await logInternalOutcome(req, {
+        status: 'failed',
+        code: 'POLICY_STATUS_NOT_FOUND',
+        message: 'Policy not found',
+        actionDurationMs: Date.now() - actionStart
+      })
       return
     }
     
@@ -235,28 +294,59 @@ router.patch('/status', requireAdmin, async (req: Request, res: Response) => {
       res.status(404).json({
         error: 'Policy not found'
       })
+
+      await logInternalOutcome(req, {
+        status: 'failed',
+        code: 'POLICY_STATUS_NOT_FOUND',
+        message: 'Policy not found',
+        actionDurationMs: Date.now() - actionStart
+      })
       return
     }
-
+    
     res.json({
       success: true,
       message: `Policy ${isActive ? 'activated' : 'deactivated'} successfully`
+    })
+
+    await logInternalOutcome(req, {
+      status: 'success',
+      code: 'POLICY_STATUS_PATCHED',
+      resourceDetails: {
+        isActive
+      },
+      actionDurationMs: Date.now() - actionStart
     })
   } catch (error: any) {
     res.status(500).json({
       error: 'Failed to update policy status',
       message: error.message
     })
+
+    await logInternalOutcome(req, {
+      status: 'failed',
+      code: 'POLICY_STATUS_ERROR',
+      message: error.message,
+      actionDurationMs: Date.now() - actionStart
+    })
   }
 })
 
 router.delete('/', requireAdmin, async (req: Request, res: Response) => {
+  const actionStart = Date.now()
   try {
     const { policy } = req.body
     
     if (!policy) {
       res.status(400).json({
         error: 'Policy is required'
+      })
+
+      await logInternalOutcome(req, {
+        status: 'failed',
+        code: 'POLICY_DELETE_MISSING',
+        message: 'Policy is required',
+        actionDurationMs: Date.now() - actionStart
       })
       return
     }
@@ -268,21 +358,50 @@ router.delete('/', requireAdmin, async (req: Request, res: Response) => {
       success: true,
       message: 'Policy deleted successfully'
     })
+
+    await logInternalOutcome(req, {
+      status: 'success',
+      code: 'POLICY_DELETED',
+      actionDurationMs: Date.now() - actionStart
+    })
   } catch (error: any) {
     res.status(500).json({
       error: 'Failed to delete policy',
       message: error.message
     })
+
+    await logInternalOutcome(req, {
+      status: 'failed',
+      code: 'POLICY_DELETE_ERROR',
+      message: error.message,
+      actionDurationMs: Date.now() - actionStart
+    })
   }
 })
 
 router.get('/templates', requireAdmin, async (req: Request, res: Response) => {
+  const actionStart = Date.now()
   try {
     const templates = getPolicyTemplates()
+    
+    await logInternalOutcome(req, {
+      status: 'success',
+      code: '200',
+      message: `Retrieved ${templates.length} policy templates`,
+      actionDurationMs: Date.now() - actionStart
+    })
+    
     res.json({
       templates
     })
   } catch (error: any) {
+    await logInternalOutcome(req, {
+      status: 'failed',
+      code: '500',
+      message: error.message || 'Failed to get policy templates',
+      actionDurationMs: Date.now() - actionStart
+    })
+    
     res.status(500).json({
       error: 'Failed to get policy templates',
       message: error.message

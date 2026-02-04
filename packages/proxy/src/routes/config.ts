@@ -5,6 +5,7 @@ import { loadConfig } from '../config.js'
 import { getRootKey } from '../utils/root-key.js'
 import { requireAdmin } from '../middleware/auth.js'
 import { writeConfig } from '../config/index.js'
+import { logInternalOutcome } from '../utils/internal-audit-helpers.js'
 
 const router: Router = Router()
 
@@ -36,6 +37,7 @@ router.get('/', (req: Request, res: Response) => {
 
  
 router.post('/', requireAdmin, (req: Request, res: Response) => {
+  const actionStart = Date.now()
   try {
     const { mode, server, publicUrl, email, logLevel } = req.body
     
@@ -85,11 +87,30 @@ router.post('/', requireAdmin, (req: Request, res: Response) => {
         logLevel: updatedConfig.logLevel
       }
     })
+
+    void logInternalOutcome(req, {
+      status: 'success',
+      code: 'CONFIG_UPDATED',
+      resourceId: 'global',
+      resourceDetails: {
+        mode: updatedConfig.mode,
+        logLevel: updatedConfig.logLevel
+      },
+      actionDurationMs: Date.now() - actionStart
+    })
   } catch (error: any) {
     console.error('[CONFIG] Failed to update configuration:', error)
     res.status(500).json({
       error: 'Failed to save configuration',
       message: error.message
+    })
+
+    void logInternalOutcome(req, {
+      status: 'failed',
+      code: 'CONFIG_UPDATE_ERROR',
+      message: error.message,
+      resourceId: 'global',
+      actionDurationMs: Date.now() - actionStart
     })
   }
 })

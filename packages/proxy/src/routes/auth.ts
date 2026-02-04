@@ -40,9 +40,9 @@ router.post('/admin/login', async (req: Request, res: Response) => {
     
  
  
-    // Check if user is a dashboard user (has non-null role)
+
     if (user && user.role !== null && user.role !== undefined) {
-      // Check if user is disabled
+
       if (user.status !== 1) {
         res.status(403).json({
           error: 'Account is disabled',
@@ -364,17 +364,17 @@ router.post('/refresh', async (req: Request, res: Response) => {
       WHERE token_hash = ?
     `).run(tokenHash)
     
-    // Determine role: if dashboard user (role IS NOT NULL), fetch from entity store; otherwise 'user'
+
     let userRole: string
     if (user.role !== null && user.role !== undefined) {
-      // Dashboard user: fetch current role from internal entity store
+
       try {
         const { internalEntityStore } = await import('../services/internal/internal-entity-store.js')
         const entity = await internalEntityStore.getEntity(user.id)
         if (entity) {
           userRole = entity.attrs.role
         } else {
-          // Fallback to DB role if entity not found
+
           userRole = user.role
         }
       } catch (error: any) {
@@ -382,7 +382,7 @@ router.post('/refresh', async (req: Request, res: Response) => {
         userRole = user.role
       }
     } else {
-      // Access user: always 'user'
+
       userRole = 'user'
     }
     

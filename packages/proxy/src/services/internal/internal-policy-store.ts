@@ -24,7 +24,7 @@ export class InternalPolicyStore implements IInternalPolicyStore {
     `).all() as any[]
     
     if (rows.length === 0) {
-      // Return default policies from file
+
       return internalPolicies.map(policy => ({
         policy,
         description: 'Internal authorization policy'
@@ -41,14 +41,14 @@ export class InternalPolicyStore implements IInternalPolicyStore {
     const db = getDatabase()
     const { randomBytes } = await import('crypto')
     
-    // Mark old policies as inactive
+
     db.prepare(`
       UPDATE internal_schema_policy
       SET status = 0, updated_at = datetime('now')
       WHERE obj_type = 'policy' AND status = 1
     `).run()
     
-    // Insert new policies
+
     const insertStmt = db.prepare(`
       INSERT INTO internal_schema_policy (id, obj_type, content, description, status)
       VALUES (?, 'policy', ?, ?, 1)
@@ -73,7 +73,7 @@ export class InternalPolicyStore implements IInternalPolicyStore {
     const filePolicies = internalPolicies.map(p => p.trim()).sort()
     const dbPolicies = rows.map((r: any) => r.content.trim()).sort()
     
-    // Compare sorted arrays
+
     const shouldUpdate = 
       filePolicies.length !== dbPolicies.length ||
       filePolicies.some((fp, idx) => fp !== dbPolicies[idx])

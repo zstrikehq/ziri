@@ -14,7 +14,7 @@ function authenticateSSE(
     const token = authHeader.substring(7)
     try {
       const payload = verifyAccessToken(token)
-      // Allow any dashboard user (role !== 'user') - admin, viewer, user_admin, policy_admin
+
       if (payload.role && payload.role !== 'user') {
         (req as any).admin = {
           userId: payload.userId,
@@ -26,7 +26,7 @@ function authenticateSSE(
         return
       }
     } catch (error) {
-      // Token invalid, continue to check query param
+
     }
   }
 
@@ -34,7 +34,7 @@ function authenticateSSE(
   if (token) {
     try {
       const payload = verifyAccessToken(token)
-      // Allow any dashboard user (role !== 'user') - admin, viewer, user_admin, policy_admin
+
       if (payload.role && payload.role !== 'user') {
         (req as any).admin = {
           userId: payload.userId,
@@ -46,7 +46,7 @@ function authenticateSSE(
         return
       }
     } catch (error) {
-      // Token invalid
+
     }
   }
 

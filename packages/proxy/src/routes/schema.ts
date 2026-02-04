@@ -3,11 +3,13 @@
 import { Router, type Request, type Response } from 'express'
 import { requireAdmin } from '../middleware/auth.js'
 import { serviceFactory } from '../services/service-factory.js'
+import { logInternalOutcome } from '../utils/internal-audit-helpers.js'
 
 const router: Router = Router()
 
  
 router.get('/', requireAdmin, async (req: Request, res: Response) => {
+  const actionStart = Date.now()
   try {
     const schemaStore = serviceFactory.getSchemaStore()
     const format = req.query.format as string | undefined
@@ -15,6 +17,13 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
     if (format === 'cedar') {
  
       if (!schemaStore.getSchemaAsCedarText) {
+        await logInternalOutcome(req, {
+          status: 'failed',
+          code: '500',
+          message: 'Cedar text format not supported',
+          actionDurationMs: Date.now() - actionStart
+        })
+        
         res.status(500).json({
           error: 'Cedar text format not supported by this schema store'
         })
@@ -26,6 +35,13 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
       
  
       const schema = await schemaStore.getSchema()
+      
+      await logInternalOutcome(req, {
+        status: 'success',
+        code: '200',
+        message: 'Retrieved schema (cedar format)',
+        actionDurationMs: Date.now() - actionStart
+      })
       
       res.json({
         data: {
@@ -39,6 +55,13 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
  
       const schema = await schemaStore.getSchema()
       
+      await logInternalOutcome(req, {
+        status: 'success',
+        code: '200',
+        message: 'Retrieved schema (json format)',
+        actionDurationMs: Date.now() - actionStart
+      })
+      
       res.json({
         data: {
           schema: schema.schema,
@@ -48,6 +71,13 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
       })
     }
   } catch (error: any) {
+    await logInternalOutcome(req, {
+      status: 'failed',
+      code: '500',
+      message: error.message || 'Failed to get schema',
+      actionDurationMs: Date.now() - actionStart
+    })
+    
     res.status(500).json({
       error: 'Failed to get schema',
       message: error.message
@@ -57,6 +87,7 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
 
  
 router.post('/', requireAdmin, async (req: Request, res: Response) => {
+  const actionStart = Date.now()
   try {
     const { schema } = req.body
     const format = req.query.format as string | undefined
@@ -107,10 +138,25 @@ router.post('/', requireAdmin, async (req: Request, res: Response) => {
         format: cedarText ? 'cedar' : 'json'
       }
     })
+
+    await logInternalOutcome(req, {
+      status: 'success',
+      code: 'SCHEMA_UPDATED',
+      resourceId: 'schema',
+      actionDurationMs: Date.now() - actionStart
+    })
   } catch (error: any) {
     res.status(500).json({
       error: 'Failed to update schema',
       message: error.message
+    })
+
+    await logInternalOutcome(req, {
+      status: 'failed',
+      code: 'SCHEMA_UPDATE_ERROR',
+      message: error.message,
+      resourceId: 'schema',
+      actionDurationMs: Date.now() - actionStart
     })
   }
 })

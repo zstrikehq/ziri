@@ -51,7 +51,7 @@ export const useInternalAuth = () => {
       return response
     } catch (error: any) {
       console.error('[INTERNAL AUTH] Check action error:', error)
-      // On 403 or network error, deny
+
       return { allowed: false, reason: error.message || 'Authorization check failed' }
     }
   }
@@ -79,7 +79,7 @@ export const useInternalAuth = () => {
       return response
     } catch (error: any) {
       console.error('[INTERNAL AUTH] Check actions error:', error)
-      // On error, deny all
+
       return {
         results: actions.map(a => ({ action: a.action, allowed: false }))
       }

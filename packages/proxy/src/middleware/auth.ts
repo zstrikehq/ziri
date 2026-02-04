@@ -24,7 +24,7 @@ export function requireAdmin(
     const token = authHeader.substring(7)
     try {
       const payload = verifyAccessToken(token)
-      // Allow any dashboard user (role !== 'user') - admin, viewer, user_admin, policy_admin
+
       if (payload.role && payload.role !== 'user') {
         req.admin = {
           userId: payload.userId,
@@ -32,7 +32,7 @@ export function requireAdmin(
           role: payload.role,
           name: payload.name
         }
-        // Chain internal authorization check
+
         requireInternalAuthz(req, res, next)
         return
       }
@@ -51,7 +51,7 @@ export function requireAdmin(
         role: 'admin',
         name: 'Administrator'
       }
-      // Chain internal authorization check
+
       requireInternalAuthz(req, res, next)
       return
     }

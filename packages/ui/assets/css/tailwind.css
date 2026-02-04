@@ -403,6 +403,38 @@
   animation: shimmer 1.5s ease-in-out infinite;
 }
 
+.skeleton-shimmer {
+  background: rgb(var(--surface-elevated));
+  position: relative;
+  overflow: hidden;
+}
+
+.skeleton-shimmer::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.1),
+    transparent
+  );
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+.dark .skeleton-shimmer {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.dark .skeleton-shimmer::before {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.1),
+    transparent
+  );
+}
+
 /* Background texture pattern */
 .bg-texture {
   position: relative;

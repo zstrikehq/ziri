@@ -84,9 +84,9 @@ export default defineNuxtRouteMiddleware(async (to) => {
     const isUserPage = userPages.some(page => to.path === page || to.path.startsWith(page + '/'))
 
  
-    // Handle redirect from root with create policy params
+
     if (to.path === '/' && to.query.create === 'true' && to.query.policy) {
-        // Preserve query params when redirecting to rules page
+
         return navigateTo({
             path: '/rules',
             query: {
@@ -96,30 +96,30 @@ export default defineNuxtRouteMiddleware(async (to) => {
         })
     }
 
-    // Role-based access control
-    // Only dashboard users (non-null role, not 'user') can access admin pages
+
+
     const isDashboardUser = userRole && userRole !== 'user'
     
-    // Settings section pages are admin-only (Config and Manage Users)
+
     if ((to.path === '/config' || to.path === '/settings/manage-users') && userRole !== 'admin') {
         const toast = useToast()
         toast.warning('Admin access required')
         return navigateTo('/')
     }
     
-    // Other admin pages: allow dashboard users (admin, viewer, user_admin, policy_admin)
+
     if (isAdminPage && !isDashboardUser) {
         const toast = useToast()
         toast.warning('Dashboard access required')
         return navigateTo('/me')
     }
 
-    // User pages: allow all authenticated users
+
     if (isUserPage) {
         return
     }
 
-    // Dashboard pages: allow all dashboard users (already checked above)
+
     if (isAdminAuthenticated && isDashboardUser && isAdminPage) {
         return
     }

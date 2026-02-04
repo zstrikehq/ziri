@@ -318,7 +318,7 @@ const loadProfile = async () => {
     }
 
  
-    // Fetch API key and usage statistics in parallel
+
     const [keysResponse, usageResponse] = await Promise.all([
       fetch('/api/me/keys', {
         headers: {
@@ -349,7 +349,7 @@ const loadProfile = async () => {
           keyStatus.value = 'active'
         }
         
-        // Update spend values from keys response
+
         usage.value.currentDailySpend = typeof keyEntity.currentDailySpend === 'number' ? keyEntity.currentDailySpend : parseFloat(keyEntity.currentDailySpend) || 0
         usage.value.currentMonthlySpend = typeof keyEntity.currentMonthlySpend === 'number' ? keyEntity.currentMonthlySpend : parseFloat(keyEntity.currentMonthlySpend) || 0
         usage.value.lastDailyReset = keyEntity.lastDailyReset || ''
@@ -365,7 +365,7 @@ const loadProfile = async () => {
       const usageData = await usageResponse.json()
       usage.value.totalRequests = usageData.totalRequests || 0
       usage.value.totalTokens = usageData.totalTokens || 0
-      // Update spend values if not already set from keys
+
       if (usage.value.currentDailySpend === 0) {
         usage.value.currentDailySpend = usageData.currentDailySpend || 0
       }

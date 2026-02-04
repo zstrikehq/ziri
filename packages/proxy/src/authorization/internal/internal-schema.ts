@@ -253,6 +253,12 @@ action "view_audit" appliesTo {
   context: InternalContext
 };
 
+action "view_internal_audit" appliesTo {
+  principal: [DashboardUser],
+  resource: [Dashboard],
+  context: InternalContext
+};
+
 action "view_stats" appliesTo {
   principal: [DashboardUser],
   resource: [Dashboard],

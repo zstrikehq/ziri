@@ -370,34 +370,34 @@ export async function deleteUser(userId: string): Promise<void> {
     console.warn(`[USER SERVICE] Failed to delete User entity:`, error.message)
   }
   
-  // Get all API keys for this user before deleting them
+
   const userKeys = db.prepare('SELECT id, key_hash FROM user_agent_keys WHERE auth_id = ?').all(userId) as Array<{ id: string; key_hash: string }>
   
-  // Clean up rate limiter buckets (if table exists)
+
   try {
-    // Check if rate_limit_buckets table exists
+
     const tableExists = db.prepare(`
       SELECT name FROM sqlite_master 
       WHERE type='table' AND name='rate_limit_buckets'
     `).get()
     
     if (tableExists) {
-      // Delete rate limiter buckets for each API key
+
       for (const key of userKeys) {
-        // Delete rate limiter buckets for this API key
-        // Keys are stored as: rl_api_key_<keyHash>
+
+
         db.prepare('DELETE FROM rate_limit_buckets WHERE key LIKE ?').run(`rl_api_key_${key.key_hash}%`)
       }
       
-      // Also delete user-level rate limit buckets
+
       db.prepare('DELETE FROM rate_limit_buckets WHERE key LIKE ?').run(`rl_user_${userId}%`)
     }
   } catch (error: any) {
-    // Rate limiter cleanup is optional, log but don't fail
+
     console.warn('[USER SERVICE] Failed to clean up rate limiter buckets:', error.message)
   }
   
-  // Delete database records (keys must be deleted before user due to foreign key)
+
   db.prepare('DELETE FROM user_agent_keys WHERE auth_id = ?').run(userId)
   db.prepare('DELETE FROM refresh_tokens WHERE auth_id = ?').run(userId)
   db.prepare('DELETE FROM auth WHERE id = ?').run(userId)

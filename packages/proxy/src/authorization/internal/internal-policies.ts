@@ -1,5 +1,5 @@
 export const internalPolicies: string[] = [
-  // Admin: permit all actions
+
   `@id("admin-full-access")
 permit (
     principal,
@@ -11,7 +11,7 @@ when {
     principal.status == "active"
 };`,
 
-  // Viewer: permit only view/list/get actions (no create/update/delete/patch)
+
   `@id("viewer-read-only")
 permit (
     principal,
@@ -45,7 +45,7 @@ when {
     principal.status == "active"
 };`,
 
-  // User Admin: Viewer permissions + users and keys actions
+
   `@id("user-admin-access")
 permit (
     principal,
@@ -101,7 +101,7 @@ when {
     principal.status == "active"
 };`,
 
-  // Policy Admin: Viewer permissions + rules actions only (no schema write)
+
   `@id("policy-admin-access")
 permit (
     principal,
@@ -153,7 +153,7 @@ when {
     principal.status == "active"
 };`,
 
-  // Forbid disabled users from all actions
+
   `@id("forbid-disabled-users")
 forbid (
     principal,
@@ -164,7 +164,7 @@ when {
     principal.status != "active"
 };`,
 
-  // Forbid non-ziri admins from admin-specific actions
+
   `@id("forbid-non-ziri-admin-actions")
 forbid (
     principal,

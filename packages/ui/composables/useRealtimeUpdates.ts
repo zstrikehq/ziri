@@ -1,13 +1,20 @@
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { useAdminAuth } from './useAdminAuth'
 
-export type EventType = 'audit_log_created' | 'cost_tracked' | 'batch_update'
+export type EventType = 'audit_log_created' | 'cost_tracked' | 'batch_update' | 'internal_audit_log_created'
 
 export interface RealtimeEvent {
   type: EventType
   data: {
     auditLogId?: number
     requestId?: string
+    internalAuditLogId?: number
+    dashboardUserId?: string
+    action?: string
+    resourceType?: string
+    resourceId?: string | null
+    outcomeStatus?: string | null
+    outcomeCode?: string | null
     costTrackingId?: number
     timestamp?: string
     decision?: 'permit' | 'forbid'
@@ -21,6 +28,7 @@ export interface RealtimeEvent {
 
 export interface UseRealtimeUpdatesOptions {
   onAuditLogCreated?: (event: RealtimeEvent) => void
+  onInternalAuditLogCreated?: (event: RealtimeEvent) => void
   onCostTracked?: (event: RealtimeEvent) => void
   onBatchUpdate?: (event: RealtimeEvent) => void
   debounceMs?: number
@@ -57,6 +65,8 @@ export function useRealtimeUpdates(options: UseRealtimeUpdatesOptions = {}) {
       for (const evt of events) {
         if (evt.type === 'audit_log_created' && options.onAuditLogCreated) {
           options.onAuditLogCreated(evt)
+        } else if (evt.type === 'internal_audit_log_created' && options.onInternalAuditLogCreated) {
+          options.onInternalAuditLogCreated(evt)
         } else if (evt.type === 'cost_tracked' && options.onCostTracked) {
           options.onCostTracked(evt)
         } else if (evt.type === 'batch_update' && options.onBatchUpdate) {
@@ -65,6 +75,8 @@ export function useRealtimeUpdates(options: UseRealtimeUpdatesOptions = {}) {
           for (const batchEvt of evt.data.events) {
             if (batchEvt.type === 'audit_log_created' && options.onAuditLogCreated) {
               options.onAuditLogCreated({ type: batchEvt.type, data: batchEvt.data, timestamp: evt.timestamp })
+            } else if (batchEvt.type === 'internal_audit_log_created' && options.onInternalAuditLogCreated) {
+              options.onInternalAuditLogCreated({ type: batchEvt.type, data: batchEvt.data, timestamp: evt.timestamp })
             } else if (batchEvt.type === 'cost_tracked' && options.onCostTracked) {
               options.onCostTracked({ type: batchEvt.type, data: batchEvt.data, timestamp: evt.timestamp })
             }

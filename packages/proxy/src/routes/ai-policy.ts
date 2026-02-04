@@ -4,6 +4,7 @@ import { requireAdmin } from '../middleware/auth.js'
 import { chatCompletions } from '../services/llm-service.js'
 import { serviceFactory } from '../services/service-factory.js'
 import * as providerService from '../services/provider-service.js'
+import { logInternalOutcome } from '../utils/internal-audit-helpers.js'
 
 const router: Router = Router()
 
@@ -189,10 +190,18 @@ It will be provided by the user.
 Generate a syntactically correct and semantically appropriate Cedar policy based on the provided schema and description. Make sure to include namespaces and choose operators (in, ==, etc.) that match the intent.`
 
 router.post('/generate', requireAdmin, async (req: Request, res: Response) => {
+  const actionStart = Date.now()
   try {
     const { provider, model, messages, cedarSchema } = req.body
 
     if (!provider || !model || !messages || !Array.isArray(messages) || messages.length === 0) {
+      await logInternalOutcome(req, {
+        status: 'failed',
+        code: '400',
+        message: 'provider, model, and messages are required',
+        actionDurationMs: Date.now() - actionStart
+      })
+      
       res.status(400).json({
         error: 'provider, model, and messages are required',
         code: 'MISSING_FIELDS'
@@ -200,9 +209,16 @@ router.post('/generate', requireAdmin, async (req: Request, res: Response) => {
       return
     }
 
-    // Check if provider is configured
+
     const configuredProvider = providerService.getProvider(provider)
     if (!configuredProvider) {
+      await logInternalOutcome(req, {
+        status: 'failed',
+        code: '400',
+        message: `Provider '${provider}' is not configured`,
+        actionDurationMs: Date.now() - actionStart
+      })
+      
       res.status(400).json({
         error: `Provider '${provider}' is not configured`,
         code: 'PROVIDER_NOT_CONFIGURED'
@@ -210,7 +226,7 @@ router.post('/generate', requireAdmin, async (req: Request, res: Response) => {
       return
     }
 
-    // Get schema if not provided
+
     let schemaText = cedarSchema
     if (!schemaText) {
       try {
@@ -222,6 +238,13 @@ router.post('/generate', requireAdmin, async (req: Request, res: Response) => {
           schemaText = JSON.stringify(schema.schema, null, 2)
         }
       } catch (error: any) {
+        await logInternalOutcome(req, {
+          status: 'failed',
+          code: '500',
+          message: 'Failed to retrieve schema',
+          actionDurationMs: Date.now() - actionStart
+        })
+        
         console.error('[AI-POLICY] Failed to get schema:', error)
         res.status(500).json({
           error: 'Failed to retrieve schema',
@@ -231,16 +254,16 @@ router.post('/generate', requireAdmin, async (req: Request, res: Response) => {
       }
     }
 
-    // Build system message with schema
+
     const systemMessage = CEDAR_PROMPT_TEMPLATE.replace('{SCHEMA_PLACEHOLDER}', schemaText || 'No schema available')
 
-    // Prepare messages with system message first
+
     const chatMessages = [
       { role: 'system', content: systemMessage },
       ...messages
     ]
 
-    // Call LLM service
+
     const response = await chatCompletions({
       provider,
       model,
@@ -249,20 +272,34 @@ router.post('/generate', requireAdmin, async (req: Request, res: Response) => {
       max_tokens: 2048
     })
 
-    // Extract policy from response
+
     let policy = ''
     if (response.choices && response.choices.length > 0) {
       policy = response.choices[0].message.content || ''
       
-      // Remove markdown code fences if present
+
       policy = policy.replace(/^```(?:cedar|policy)?\n?/gm, '').replace(/```$/gm, '').trim()
     }
+
+    await logInternalOutcome(req, {
+      status: 'success',
+      code: '200',
+      message: 'Policy generated successfully',
+      actionDurationMs: Date.now() - actionStart
+    })
 
     res.json({
       policy,
       usage: response.usage
     })
   } catch (error: any) {
+    await logInternalOutcome(req, {
+      status: 'failed',
+      code: '500',
+      message: error.message || 'Failed to generate policy',
+      actionDurationMs: Date.now() - actionStart
+    })
+    
     console.error('[AI-POLICY] Generate error:', error)
     res.status(500).json({
       error: error.message || 'Failed to generate policy',

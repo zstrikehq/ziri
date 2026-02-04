@@ -69,7 +69,7 @@ export class InternalAuthorizationService implements IInternalAuthorizationServi
       
       const parsePrincipal = parseEntityUid(request.principal)
       const parseAction = parseEntityUid(request.action)
-      // Use placeholder resource
+
       const parseResource = { type: 'Dashboard', id: 'app' }
       
       const policiesMap: Record<string, string> = {}
@@ -113,7 +113,7 @@ export class InternalAuthorizationService implements IInternalAuthorizationServi
         }
       }
       
-      // Build context with resourceType
+
       const context = {
         resourceType: request.resourceType,
         ...(request.context || {})

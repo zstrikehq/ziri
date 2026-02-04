@@ -44,86 +44,9 @@ export async function ensureSchemaInitialized(): Promise<void> {
 }
 
 async function initializeSchema(database: Database.Database): Promise<void> {
-  console.log('[DB] Initializing database schema...')
-  
-  try {
-    const { up: migrationUp } = await import('./migrations/003_audit_cost_tracking.js')
-    migrationUp(database)
-    console.log('[DB] ✅ Migration 003 applied: audit_cost_tracking')
-  } catch (error: any) {
-    if (error.message?.includes('already exists')) {
-      console.log('[DB] Migration 003: tables already exist, skipping')
-    } else if (error.message?.includes('Cannot find module')) {
-      console.warn('[DB] Migration 003: module not found')
-    } else {
-      console.error('[DB] Migration 003 failed:', error.message)
-      throw error
-    }
-  }
+  console.log('[DB] Initializing database schema (unified)...')
 
-  try {
-    const { up: migrationUp } = await import('./migrations/004_rate_limiting.js')
-    migrationUp(database)
-    console.log('[DB] ✅ Migration 004 applied: rate_limiting')
-  } catch (error: any) {
-    if (error.message?.includes('already exists')) {
-      console.log('[DB] Migration 004: tables already exist, skipping')
-    } else if (error.message?.includes('Cannot find module')) {
-      console.error('[DB] Migration 004: module not found - this is required!')
-      throw error
-    } else {
-      console.error('[DB] Migration 004 failed:', error.message)
-      throw error
-    }
-  }
-  
-  try {
-    const { up: migrationUp } = await import('./migrations/005_model_actions_and_image_pricing.js')
-    migrationUp(database)
-    console.log('[DB] ✅ Migration 005 applied: model_actions_and_image_pricing')
-  } catch (error: any) {
-    if (error.message?.includes('duplicate column name') || error.message?.includes('already exists')) {
-      console.log('[DB] Migration 005: schema already updated, skipping')
-    } else if (error.message?.includes('Cannot find module')) {
-      console.error('[DB] Migration 005: module not found - this is required!')
-      throw error
-    } else {
-      console.error('[DB] Migration 005 failed:', error.message)
-      throw error
-    }
-  }
-
-  try {
-    const { up: migrationUp } = await import('./migrations/006_dept_to_group.js')
-    migrationUp(database)
-    console.log('[DB] ✅ Migration 006 applied: dept_to_group')
-  } catch (error: any) {
-    if (error.message?.includes('Cannot find module')) {
-      console.warn('[DB] Migration 006: module not found')
-    } else {
-      console.error('[DB] Migration 006 failed:', error.message)
-      throw error
-    }
-  }
-
-  try {
-    const { up: migrationUp } = await import('./migrations/007_add_role_and_internal_auth.js')
-    migrationUp(database)
-    console.log('[DB] ✅ Migration 007 applied: add_role_and_internal_auth')
-  } catch (error: any) {
-    if (error.message?.includes('already exists') || error.message?.includes('duplicate column name')) {
-      console.log('[DB] Migration 007: schema already updated, skipping')
-    } else if (error.message?.includes('Cannot find module')) {
-      console.warn('[DB] Migration 007: module not found')
-    } else {
-      console.error('[DB] Migration 007 failed:', error.message)
-      throw error
-    }
-  }
-  
-  const schemasToApply = ALL_SCHEMAS.filter(schema => !schema.includes('CREATE TABLE IF NOT EXISTS audit_logs'))
-  
-  for (const schema of schemasToApply) {
+  for (const schema of ALL_SCHEMAS) {
     try {
       database.exec(schema)
     } catch (error: any) {
@@ -132,7 +55,7 @@ async function initializeSchema(database: Database.Database): Promise<void> {
       }
     }
   }
-  
+
   try {
     const { seedPricing } = await import('./seed-pricing.js')
     seedPricing(database)
@@ -141,7 +64,7 @@ async function initializeSchema(database: Database.Database): Promise<void> {
       console.warn('[DB] Pricing seed failed:', error.message)
     }
   }
-  
+
   console.log('[DB] ✅ Database schema initialized')
 }
 
@@ -217,7 +140,7 @@ export async function initializeInternalAuth(): Promise<void> {
   const { internalCedarTextSchema } = await import('../authorization/internal/internal-schema.js')
   const { internalPolicies } = await import('../authorization/internal/internal-policies.js')
   
-  // Check if schema needs updating
+
   const schemaCheck = await internalSchemaStore.shouldUpdateSchema()
   if (schemaCheck.shouldUpdate) {
     console.log('[INTERNAL AUTH] Schema changed, updating...')
@@ -227,7 +150,7 @@ export async function initializeInternalAuth(): Promise<void> {
     console.log('[INTERNAL AUTH] Schema is up to date')
   }
   
-  // Check if policies need updating
+
   const policyCheck = await internalPolicyStore.shouldUpdatePolicies()
   if (policyCheck.shouldUpdate) {
     console.log('[INTERNAL AUTH] Policies changed, updating...')
@@ -237,7 +160,7 @@ export async function initializeInternalAuth(): Promise<void> {
     console.log('[INTERNAL AUTH] Policies are up to date')
   }
   
-  // Ensure ziri's internal entity exists
+
   const ziriEntity = await internalEntityStore.getEntity('ziri')
   if (!ziriEntity) {
     console.log('[INTERNAL AUTH] Creating internal entity for ziri...')
@@ -272,7 +195,7 @@ export async function initializeInternalAuth(): Promise<void> {
       console.warn('[INTERNAL AUTH] ⚠️ Ziri user not found in auth table, skipping entity creation')
     }
   } else {
-    // Sync name/email from auth table if needed
+
     const ziriUser = db.prepare('SELECT * FROM auth WHERE id = ?').get('ziri') as any
     if (ziriUser) {
       const { decrypt } = await import('../utils/encryption.js')

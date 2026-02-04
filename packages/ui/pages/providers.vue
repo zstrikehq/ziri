@@ -11,7 +11,8 @@ const { providers, loading, listProviders, addProvider, removeProvider, testProv
 const toast = useToast()
 const { checkActions, checkAction } = useInternalAuth()
 
-// Permission states
+
+const permissionsLoading = ref(true)
 const canCreateProvider = ref(false)
 const canDeleteProvider = ref(false)
 const canTestProvider = ref(false)
@@ -32,16 +33,21 @@ const PROVIDER_TEMPLATES: Record<string, { displayName: string; baseUrl: string;
 
  
 onMounted(async () => {
-  // Check permissions for sensitive actions
-  const permissions = await checkActions([
-    { action: 'create_provider', resourceType: 'providers' },
-    { action: 'delete_provider', resourceType: 'providers' },
-    { action: 'test_provider', resourceType: 'providers' }
-  ])
-  
-  canCreateProvider.value = permissions.results.find(r => r.action === 'create_provider')?.allowed || false
-  canDeleteProvider.value = permissions.results.find(r => r.action === 'delete_provider')?.allowed || false
-  canTestProvider.value = permissions.results.find(r => r.action === 'test_provider')?.allowed || false
+
+  permissionsLoading.value = true
+  try {
+    const permissions = await checkActions([
+      { action: 'create_provider', resourceType: 'providers' },
+      { action: 'delete_provider', resourceType: 'providers' },
+      { action: 'test_provider', resourceType: 'providers' }
+    ])
+    
+    canCreateProvider.value = permissions.results.find(r => r.action === 'create_provider')?.allowed || false
+    canDeleteProvider.value = permissions.results.find(r => r.action === 'delete_provider')?.allowed || false
+    canTestProvider.value = permissions.results.find(r => r.action === 'test_provider')?.allowed || false
+  } finally {
+    permissionsLoading.value = false
+  }
   
   try {
     await listProviders()
@@ -114,7 +120,7 @@ const paginatedProviders = computed(() => {
 })
 
 const handleAddProvider = async () => {
-  // Pre-action check (Layer 2)
+
   const check = await checkAction('create_provider', 'providers')
   if (!check.allowed) {
     toast.error('You do not have permission to create providers')
@@ -149,7 +155,7 @@ const handleAddProvider = async () => {
 const handleRemoveProvider = async () => {
   if (!providerToDelete.value) return
   
-  // Pre-action check (Layer 2)
+
   const check = await checkAction('delete_provider', 'providers')
   if (!check.allowed) {
     toast.error('You do not have permission to delete providers')
@@ -167,7 +173,7 @@ const handleRemoveProvider = async () => {
 }
 
 const handleTestProvider = async (provider: Provider) => {
-  // Pre-action check (Layer 2)
+
   const check = await checkAction('test_provider', 'providers')
   if (!check.allowed) {
     toast.error('You do not have permission to test providers')
@@ -202,7 +208,7 @@ const columns = computed(() => {
     { key: 'hasCredentials', header: 'Status' }
   ]
   
-  // Only show actions column if user has any action permissions
+
   if (canCreateProvider.value || canDeleteProvider.value || canTestProvider.value) {
     baseColumns.push({ key: 'actions', header: 'Actions' })
   }
@@ -213,8 +219,62 @@ const columns = computed(() => {
 
 <template>
   <div class="space-y-4">
-    <!-- Toolbar - Always show if there's data OR if there's a search query -->
-    <div class="flex items-center justify-between gap-4" v-if="providers.length > 0 || searchQuery">
+    <!-- Permissions Loading Skeleton -->
+    <div v-if="permissionsLoading" class="space-y-4">
+      <!-- Toolbar Skeleton -->
+      <div class="flex items-center justify-between gap-4">
+        <div class="flex-1 flex items-center gap-3">
+          <div class="relative flex-1 max-w-md">
+            <div class="skeleton-shimmer h-10 rounded-lg" style="width: 100%;"></div>
+          </div>
+        </div>
+        <div class="skeleton-shimmer h-10 w-32 rounded-lg"></div>
+      </div>
+      <!-- Table Skeleton -->
+      <div class="overflow-x-auto rounded-xl border-2 border-[rgb(var(--border))] bg-[rgb(var(--surface))]">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b-2 border-[rgb(var(--border))]">
+              <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-[rgb(var(--text-muted))]">
+                <div class="skeleton-shimmer h-4 w-20 rounded"></div>
+              </th>
+              <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-[rgb(var(--text-muted))]">
+                <div class="skeleton-shimmer h-4 w-24 rounded"></div>
+              </th>
+              <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-[rgb(var(--text-muted))]">
+                <div class="skeleton-shimmer h-4 w-16 rounded"></div>
+              </th>
+              <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-[rgb(var(--text-muted))]">
+                <div class="skeleton-shimmer h-4 w-20 rounded"></div>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="i in 5" :key="i" class="border-b border-[rgb(var(--border))]">
+              <td class="px-4 py-3">
+                <div class="skeleton-shimmer h-4 rounded" :style="{ width: `${70 + Math.random() * 20}%` }"></div>
+              </td>
+              <td class="px-4 py-3">
+                <div class="skeleton-shimmer h-4 rounded" :style="{ width: `${65 + Math.random() * 25}%` }"></div>
+              </td>
+              <td class="px-4 py-3">
+                <div class="skeleton-shimmer h-4 rounded" :style="{ width: `${60 + Math.random() * 30}%` }"></div>
+              </td>
+              <td class="px-4 py-3">
+                <div class="flex gap-2">
+                  <div class="skeleton-shimmer h-8 w-8 rounded"></div>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Main Content (only show after permissions load) -->
+    <template v-else>
+      <!-- Toolbar - Always show if there's data OR if there's a search query -->
+      <div class="flex items-center justify-between gap-4" v-if="providers.length > 0 || searchQuery">
       <div class="flex-1 flex items-center gap-3">
         <div class="relative flex-1 max-w-md">
           <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[rgb(var(--text-muted))]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -407,6 +467,6 @@ const columns = computed(() => {
         <UiButton variant="danger" @click="handleRemoveProvider" :disabled="loading">Remove</UiButton>
       </div>
     </UiModal>
-
+    </template>
   </div>
 </template>

@@ -164,7 +164,7 @@ const columns = [
   { key: 'decision', header: 'Decision', class: 'w-24', sortable: true },
   { key: 'auth_duration_ms', header: 'Duration', class: 'w-28', sortable: true },
   { key: 'provider', header: 'Provider', class: 'w-24', sortable: true },
-  { key: 'spend', header: 'Cost', class: 'w-28' }
+  { key: 'spend', header: 'Cost', class: 'w-28', sortable: true }
 ]
 
 onMounted(() => {

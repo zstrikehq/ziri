@@ -53,7 +53,7 @@ export async function chatCompletions(request: ChatCompletionRequest): Promise<C
  
     endpoint = `${provider.baseUrl}/messages`
     
-    // Separate system messages from user/assistant messages for Anthropic
+
     const systemMessages: string[] = []
     const conversationMessages: Array<{ role: 'user' | 'assistant'; content: string }> = []
     
@@ -74,12 +74,12 @@ export async function chatCompletions(request: ChatCompletionRequest): Promise<C
       messages: conversationMessages
     }
     
-    // Add system parameter if there are system messages
+
     if (systemMessages.length > 0) {
       requestBody.system = systemMessages.join('\n\n')
     }
     
-    // Add temperature if provided
+
     if (request.temperature !== undefined) {
       requestBody.temperature = request.temperature
     }
@@ -87,7 +87,7 @@ export async function chatCompletions(request: ChatCompletionRequest): Promise<C
  
     endpoint = `${provider.baseUrl}/chat/completions`
     
-    // Check if model requires max_completion_tokens (newer OpenAI models like GPT-5.1)
+
     const requiresMaxCompletionTokens = request.model.includes('gpt-5') || request.model.includes('o1') || request.model.includes('o3')
     
     requestBody = {

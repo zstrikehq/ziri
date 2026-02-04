@@ -335,7 +335,7 @@ If you did not request this password reset, please contact your administrator im
   return { html, text }
 }
 
-// Dashboard user credentials email template
+
 export function generateDashboardUserCredentialsEmail(data: {
   name: string
   email: string

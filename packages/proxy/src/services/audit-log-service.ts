@@ -170,7 +170,8 @@ export class AuditLogService {
         'model': 'audit_logs.model',
         'decision': 'audit_logs.decision',
         'auth_duration_ms': 'audit_logs.auth_duration_ms',
-        'request_id': 'audit_logs.request_id'
+        'request_id': 'audit_logs.request_id',
+        'spend': 'COALESCE(cost_tracking.total_cost, 0)'
       }
       const dbColumn = columnMap[params.sortBy]
       if (dbColumn) {

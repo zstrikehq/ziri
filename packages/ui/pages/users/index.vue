@@ -9,7 +9,8 @@ const { users, loading, loadUsers, createUser, updateUser, deleteUser, resetPass
 const toast = useToast()
 const { checkActions, checkAction } = useInternalAuth()
 
-// Permission states
+
+const permissionsLoading = ref(true)
 const canCreateUser = ref(false)
 const canUpdateUser = ref(false)
 const canDeleteUser = ref(false)
@@ -83,18 +84,23 @@ watch([debouncedSearchQuery, currentPage, itemsPerPage, sortBy, sortOrder], () =
 })
 
 onMounted(async () => {
-  // Check permissions for sensitive actions
-  const permissions = await checkActions([
-    { action: 'create_user', resourceType: 'users' },
-    { action: 'update_user', resourceType: 'users' },
-    { action: 'delete_user', resourceType: 'users' },
-    { action: 'reset_user_password', resourceType: 'users' }
-  ])
-  
-  canCreateUser.value = permissions.results.find(r => r.action === 'create_user')?.allowed || false
-  canUpdateUser.value = permissions.results.find(r => r.action === 'update_user')?.allowed || false
-  canDeleteUser.value = permissions.results.find(r => r.action === 'delete_user')?.allowed || false
-  canResetPassword.value = permissions.results.find(r => r.action === 'reset_user_password')?.allowed || false
+
+  permissionsLoading.value = true
+  try {
+    const permissions = await checkActions([
+      { action: 'create_user', resourceType: 'users' },
+      { action: 'update_user', resourceType: 'users' },
+      { action: 'delete_user', resourceType: 'users' },
+      { action: 'reset_user_password', resourceType: 'users' }
+    ])
+    
+    canCreateUser.value = permissions.results.find(r => r.action === 'create_user')?.allowed || false
+    canUpdateUser.value = permissions.results.find(r => r.action === 'update_user')?.allowed || false
+    canDeleteUser.value = permissions.results.find(r => r.action === 'delete_user')?.allowed || false
+    canResetPassword.value = permissions.results.find(r => r.action === 'reset_user_password')?.allowed || false
+  } finally {
+    permissionsLoading.value = false
+  }
   
   await fetchUsers()
 })
@@ -105,7 +111,7 @@ const handleCreateUser = async () => {
     return
   }
   
-  // Pre-action check (Layer 2)
+
   const check = await checkAction('create_user', 'users')
   if (!check.allowed) {
     toast.error('You do not have permission to create users')
@@ -146,7 +152,7 @@ const handleCreateUser = async () => {
 }
 
 const confirmDelete = async (user: User) => {
-  // Pre-action check (Layer 2)
+
   const check = await checkAction('delete_user', 'users')
   if (!check.allowed) {
     toast.error('You do not have permission to delete users')
@@ -158,7 +164,7 @@ const confirmDelete = async (user: User) => {
 }
 
 const confirmResetPassword = async (user: User) => {
-  // Pre-action check (Layer 2)
+
   const check = await checkAction('reset_user_password', 'users')
   if (!check.allowed) {
     toast.error('You do not have permission to reset user passwords')
@@ -223,8 +229,75 @@ const copyPassword = () => {
 
 <template>
   <div class="space-y-4">
-    <!-- Toolbar - Always show if there's data OR if there's a search query -->
-    <div class="flex items-center justify-between gap-4" v-if="users.length > 0 || searchQuery">
+    <!-- Permissions Loading Skeleton -->
+    <div v-if="permissionsLoading" class="space-y-4">
+      <!-- Toolbar Skeleton -->
+      <div class="flex items-center justify-between gap-4">
+        <div class="flex-1 flex items-center gap-3">
+          <div class="relative flex-1 max-w-md">
+            <div class="skeleton-shimmer h-10 rounded-lg" style="width: 100%;"></div>
+          </div>
+        </div>
+        <div class="skeleton-shimmer h-10 w-28 rounded-lg"></div>
+      </div>
+      <!-- Table Skeleton -->
+      <div class="overflow-x-auto rounded-xl border-2 border-[rgb(var(--border))] bg-[rgb(var(--surface))]">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b-2 border-[rgb(var(--border))]">
+              <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-[rgb(var(--text-muted))]">
+                <div class="skeleton-shimmer h-4 w-16 rounded"></div>
+              </th>
+              <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-[rgb(var(--text-muted))]">
+                <div class="skeleton-shimmer h-4 w-20 rounded"></div>
+              </th>
+              <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-[rgb(var(--text-muted))]">
+                <div class="skeleton-shimmer h-4 w-24 rounded"></div>
+              </th>
+              <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-[rgb(var(--text-muted))]">
+                <div class="skeleton-shimmer h-4 w-16 rounded"></div>
+              </th>
+              <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-[rgb(var(--text-muted))]">
+                <div class="skeleton-shimmer h-4 w-20 rounded"></div>
+              </th>
+              <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-[rgb(var(--text-muted))] w-32">
+                <div class="skeleton-shimmer h-4 w-16 rounded"></div>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="i in 5" :key="i" class="border-b border-[rgb(var(--border))]">
+              <td class="px-4 py-3">
+                <div class="skeleton-shimmer h-4 rounded" :style="{ width: `${60 + Math.random() * 30}%` }"></div>
+              </td>
+              <td class="px-4 py-3">
+                <div class="skeleton-shimmer h-4 rounded" :style="{ width: `${70 + Math.random() * 20}%` }"></div>
+              </td>
+              <td class="px-4 py-3">
+                <div class="skeleton-shimmer h-4 rounded" :style="{ width: `${65 + Math.random() * 25}%` }"></div>
+              </td>
+              <td class="px-4 py-3">
+                <div class="skeleton-shimmer h-6 w-20 rounded-full"></div>
+              </td>
+              <td class="px-4 py-3">
+                <div class="skeleton-shimmer h-4 rounded" :style="{ width: `${50 + Math.random() * 20}%` }"></div>
+              </td>
+              <td class="px-4 py-3">
+                <div class="flex gap-2">
+                  <div class="skeleton-shimmer h-8 w-8 rounded"></div>
+                  <div class="skeleton-shimmer h-8 w-8 rounded"></div>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Main Content (only show after permissions load) -->
+    <template v-else>
+      <!-- Toolbar - Always show if there's data OR if there's a search query -->
+      <div class="flex items-center justify-between gap-4" v-if="users.length > 0 || searchQuery">
       <div class="flex-1 flex items-center gap-3">
         <div class="relative flex-1 max-w-md">
           <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[rgb(var(--text-muted))]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -495,5 +568,6 @@ const copyPassword = () => {
         </div>
       </div>
     </UiModal>
+    </template>
   </div>
 </template>

@@ -18,7 +18,8 @@ const { validatePolicies, formatPolicy } = useCedarWasm()
 const toast = useToast()
 const { checkActions, checkAction } = useInternalAuth()
 
-// Permission states
+
+const permissionsLoading = ref(true)
 const canCreatePolicy = ref(false)
 const canUpdatePolicy = ref(false)
 const canDeletePolicy = ref(false)
@@ -211,24 +212,29 @@ const groupedTemplates = computed(() => {
 
  
 onMounted(async () => {
-  // Check permissions for sensitive actions
-  const permissions = await checkActions([
-    { action: 'create_policy', resourceType: 'policies' },
-    { action: 'update_policy', resourceType: 'policies' },
-    { action: 'delete_policy', resourceType: 'policies' },
-    { action: 'patch_policy_status', resourceType: 'policies' },
-    { action: 'generate_policy_with_ai', resourceType: 'policies' }
-  ])
-  
-  canCreatePolicy.value = permissions.results.find(r => r.action === 'create_policy')?.allowed || false
-  canUpdatePolicy.value = permissions.results.find(r => r.action === 'update_policy')?.allowed || false
-  canDeletePolicy.value = permissions.results.find(r => r.action === 'delete_policy')?.allowed || false
-  canPatchPolicyStatus.value = permissions.results.find(r => r.action === 'patch_policy_status')?.allowed || false
-  canGeneratePolicyWithAI.value = permissions.results.find(r => r.action === 'generate_policy_with_ai')?.allowed || false
+
+  permissionsLoading.value = true
+  try {
+    const permissions = await checkActions([
+      { action: 'create_policy', resourceType: 'policies' },
+      { action: 'update_policy', resourceType: 'policies' },
+      { action: 'delete_policy', resourceType: 'policies' },
+      { action: 'patch_policy_status', resourceType: 'policies' },
+      { action: 'generate_policy_with_ai', resourceType: 'policies' }
+    ])
+    
+    canCreatePolicy.value = permissions.results.find(r => r.action === 'create_policy')?.allowed || false
+    canUpdatePolicy.value = permissions.results.find(r => r.action === 'update_policy')?.allowed || false
+    canDeletePolicy.value = permissions.results.find(r => r.action === 'delete_policy')?.allowed || false
+    canPatchPolicyStatus.value = permissions.results.find(r => r.action === 'patch_policy_status')?.allowed || false
+    canGeneratePolicyWithAI.value = permissions.results.find(r => r.action === 'generate_policy_with_ai')?.allowed || false
+  } finally {
+    permissionsLoading.value = false
+  }
   
   await nextTick()
   
-  // Check for URL parameters to open create modal with policy
+
   const route = useRoute()
   if (route.query.create === 'true' && route.query.policy) {
     try {
@@ -240,14 +246,14 @@ onMounted(async () => {
       validationErrors.value = []
       validationWarnings.value = []
       
-      // Clean up URL first to prevent redirect issues
+
       await navigateTo('/rules', { replace: true })
       
-      // Wait a bit for navigation to complete
+
       await nextTick()
       await new Promise(resolve => setTimeout(resolve, 100))
       
-      // Open modal and validate
+
       showCreateModal.value = true
       await nextTick()
       validatePolicy(policyText)
@@ -354,7 +360,7 @@ const onPolicyBlur = async () => {
 }
 
 const handleCreateRule = async () => {
-  // Pre-action check (Layer 2)
+
   const check = await checkAction('create_policy', 'policies')
   if (!check.allowed) {
     toast.error('You do not have permission to create policies')
@@ -375,7 +381,7 @@ const handleCreateRule = async () => {
     await createRule(newRule)
  
     if (!newRule.isActive) {
-      // Check permission for status change
+
       const statusCheck = await checkAction('patch_policy_status', 'policies')
       if (!statusCheck.allowed) {
         toast.error('You do not have permission to change policy status')
@@ -420,7 +426,7 @@ const handleEditRule = async (rule: Policy) => {
 const handleUpdateRule = async () => {
   if (!ruleToEdit.value) return
   
-  // Pre-action check (Layer 2)
+
   const check = await checkAction('update_policy', 'policies')
   if (!check.allowed) {
     toast.error('You do not have permission to update policies')
@@ -441,7 +447,7 @@ const handleUpdateRule = async () => {
  
  
     if (newRule.isActive !== ruleToEdit.value.isActive) {
-      // Check permission for status change
+
       const statusCheck = await checkAction('patch_policy_status', 'policies')
       if (!statusCheck.allowed) {
         toast.error('You do not have permission to change policy status')
@@ -476,7 +482,7 @@ const handleCancelEdit = () => {
 }
 
 const confirmDelete = async (rule: Policy) => {
-  // Pre-action check (Layer 2)
+
   const check = await checkAction('delete_policy', 'policies')
   if (!check.allowed) {
     toast.error('You do not have permission to delete policies')
@@ -500,20 +506,83 @@ const handleDeleteRule = async () => {
 }
 
 const handleUseAIPolicy = async (policy: string) => {
-  // Pre-action check (Layer 2)
+
   const check = await checkAction('generate_policy_with_ai', 'policies')
   if (!check.allowed) {
     toast.error('You do not have permission to generate policies with AI')
     return
   }
-  // This is handled in the component itself now, keeping for compatibility
+
 }
 </script>
 
 <template>
   <div class="space-y-4">
-    <!-- Toolbar - Always show if there's data OR if there's a search query -->
-    <div class="flex items-center justify-between gap-4" v-if="rules.length > 0 || searchQuery || filterEffect">
+    <!-- Permissions Loading Skeleton -->
+    <div v-if="permissionsLoading" class="space-y-4">
+      <!-- Toolbar Skeleton -->
+      <div class="flex items-center justify-between gap-4">
+        <div class="flex-1 flex items-center gap-3">
+          <div class="relative flex-1 max-w-md">
+            <div class="skeleton-shimmer h-10 rounded-lg" style="width: 100%;"></div>
+          </div>
+          <div class="skeleton-shimmer h-10 w-32 rounded-lg"></div>
+        </div>
+        <div class="flex gap-2">
+          <div class="skeleton-shimmer h-10 w-24 rounded-lg"></div>
+          <div class="skeleton-shimmer h-10 w-32 rounded-lg"></div>
+          <div class="skeleton-shimmer h-10 w-28 rounded-lg"></div>
+        </div>
+      </div>
+      <!-- Table Skeleton -->
+      <div class="overflow-x-auto rounded-xl border-2 border-[rgb(var(--border))] bg-[rgb(var(--surface))]">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b-2 border-[rgb(var(--border))]">
+              <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-[rgb(var(--text-muted))]">
+                <div class="skeleton-shimmer h-4 w-16 rounded"></div>
+              </th>
+              <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-[rgb(var(--text-muted))]">
+                <div class="skeleton-shimmer h-4 w-20 rounded"></div>
+              </th>
+              <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-[rgb(var(--text-muted))]">
+                <div class="skeleton-shimmer h-4 w-12 rounded"></div>
+              </th>
+              <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-[rgb(var(--text-muted))]">
+                <div class="skeleton-shimmer h-4 w-16 rounded"></div>
+              </th>
+              <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-[rgb(var(--text-muted))]">
+                <div class="skeleton-shimmer h-4 w-20 rounded"></div>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="i in 5" :key="i" class="border-b border-[rgb(var(--border))]">
+              <td class="px-4 py-3">
+                <div class="skeleton-shimmer h-4 rounded" :style="{ width: `${60 + Math.random() * 30}%` }"></div>
+              </td>
+              <td class="px-4 py-3">
+                <div class="skeleton-shimmer h-4 rounded" :style="{ width: `${70 + Math.random() * 20}%` }"></div>
+              </td>
+              <td class="px-4 py-3">
+                <div class="skeleton-shimmer h-6 w-16 rounded-full"></div>
+              </td>
+              <td class="px-4 py-3">
+                <div class="skeleton-shimmer h-6 w-20 rounded-full"></div>
+              </td>
+              <td class="px-4 py-3">
+                <div class="skeleton-shimmer h-4 rounded" :style="{ width: `${50 + Math.random() * 20}%` }"></div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Main Content (only show after permissions load) -->
+    <template v-else>
+      <!-- Toolbar - Always show if there's data OR if there's a search query -->
+      <div class="flex items-center justify-between gap-4" v-if="rules.length > 0 || searchQuery || filterEffect">
       <div class="flex-1 flex items-center gap-3">
         <div class="relative flex-1 max-w-md">
           <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[rgb(var(--text-muted))]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -929,7 +998,8 @@ const handleUseAIPolicy = async (policy: string) => {
       </div>
     </UiModal>
 
-    <!-- AI Policy Chat Modal -->
-    <AIPolicyChatModal v-model="showAIChatModal" @usePolicy="handleUseAIPolicy" />
+      <!-- AI Policy Chat Modal -->
+      <AIPolicyChatModal v-model="showAIChatModal" @usePolicy="handleUseAIPolicy" />
+    </template>
   </div>
 </template>

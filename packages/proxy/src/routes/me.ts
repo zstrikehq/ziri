@@ -111,7 +111,7 @@ router.get('/keys', async (req: AuthenticatedRequest, res: Response) => {
       data: [{
         ...userKeyEntity,
         apiKey: decryptedKey,
-        // Parse and include spend values in a format the UI can use
+
         currentDailySpend: parseDecimal(attrs.current_daily_spend),
         currentMonthlySpend: parseDecimal(attrs.current_monthly_spend),
         lastDailyReset: attrs.last_daily_reset || '',
@@ -177,11 +177,11 @@ router.get('/usage', async (req: AuthenticatedRequest, res: Response) => {
     
     const attrs = userKeyEntity.attrs || {}
     
-    // Get all API keys for this user to calculate totals
+
     const userKeys = db.prepare('SELECT id FROM user_agent_keys WHERE auth_id = ?').all(userId) as Array<{ id: string }>
     const executionKeys = userKeys.map(k => k.id)
     
-    // Calculate total requests (permitted requests only)
+
     let totalRequests = 0
     if (executionKeys.length > 0) {
       const placeholders = executionKeys.map(() => '?').join(',')
@@ -193,7 +193,7 @@ router.get('/usage', async (req: AuthenticatedRequest, res: Response) => {
       totalRequests = requestsResult?.count || 0
     }
     
-    // Calculate total tokens from cost_tracking
+
     let totalTokens = 0
     if (executionKeys.length > 0) {
       const placeholders = executionKeys.map(() => '?').join(',')
@@ -205,7 +205,7 @@ router.get('/usage', async (req: AuthenticatedRequest, res: Response) => {
         `).get(...executionKeys) as { sum: number | null } | undefined
         totalTokens = tokensResult?.sum || 0
       } catch (error: any) {
-        // cost_tracking table might not exist, ignore
+
         console.warn('[ME] Failed to get total tokens:', error.message)
       }
     }

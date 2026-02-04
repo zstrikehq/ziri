@@ -19,7 +19,8 @@ const { validateEntities } = useCedarWasm()
 const toast = useToast()
 const { checkActions, checkAction } = useInternalAuth()
 
-// Permission states
+
+const permissionsLoading = ref(true)
 const canCreateKey = ref(false)
 const canRotateKey = ref(false)
 const canDeleteKey = ref(false)
@@ -27,18 +28,23 @@ const canUpdateKeyStatus = ref(false)
 
  
 onMounted(async () => {
-  // Check permissions for sensitive actions
-  const permissions = await checkActions([
-    { action: 'create_key', resourceType: 'keys' },
-    { action: 'rotate_key', resourceType: 'keys' },
-    { action: 'delete_key_by_id', resourceType: 'keys' },
-    { action: 'update_key_status', resourceType: 'keys' }
-  ])
-  
-  canCreateKey.value = permissions.results.find(r => r.action === 'create_key')?.allowed || false
-  canRotateKey.value = permissions.results.find(r => r.action === 'rotate_key')?.allowed || false
-  canDeleteKey.value = permissions.results.find(r => r.action === 'delete_key_by_id')?.allowed || false
-  canUpdateKeyStatus.value = permissions.results.find(r => r.action === 'update_key_status')?.allowed || false
+
+  permissionsLoading.value = true
+  try {
+    const permissions = await checkActions([
+      { action: 'create_key', resourceType: 'keys' },
+      { action: 'rotate_key', resourceType: 'keys' },
+      { action: 'delete_key_by_id', resourceType: 'keys' },
+      { action: 'update_key_status', resourceType: 'keys' }
+    ])
+    
+    canCreateKey.value = permissions.results.find(r => r.action === 'create_key')?.allowed || false
+    canRotateKey.value = permissions.results.find(r => r.action === 'rotate_key')?.allowed || false
+    canDeleteKey.value = permissions.results.find(r => r.action === 'delete_key_by_id')?.allowed || false
+    canUpdateKeyStatus.value = permissions.results.find(r => r.action === 'update_key_status')?.allowed || false
+  } finally {
+    permissionsLoading.value = false
+  }
   
   await nextTick()
   
@@ -171,7 +177,7 @@ const columns = [
 ]
 
 const viewKeyDetail = async (row: Key) => {
-  // Check permission before navigating to detail page
+
   const check = await checkAction('create_key', 'keys')
   if (!check.allowed) {
     toast.error('You do not have permission to view key details')
@@ -282,7 +288,7 @@ const isUpdating = ref(false)
 const handleUpdateKey = async () => {
   if (!keyToEdit.value || !originalEntity.value || !keyToEdit.value.userKeyId || isUpdating.value) return
   
-  // Pre-action check (Layer 2)
+
   const check = await checkAction('update_key_status', 'keys')
   if (!check.allowed) {
     toast.error('You do not have permission to update key status')
@@ -337,7 +343,7 @@ const handleCreateKey = async () => {
     return
   }
   
-  // Pre-action check (Layer 2)
+
   const check = await checkAction('create_key', 'keys')
   if (!check.allowed) {
     toast.error('You do not have permission to create API keys')
@@ -369,7 +375,7 @@ const handleCreateKey = async () => {
 const handleRotateKey = async (userId: string) => {
   if (isRotating.value === userId) return
   
-  // Pre-action check (Layer 2)
+
   const check = await checkAction('rotate_key', 'keys')
   if (!check.allowed) {
     toast.error('You do not have permission to rotate API keys')
@@ -401,8 +407,75 @@ const { getAuthHeader } = useAdminAuth()
 
 <template>
   <div class="space-y-4">
-    <!-- Toolbar - Always show if there's data OR if there's a search query -->
-    <div class="flex items-center justify-between gap-4" v-if="keys.length > 0 || searchQuery || filterStatus">
+    <!-- Permissions Loading Skeleton -->
+    <div v-if="permissionsLoading" class="space-y-4">
+      <!-- Toolbar Skeleton -->
+      <div class="flex items-center justify-between gap-4">
+        <div class="flex-1 flex items-center gap-3">
+          <div class="relative flex-1 max-w-md">
+            <div class="skeleton-shimmer h-10 rounded-lg" style="width: 100%;"></div>
+          </div>
+          <div class="skeleton-shimmer h-10 w-32 rounded-lg"></div>
+        </div>
+        <div class="skeleton-shimmer h-10 w-28 rounded-lg"></div>
+      </div>
+      <!-- Table Skeleton -->
+      <div class="overflow-x-auto rounded-xl border-2 border-[rgb(var(--border))] bg-[rgb(var(--surface))]">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b-2 border-[rgb(var(--border))]">
+              <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-[rgb(var(--text-muted))]">
+                <div class="skeleton-shimmer h-4 w-16 rounded"></div>
+              </th>
+              <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-[rgb(var(--text-muted))]">
+                <div class="skeleton-shimmer h-4 w-20 rounded"></div>
+              </th>
+              <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-[rgb(var(--text-muted))]">
+                <div class="skeleton-shimmer h-4 w-24 rounded"></div>
+              </th>
+              <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-[rgb(var(--text-muted))]">
+                <div class="skeleton-shimmer h-4 w-16 rounded"></div>
+              </th>
+              <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-[rgb(var(--text-muted))]">
+                <div class="skeleton-shimmer h-4 w-20 rounded"></div>
+              </th>
+              <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-[rgb(var(--text-muted))]">
+                <div class="skeleton-shimmer h-4 w-16 rounded"></div>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="i in 5" :key="i" class="border-b border-[rgb(var(--border))]">
+              <td class="px-4 py-3">
+                <div class="skeleton-shimmer h-4 rounded" :style="{ width: `${60 + Math.random() * 30}%` }"></div>
+              </td>
+              <td class="px-4 py-3">
+                <div class="skeleton-shimmer h-4 rounded" :style="{ width: `${70 + Math.random() * 20}%` }"></div>
+              </td>
+              <td class="px-4 py-3">
+                <div class="skeleton-shimmer h-4 rounded" :style="{ width: `${65 + Math.random() * 25}%` }"></div>
+              </td>
+              <td class="px-4 py-3">
+                <div class="skeleton-shimmer h-6 w-20 rounded-full"></div>
+              </td>
+              <td class="px-4 py-3">
+                <div class="skeleton-shimmer h-4 rounded" :style="{ width: `${50 + Math.random() * 20}%` }"></div>
+              </td>
+              <td class="px-4 py-3">
+                <div class="flex gap-2">
+                  <div class="skeleton-shimmer h-8 w-8 rounded"></div>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Main Content (only show after permissions load) -->
+    <template v-else>
+      <!-- Toolbar - Always show if there's data OR if there's a search query -->
+      <div class="flex items-center justify-between gap-4" v-if="keys.length > 0 || searchQuery || filterStatus">
       <div class="flex-1 flex items-center gap-3">
         <div class="relative flex-1 max-w-md">
           <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[rgb(var(--text-muted))]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -665,6 +738,6 @@ const { getAuthHeader } = useAdminAuth()
         </div>
       </div>
     </UiModal>
-
+    </template>
   </div>
 </template>

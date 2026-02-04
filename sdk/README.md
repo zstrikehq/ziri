@@ -64,7 +64,7 @@ const response = await sdk.chatCompletions({
   }>,
   temperature?: number,
   maxTokens?: number,
-  // ... other provider-specific options
+
 })
 ```
 

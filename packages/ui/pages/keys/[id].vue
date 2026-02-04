@@ -16,6 +16,10 @@ const { getAuthHeader } = useUnifiedAuth()
 const toast = useToast()
 const { checkAction } = useInternalAuth()
 
+
+const permissionsLoading = ref(true)
+const canCreateKey = ref(false)
+
 const routeId = route.params.id as string
  
 const userId = routeId
@@ -185,17 +189,22 @@ const goBack = () => {
 onMounted(async () => {
   await nextTick()
   
-  // Check permission to access key detail page
-  const check = await checkAction('get_key', 'keys')
-  if (!check.allowed) {
-    toast.error('You do not have permission to view key details')
-    router.push('/keys')
-    return
+
+  permissionsLoading.value = true
+  try {
+    const check = await checkAction('get_key', 'keys')
+    if (!check.allowed) {
+      toast.error('You do not have permission to view key details')
+      router.push('/keys')
+      return
+    }
+    
+
+    const createCheck = await checkAction('create_key', 'keys')
+    canCreateKey.value = createCheck.allowed
+  } finally {
+    permissionsLoading.value = false
   }
-  
-  // Check permission for copy button (requires create_key permission)
-  const createCheck = await checkAction('create_key', 'keys')
-  canCreateKey.value = createCheck.allowed
   
   if (configStore.isConfigured) {
     try {
@@ -225,22 +234,95 @@ watch(() => key.value.executionKey, () => {
 
 <template>
   <div class="space-y-6">
-    <!-- Back button -->
-    <button 
-      @click="goBack"
-      class="inline-flex items-center gap-2 text-sm font-medium text-[rgb(var(--text-secondary))] hover:text-[rgb(var(--text))] transition-colors group"
-    >
-      <svg class="w-4 h-4 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-      </svg>
-      Back to Keys
-    </button>
-
-    <div v-if="loading" class="p-6">
-      <UiLoadingSkeleton :lines="8" height="h-6" />
+    <!-- Permissions Loading Skeleton -->
+    <div v-if="permissionsLoading" class="space-y-6">
+      <!-- Back Button Skeleton -->
+      <div class="skeleton-shimmer h-5 w-32 rounded"></div>
+      
+      <!-- Cards Grid Skeleton -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Key Info Card Skeleton -->
+        <div class="card">
+          <div class="flex items-center justify-between mb-5">
+            <div class="skeleton-shimmer h-6 w-24 rounded"></div>
+            <div class="skeleton-shimmer h-6 w-20 rounded-full"></div>
+          </div>
+          <div class="space-y-4">
+            <div class="grid grid-cols-2 gap-4">
+              <div class="space-y-2">
+                <div class="skeleton-shimmer h-3 w-16 rounded"></div>
+                <div class="skeleton-shimmer h-8 w-full rounded-md"></div>
+              </div>
+              <div class="space-y-2">
+                <div class="skeleton-shimmer h-3 w-20 rounded"></div>
+                <div class="skeleton-shimmer h-4 w-12 rounded"></div>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+              <div class="space-y-2">
+                <div class="skeleton-shimmer h-3 w-16 rounded"></div>
+                <div class="skeleton-shimmer h-4 w-full rounded"></div>
+              </div>
+              <div class="space-y-2">
+                <div class="skeleton-shimmer h-3 w-24 rounded"></div>
+                <div class="skeleton-shimmer h-4 w-full rounded"></div>
+              </div>
+            </div>
+            <div class="pt-4 border-t-2 border-[rgb(var(--border))] space-y-2">
+              <div class="skeleton-shimmer h-3 w-20 rounded"></div>
+              <div class="skeleton-shimmer h-20 w-full rounded-lg"></div>
+            </div>
+            <div class="grid grid-cols-2 gap-4 pt-4 border-t-2 border-[rgb(var(--border))]">
+              <div class="space-y-2">
+                <div class="skeleton-shimmer h-3 w-16 rounded"></div>
+                <div class="skeleton-shimmer h-4 w-32 rounded"></div>
+              </div>
+              <div class="space-y-2">
+                <div class="skeleton-shimmer h-3 w-32 rounded"></div>
+                <div class="skeleton-shimmer h-4 w-32 rounded"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Cost Tracking Card Skeleton -->
+        <div class="card">
+          <div class="skeleton-shimmer h-6 w-32 rounded mb-5"></div>
+          <div class="space-y-4">
+            <div class="space-y-2">
+              <div class="skeleton-shimmer h-4 w-24 rounded"></div>
+              <div class="skeleton-shimmer h-3 w-full rounded"></div>
+              <div class="skeleton-shimmer h-3 w-full rounded"></div>
+            </div>
+            <div class="space-y-2">
+              <div class="skeleton-shimmer h-4 w-32 rounded"></div>
+              <div class="skeleton-shimmer h-3 w-full rounded"></div>
+              <div class="skeleton-shimmer h-3 w-full rounded"></div>
+            </div>
+            <div class="skeleton-shimmer h-48 w-full rounded-lg"></div>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div v-else class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Main Content (only show after permissions load) -->
+    <template v-else>
+      <!-- Back button -->
+      <button 
+        @click="goBack"
+        class="inline-flex items-center gap-2 text-sm font-medium text-[rgb(var(--text-secondary))] hover:text-[rgb(var(--text))] transition-colors group"
+      >
+        <svg class="w-4 h-4 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+        </svg>
+        Back to Keys
+      </button>
+
+      <div v-if="loading" class="p-6">
+        <UiLoadingSkeleton :lines="8" height="h-6" />
+      </div>
+
+      <div v-else class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <!-- Key Info Card -->
       <div class="card">
         <div class="flex items-center justify-between mb-5">
@@ -372,5 +454,6 @@ watch(() => key.value.executionKey, () => {
         </div>
       </div>
     </div>
+    </template>
   </div>
 </template>

@@ -9,21 +9,22 @@ import { useInternalAuth } from '~/composables/useInternalAuth'
 const { users, loading, loadUsers, createUser, updateUser, deleteUser, disableUser, enableUser } = useDashboardUsers()
 const toast = useToast()
 const { user: currentUser } = useAdminAuth()
-const { checkActions } = useInternalAuth()
+const { checkAction, checkActions } = useInternalAuth()
 
-// Permission states
+
+const permissionsLoading = ref(true)
 const canCreateAdmin = ref(false)
 const canUpdateAdmin = ref(false)
 const canDeleteAdmin = ref(false)
 const isZiri = computed(() => currentUser.value?.userId === 'ziri')
 
 const tableColumns = [
-  { key: 'userId', header: 'User ID' },
-  { key: 'name', header: 'Name' },
-  { key: 'email', header: 'Email' },
+  { key: 'userId', header: 'User ID', sortable: true },
+  { key: 'name', header: 'Name', sortable: true },
+  { key: 'email', header: 'Email', sortable: true },
   { key: 'role', header: 'Role' },
   { key: 'status', header: 'Status' },
-  { key: 'lastSignIn', header: 'Last Sign In' },
+  { key: 'lastSignIn', header: 'Last Sign In', sortable: true },
   { key: 'actions', header: '', class: 'w-40' }
 ]
 
@@ -60,6 +61,8 @@ const searchQuery = ref('')
 const currentPage = ref(1)
 const itemsPerPage = ref(20)
 const totalUsers = ref(0)
+const sortBy = ref<string | null>(null)
+const sortOrder = ref<'asc' | 'desc' | null>(null)
 
 const debouncedSearchQuery = useDebounce(searchQuery, 300)
 
@@ -68,7 +71,9 @@ const fetchUsers = async () => {
     const result = await loadUsers({
       search: debouncedSearchQuery.value || undefined,
       limit: itemsPerPage.value,
-      offset: (currentPage.value - 1) * itemsPerPage.value
+      offset: (currentPage.value - 1) * itemsPerPage.value,
+      sortBy: sortBy.value,
+      sortOrder: sortOrder.value
     })
     totalUsers.value = result.total || 0
   } catch (e: any) {
@@ -76,21 +81,32 @@ const fetchUsers = async () => {
   }
 }
 
-watch([debouncedSearchQuery, currentPage, itemsPerPage], () => {
+const handleSort = (newSortBy: string | null, newSortOrder: 'asc' | 'desc' | null) => {
+  sortBy.value = newSortBy
+  sortOrder.value = newSortOrder
+  currentPage.value = 1
+}
+
+watch([debouncedSearchQuery, currentPage, itemsPerPage, sortBy, sortOrder], () => {
   fetchUsers()
 })
 
 onMounted(async () => {
-  // Check permissions for admin-specific actions
-  const permissions = await checkActions([
-    { action: 'create_admin_dashboard_user', resourceType: 'dashboard_users' },
-    { action: 'update_admin_dashboard_user', resourceType: 'dashboard_users' },
-    { action: 'delete_admin_dashboard_user', resourceType: 'dashboard_users' }
-  ])
-  
-  canCreateAdmin.value = permissions.results.find(r => r.action === 'create_admin_dashboard_user')?.allowed || false
-  canUpdateAdmin.value = permissions.results.find(r => r.action === 'update_admin_dashboard_user')?.allowed || false
-  canDeleteAdmin.value = permissions.results.find(r => r.action === 'delete_admin_dashboard_user')?.allowed || false
+
+  permissionsLoading.value = true
+  try {
+    const permissions = await checkActions([
+      { action: 'create_admin_dashboard_user', resourceType: 'dashboard_users' },
+      { action: 'update_admin_dashboard_user', resourceType: 'dashboard_users' },
+      { action: 'delete_admin_dashboard_user', resourceType: 'dashboard_users' }
+    ])
+    
+    canCreateAdmin.value = permissions.results.find(r => r.action === 'create_admin_dashboard_user')?.allowed || false
+    canUpdateAdmin.value = permissions.results.find(r => r.action === 'update_admin_dashboard_user')?.allowed || false
+    canDeleteAdmin.value = permissions.results.find(r => r.action === 'delete_admin_dashboard_user')?.allowed || false
+  } finally {
+    permissionsLoading.value = false
+  }
   
   await fetchUsers()
 })
@@ -103,7 +119,7 @@ const handleCreateUser = async () => {
   
   if (isCreatingUser.value) return
   
-  // Layer 2: Check permission before creating
+
   if (newUser.role === 'admin') {
     const check = await checkAction('create_admin_dashboard_user', 'dashboard_users')
     if (!check.allowed) {
@@ -178,7 +194,7 @@ const confirmDelete = (user: DashboardUser) => {
 const handleDeleteUser = async () => {
   if (!userToDelete.value || isDeletingUser.value) return
   
-  // Layer 2: Check permission before deleting
+
   if (userToDelete.value.role === 'admin') {
     const check = await checkAction('delete_admin_dashboard_user', 'dashboard_users')
     if (!check.allowed) {
@@ -193,7 +209,7 @@ const handleDeleteUser = async () => {
     }
   }
   
-  // Check self-modification
+
   if (currentUser.value?.userId === userToDelete.value.userId) {
     toast.error('You cannot delete your own account')
     return
@@ -216,7 +232,7 @@ const handleDeleteUser = async () => {
 const handleToggleStatus = async (user: DashboardUser) => {
   if (isTogglingStatus.value) return
   
-  // Layer 2: Check permission before toggling status
+
   if (user.role === 'admin') {
     const check = await checkAction('update_admin_dashboard_user', 'dashboard_users')
     if (!check.allowed) {
@@ -231,7 +247,7 @@ const handleToggleStatus = async (user: DashboardUser) => {
     }
   }
   
-  // Check self-modification
+
   if (currentUser.value?.userId === user.userId) {
     toast.error('You cannot disable/enable your own account')
     return
@@ -277,9 +293,82 @@ const getRoleBadgeColor = (role: string) => {
 
 <template>
   <div class="space-y-4">
+    <!-- Permissions Loading Skeleton -->
+    <div v-if="permissionsLoading" class="space-y-4">
+      <!-- Toolbar Skeleton -->
+      <div class="flex items-center justify-between gap-4">
+        <div class="flex-1 flex items-center gap-3">
+          <div class="relative flex-1 max-w-md">
+            <div class="skeleton-shimmer h-10 rounded-lg" style="width: 100%;"></div>
+          </div>
+        </div>
+        <div class="skeleton-shimmer h-10 w-40 rounded-lg"></div>
+      </div>
+      <!-- Table Skeleton -->
+      <div class="overflow-x-auto rounded-xl border-2 border-[rgb(var(--border))] bg-[rgb(var(--surface))]">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b-2 border-[rgb(var(--border))]">
+              <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-[rgb(var(--text-muted))]">
+                <div class="skeleton-shimmer h-4 w-16 rounded"></div>
+              </th>
+              <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-[rgb(var(--text-muted))]">
+                <div class="skeleton-shimmer h-4 w-20 rounded"></div>
+              </th>
+              <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-[rgb(var(--text-muted))]">
+                <div class="skeleton-shimmer h-4 w-24 rounded"></div>
+              </th>
+              <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-[rgb(var(--text-muted))]">
+                <div class="skeleton-shimmer h-4 w-16 rounded"></div>
+              </th>
+              <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-[rgb(var(--text-muted))]">
+                <div class="skeleton-shimmer h-4 w-20 rounded"></div>
+              </th>
+              <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-[rgb(var(--text-muted))]">
+                <div class="skeleton-shimmer h-4 w-24 rounded"></div>
+              </th>
+              <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-[rgb(var(--text-muted))] w-40">
+                <div class="skeleton-shimmer h-4 w-16 rounded"></div>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="i in 5" :key="i" class="border-b border-[rgb(var(--border))]">
+              <td class="px-4 py-3">
+                <div class="skeleton-shimmer h-4 rounded" :style="{ width: `${60 + Math.random() * 30}%` }"></div>
+              </td>
+              <td class="px-4 py-3">
+                <div class="skeleton-shimmer h-4 rounded" :style="{ width: `${70 + Math.random() * 20}%` }"></div>
+              </td>
+              <td class="px-4 py-3">
+                <div class="skeleton-shimmer h-4 rounded" :style="{ width: `${65 + Math.random() * 25}%` }"></div>
+              </td>
+              <td class="px-4 py-3">
+                <div class="skeleton-shimmer h-6 w-20 rounded-full"></div>
+              </td>
+              <td class="px-4 py-3">
+                <div class="skeleton-shimmer h-6 w-20 rounded-full"></div>
+              </td>
+              <td class="px-4 py-3">
+                <div class="skeleton-shimmer h-4 rounded" :style="{ width: `${50 + Math.random() * 20}%` }"></div>
+              </td>
+              <td class="px-4 py-3">
+                <div class="flex gap-2">
+                  <div class="skeleton-shimmer h-8 w-8 rounded"></div>
+                  <div class="skeleton-shimmer h-8 w-8 rounded"></div>
+                  <div class="skeleton-shimmer h-8 w-8 rounded"></div>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
 
-    <!-- Toolbar -->
-    <div class="flex items-center justify-between gap-4" v-if="users.length > 0 || searchQuery">
+    <!-- Main Content (only show after permissions load) -->
+    <template v-else>
+      <!-- Toolbar -->
+      <div class="flex items-center justify-between gap-4" v-if="users.length > 0 || searchQuery">
       <div class="flex-1 flex items-center gap-3">
         <div class="relative flex-1 max-w-md">
           <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[rgb(var(--text-muted))]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -330,9 +419,12 @@ const getRoleBadgeColor = (role: string) => {
       :current-page="currentPage"
       :items-per-page="itemsPerPage"
       :total-items="totalUsers"
+      :sort-by="sortBy"
+      :sort-order="sortOrder"
       :empty-message="searchQuery ? 'No dashboard users match your search criteria.' : 'No dashboard users found. Create your first dashboard user to get started.'"
       @update:current-page="currentPage = $event"
       @update:items-per-page="itemsPerPage = $event"
+      @update:sort="handleSort"
     >
       <template #userId="{ row }">
         <code class="text-xs font-mono">{{ row.userId }}</code>
@@ -554,5 +646,6 @@ const getRoleBadgeColor = (role: string) => {
         </div>
       </div>
     </UiModal>
+    </template>
   </div>
 </template>

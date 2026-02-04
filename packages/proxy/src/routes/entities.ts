@@ -1,10 +1,12 @@
 import { Router, type Request, type Response } from 'express'
 import { requireAdmin } from '../middleware/auth.js'
 import { serviceFactory } from '../services/service-factory.js'
+import { logInternalOutcome } from '../utils/internal-audit-helpers.js'
 
 const router: Router = Router()
 
 router.get('/', requireAdmin, async (req: Request, res: Response) => {
+  const actionStart = Date.now()
   try {
     const uid = req.query.uid as string | undefined
     const includeApiKeys = req.query.includeApiKeys === 'true'
@@ -71,7 +73,21 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
         total: result.total
       })
     }
+
+    await logInternalOutcome(req, {
+      status: 'success',
+      code: '200',
+      message: `Retrieved ${result.data.length} entities`,
+      actionDurationMs: Date.now() - actionStart
+    })
   } catch (error: any) {
+    await logInternalOutcome(req, {
+      status: 'failed',
+      code: '500',
+      message: error.message || 'Failed to get entities',
+      actionDurationMs: Date.now() - actionStart
+    })
+
     res.status(500).json({
       error: 'Failed to get entities',
       message: error.message
@@ -80,6 +96,7 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
 })
 
 router.put('/', requireAdmin, async (req: Request, res: Response) => {
+  const actionStart = Date.now()
   try {
     const { entity, status } = req.body
     
@@ -102,11 +119,25 @@ router.put('/', requireAdmin, async (req: Request, res: Response) => {
     
     await entityStore.updateEntity(entity, entityStatus)
     
+    await logInternalOutcome(req, {
+      status: 'success',
+      code: '200',
+      message: 'Entity updated successfully',
+      actionDurationMs: Date.now() - actionStart
+    })
+
     res.json({
       success: true,
       message: 'Entity updated successfully'
     })
   } catch (error: any) {
+    await logInternalOutcome(req, {
+      status: 'failed',
+      code: '500',
+      message: error.message || 'Failed to update entity',
+      actionDurationMs: Date.now() - actionStart
+    })
+
     res.status(500).json({
       error: 'Failed to update entity',
       message: error.message

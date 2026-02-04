@@ -59,7 +59,7 @@ export class InternalSchemaStore implements IInternalSchemaStore {
     `).get() as any
     
     if (!row) {
-      // Return default schema from file
+
       const schemaJson = await convertCedarTextToJson(internalCedarTextSchema)
       return {
         schema: schemaJson,
@@ -77,7 +77,7 @@ export class InternalSchemaStore implements IInternalSchemaStore {
       }
     } catch (error: any) {
       console.error('[INTERNAL SCHEMA STORE] Failed to convert Cedar text to JSON:', error)
-      // Fallback to file schema
+
       const schemaJson = await convertCedarTextToJson(internalCedarTextSchema)
       return {
         schema: schemaJson,
@@ -90,7 +90,7 @@ export class InternalSchemaStore implements IInternalSchemaStore {
     const db = getDatabase()
     const { randomBytes } = await import('crypto')
 
-    // Check if a schema row already exists (because of UNIQUE index on obj_type = 'schema')
+
     const existing = db.prepare(`
       SELECT id 
       FROM internal_schema_policy 
@@ -99,14 +99,14 @@ export class InternalSchemaStore implements IInternalSchemaStore {
     `).get() as { id: string } | undefined
 
     if (existing?.id) {
-      // Update existing row in-place to avoid UNIQUE constraint violations
+
       db.prepare(`
         UPDATE internal_schema_policy
         SET content = ?, description = ?, status = 1, updated_at = datetime('now')
         WHERE id = ?
       `).run(schema, 'Internal authorization schema', existing.id)
     } else {
-      // Insert new schema row if none exists yet
+
       const schemaId = `internal-schema-${randomBytes(8).toString('hex')}`
       db.prepare(`
         INSERT INTO internal_schema_policy (id, obj_type, content, description, status)

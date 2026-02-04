@@ -89,6 +89,9 @@ export async function createServer(): Promise<Express> {
   const auditRoutes = (await import('./routes/audit.js')).default
   app.use('/api/audit', auditRoutes)
   
+  const internalAuditLogsRoutes = (await import('./routes/internal-audit-logs.js')).default
+  app.use('/api/internal-audit-logs', internalAuditLogsRoutes)
+  
   const costsRoutes = (await import('./routes/costs.js')).default
   app.use('/api/costs', costsRoutes)
 
@@ -153,7 +156,7 @@ async function ensureInitialization() {
     console.warn('[PROXY] Failed to initialize admin user:', error)
   })
   
-  // Step 6.5: Initialize internal authorization synchronously
+
   await initializeInternalAuth().catch((error) => {
     console.error('[PROXY] Failed to initialize internal authorization:', error)
     throw error // This is critical, so we should fail startup if it fails

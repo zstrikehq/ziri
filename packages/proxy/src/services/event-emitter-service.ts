@@ -1,12 +1,19 @@
 import { EventEmitter } from 'events'
 
-export type EventType = 'audit_log_created' | 'cost_tracked' | 'batch_update'
+export type EventType = 'audit_log_created' | 'cost_tracked' | 'batch_update' | 'internal_audit_log_created'
 
 export interface EventData {
   type: EventType
   data: {
     auditLogId?: number
     requestId?: string
+    internalAuditLogId?: number
+    dashboardUserId?: string
+    action?: string
+    resourceType?: string
+    resourceId?: string | null
+    outcomeStatus?: string | null
+    outcomeCode?: string | null
     costTrackingId?: number
     timestamp?: string
     decision?: 'permit' | 'forbid'

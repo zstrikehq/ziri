@@ -13,6 +13,7 @@ const { schemaToJson, schemaToText, validateCedarSchema, validateJsonSchema } = 
 const toast = useToast()
 const { checkAction } = useInternalAuth()
 
+const permissionsLoading = ref(true)
 const canUpdateSchema = ref(false)
 
  
@@ -27,9 +28,14 @@ const validationDebounceTimer = ref<NodeJS.Timeout | null>(null)
 
  
 onMounted(async () => {
-  // Check permission to update schema
-  const check = await checkAction('update_schema', 'schema')
-  canUpdateSchema.value = check.allowed
+
+  permissionsLoading.value = true
+  try {
+    const check = await checkAction('update_schema', 'schema')
+    canUpdateSchema.value = check.allowed
+  } finally {
+    permissionsLoading.value = false
+  }
   
   await nextTick()
   
@@ -192,7 +198,7 @@ const onModeSwitch = async (newMode: 'json' | 'cedar') => {
 
  
 const handleSave = async () => {
-  // Pre-action check (Layer 2)
+
   const check = await checkAction('update_schema', 'schema')
   if (!check.allowed) {
     toast.error('You do not have permission to update the schema')
@@ -261,7 +267,7 @@ const handleCancel = async () => {
 
  
 const startEditing = async () => {
-  // Check permission before allowing edit
+
   const check = await checkAction('update_schema', 'schema')
   if (!check.allowed) {
     toast.error('You do not have permission to edit the schema')
@@ -277,8 +283,33 @@ const displayLastSynced = computed(() => lastSyncedAt.value || new Date())
 
 <template>
   <div class="h-full flex flex-col">
-    <!-- Toolbar -->
-    <div class="flex items-center justify-between mb-4">
+    <!-- Permissions Loading Skeleton -->
+    <div v-if="permissionsLoading" class="h-full flex flex-col">
+      <!-- Toolbar Skeleton -->
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-3">
+          <div class="skeleton-shimmer h-6 w-12 rounded-full"></div>
+          <div class="skeleton-shimmer h-4 w-32 rounded"></div>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="skeleton-shimmer h-9 w-20 rounded-lg"></div>
+          <div class="skeleton-shimmer h-9 w-20 rounded-lg"></div>
+          <div class="skeleton-shimmer h-9 w-16 rounded-lg"></div>
+          <div class="skeleton-shimmer h-9 w-16 rounded-lg"></div>
+          <div class="skeleton-shimmer h-9 w-10 rounded-lg"></div>
+        </div>
+      </div>
+      
+      <!-- Editor Skeleton -->
+      <div class="flex-1 card">
+        <div class="skeleton-shimmer h-full w-full rounded-lg" style="min-height: 400px;"></div>
+      </div>
+    </div>
+
+    <!-- Main Content (only show after permissions load) -->
+    <template v-else>
+      <!-- Toolbar -->
+      <div class="flex items-center justify-between mb-4">
       <div class="flex items-center gap-3">
         <span class="badge badge-neutral">v1.0</span>
         <span class="text-xs text-[rgb(var(--text-muted))]">
@@ -324,12 +355,12 @@ const displayLastSynced = computed(() => lastSyncedAt.value || new Date())
             </svg>
             Refresh
           </UiButton>
-          <UiButton v-if="canUpdateSchema" size="sm" @click="startEditing">
+          <!-- <UiButton v-if="canUpdateSchema" size="sm" @click="startEditing">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
             </svg>
             Edit
-          </UiButton>
+          </UiButton> -->
         </template>
         
         <template v-else>
@@ -395,6 +426,7 @@ const displayLastSynced = computed(() => lastSyncedAt.value || new Date())
         spellcheck="false"
         placeholder="Loading schema..."
       />
-    </div>
+      </div>
+    </template>
   </div>
 </template>

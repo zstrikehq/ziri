@@ -22,7 +22,7 @@ const userRole = computed(() => {
 
 const isAdmin = computed(() => userRole.value === 'admin')
 const isUser = computed(() => userRole.value === 'user' || userRole.value === undefined)
-// Dashboard users are any users with a role that's not 'user' (admin, viewer, user_admin, policy_admin)
+
 const isDashboardUser = computed(() => userRole.value && userRole.value !== 'user')
 
 const toggleSidebar = () => {
@@ -72,7 +72,7 @@ const dashboardItem = { name: 'Dashboard', path: '/', icon: 'dashboard', adminOn
 const navSections = computed(() => {
   const sections = []
   
-  // Show sections for all dashboard users (admin, viewer, user_admin, policy_admin)
+
   if (isDashboardUser.value) {
     sections.push(
       {
@@ -116,7 +116,8 @@ const navSections = computed(() => {
         adminOnly: true, // Only admins can see Settings section (includes Config and Manage Users)
         items: [
           { name: 'Configuration', path: '/config', icon: 'config', adminOnly: true },
-          { name: 'Manage Users', path: '/settings/manage-users', icon: 'users', adminOnly: true, requiresAdmin: true }
+          { name: 'Manage Users', path: '/settings/manage-users', icon: 'users', adminOnly: true, requiresAdmin: true },
+          { name: 'Internal Logs', path: '/settings/internal-audit', icon: 'logs', adminOnly: true }
         ]
       }
     )
