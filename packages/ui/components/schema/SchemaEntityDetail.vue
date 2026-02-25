@@ -47,12 +47,13 @@ const emit = defineEmits<{
     </div>
 
     <!-- Attributes (recursive tree — handles unlimited nesting) -->
-    <div v-if="entity.attributes.length > 0">
+    <div>
       <h4 class="text-xs font-semibold uppercase tracking-wider text-[rgb(var(--text-muted))] mb-2">
         Attributes
-        <span class="text-[rgb(var(--text-muted))] font-normal">({{ entity.attributes.length }})</span>
+        <span v-if="entity.attributes.length > 0" class="text-[rgb(var(--text-muted))] font-normal">({{ entity.attributes.length }})</span>
       </h4>
       <SchemaAttributeTree
+        v-if="entity.attributes.length > 0"
         :attributes="entity.attributes"
         :schema="schema"
         :namespace="entity.namespace"
@@ -60,6 +61,7 @@ const emit = defineEmits<{
         :searchQuery="searchQuery"
         @navigate="(type, id) => emit('navigate', type, id)"
       />
+      <p v-else-if="entity.kind === 'entity'" class="text-xs text-[rgb(var(--text-muted))]">No attributes</p>
     </div>
 
     <!-- Tags -->
@@ -82,6 +84,21 @@ const emit = defineEmits<{
           @click="emit('navigate', 'entity', parent)"
         >
           <span v-html="highlightText(shortName(parent), searchQuery)"></span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Parent Of (entity types that have this type as parent) -->
+    <div v-if="entity.parentOf && entity.parentOf.length > 0">
+      <h4 class="text-xs font-semibold uppercase tracking-wider text-[rgb(var(--text-muted))] mb-2">Parent Of</h4>
+      <div class="flex flex-wrap gap-1.5">
+        <button
+          v-for="childId in entity.parentOf"
+          :key="childId"
+          class="px-2 py-0.5 text-xs font-mono rounded-full bg-sky-50 dark:bg-sky-900/20 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800 hover:bg-sky-100 dark:hover:bg-sky-900/40 transition-colors cursor-pointer"
+          @click="emit('navigate', 'entity', childId)"
+        >
+          <span v-html="highlightText(shortName(childId), searchQuery)"></span>
         </button>
       </div>
     </div>

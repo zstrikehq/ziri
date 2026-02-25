@@ -63,6 +63,13 @@ export async function proxyJsonRequest(event: any, opts: ProxyJsonRequestOpts): 
         response.statusText
       throw createError({ statusCode: response.status, statusMessage })
     }
+    if (response.status === 204) {
+      return null
+    }
+    const contentType = response.headers.get('content-type') || ''
+    if (!contentType.toLowerCase().includes('application/json')) {
+      return null
+    }
     return await response.json()
   } catch (err: any) {
     if (err.statusCode) throw err

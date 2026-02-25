@@ -1,0 +1,11 @@
+Signup: {
+  shape: sequence_diagram
+  ZS_UI -> ZS_UI: User clicks "Sign up" button
+  ZS_UI -> Kinde_UI: Redirect to Kinde login page
+  Kinde -> ZS_UI: User is redirected back to ZStrike UI with an authorization code
+  ZS_UI -> ZS_UI: Exchange authorization code for a token
+  ZS_UI -> Kinde_UI: Request user profile with token
+  Kinde -> ZS_UI: User profile
+  ZS_UI -> ZS_UI: Store user profile
+  ZS_UI -> ZS_UI: Show user dashboard
+}

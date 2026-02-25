@@ -1,9 +1,10 @@
 import express, { type Express } from 'express'
 import cors from 'cors'
 import path from 'path'
+import https from 'node:https'
 import { fileURLToPath } from 'url'
 import { dirname } from 'path'
-import { existsSync } from 'fs'
+import { existsSync, readFileSync } from 'fs'
 import { errorHandler, notFoundHandler } from './middleware/error-handler.js'
 import { findFreePort } from './utils/port-finder.js'
 import { loadConfig } from './config.js'
@@ -61,6 +62,9 @@ export async function createServer(): Promise<Express> {
   
   const entitiesRoutes = (await import('./routes/entities.js')).default
   app.use('/api/entities', entitiesRoutes)
+
+  const rolesRoutes = (await import('./routes/roles.js')).default
+  app.use('/api/roles', rolesRoutes)
   
   const userRoutes = (await import('./routes/users.js')).default
   app.use('/api/users', userRoutes)
@@ -176,14 +180,59 @@ async function ensureInitialization() {
   initialized = true
 }
 
+function createListener(app: Express, config: ReturnType<typeof loadConfig>) {
+  if (config.ssl?.enabled) {
+    const certPath = config.ssl.cert
+    const keyPath = config.ssl.key
+    if (!existsSync(certPath) || !existsSync(keyPath)) {
+      console.error(`[SERVER] SSL enabled but cert/key files not found:`)
+      console.error(`  cert: ${certPath} (${existsSync(certPath) ? 'found' : 'MISSING'})`)
+      console.error(`  key:  ${keyPath} (${existsSync(keyPath) ? 'found' : 'MISSING'})`)
+      console.error(`[SERVER] Falling back to HTTP`)
+      return null
+    }
+    return https.createServer(
+      { cert: readFileSync(certPath), key: readFileSync(keyPath) },
+      app
+    )
+  }
+  return null
+}
+
+function printStartupBanner(config: ReturnType<typeof loadConfig>, localUrl: string) {
+  console.log('='.repeat(70))
+  console.log('🚀 ZIRI PROXY SERVER')
+  console.log('='.repeat(70))
+  console.log(`Mode: ${config.mode || 'local'}`)
+  console.log(`Local URL: ${localUrl}`)
+  if (config.ssl?.enabled) {
+    console.log('🔒 SSL: Enabled')
+  }
+  if (config.publicUrl && config.publicUrl !== localUrl) {
+    console.log(`Public URL: ${config.publicUrl}`)
+    console.log('')
+    console.log('⚠️  Share this Public URL with users for API access')
+  }
+  console.log(`API Endpoints: ${localUrl}/api/*`)
+  console.log(`Health Check: ${localUrl}/health`)
+  console.log('')
+  if (config.email?.enabled) {
+    console.log(`📧 Email: Enabled (${config.email.provider || 'manual'})`)
+  } else {
+    console.log('📧 Email: Disabled')
+  }
+  console.log('='.repeat(70))
+  console.log('')
+}
+
 export async function startServer(): Promise<{ port: number; url: string }> {
   await ensureInitialization()
-  
+
   const app = await createServer()
   const config = loadConfig()
-  
+
   const host = config.host || '127.0.0.1'
-  
+
   let port: number
   try {
     port = await findFreePort(config.port)
@@ -191,77 +240,53 @@ export async function startServer(): Promise<{ port: number; url: string }> {
     console.error('[SERVER] Failed to find free port:', error)
     throw error
   }
-  
-      const localUrl = `http://${host === '0.0.0.0' ? 'localhost' : host}:${port}`
-      const serverConfig = loadConfig()
-      const publicUrl = serverConfig.publicUrl || localUrl
-      
-      return new Promise((resolve, reject) => {
-        server = app.listen(port, host, () => {
-          console.log('='.repeat(70))
-                console.log('🚀 ZIRI PROXY SERVER')
-          console.log('='.repeat(70))
-          console.log(`Mode: ${serverConfig.mode || 'local'}`)
-          console.log(`Local URL: ${localUrl}`)
-          if (serverConfig.publicUrl && serverConfig.publicUrl !== localUrl) {
-            console.log(`Public URL: ${publicUrl}`)
-            console.log('')
-            console.log('⚠️  Share this Public URL with users for API access')
+
+  const httpsServer = createListener(app, config)
+  const useHttps = httpsServer !== null
+  const protocol = useHttps ? 'https' : 'http'
+  const localUrl = `${protocol}://${host === '0.0.0.0' ? 'localhost' : host}:${port}`
+
+  return new Promise((resolve, reject) => {
+    if (useHttps) {
+      server = httpsServer.listen(port, host, () => {
+        printStartupBanner(config, localUrl)
+        resolve({ port, url: localUrl })
+      })
+    } else {
+      server = app.listen(port, host, () => {
+        printStartupBanner(config, localUrl)
+        resolve({ port, url: localUrl })
+      })
+    }
+
+    server.on('error', (error: NodeJS.ErrnoException) => {
+      if (error.code === 'EADDRINUSE') {
+        console.log(`[SERVER] Port ${port} became unavailable, finding new port...`)
+        findFreePort(port + 1).then((newPort) => {
+          if (server) {
+            server.close()
           }
-          console.log(`API Endpoints: ${localUrl}/api/*`)
-          console.log(`Health Check: ${localUrl}/health`)
-          console.log('')
-          if (serverConfig.email?.enabled) {
-            console.log(`📧 Email: Enabled (${serverConfig.email.provider || 'manual'})`)
-          } else {
-            console.log('📧 Email: Disabled')
-          }
-          console.log('='.repeat(70))
-          console.log('')
-          
-          resolve({ port, url: localUrl })
-        })
-        
-        server.on('error', (error: NodeJS.ErrnoException) => {
-          if (error.code === 'EADDRINUSE') {
-            console.log(`[SERVER] Port ${port} became unavailable, finding new port...`)
-            findFreePort(port + 1).then((newPort) => {
-              if (server) {
-                server.close()
-              }
-              const newLocalUrl = `http://${host === '0.0.0.0' ? 'localhost' : host}:${newPort}`
-              const retryConfig = loadConfig()
-              server = app.listen(newPort, host, () => {
-                console.log('='.repeat(70))
-                console.log('🚀 ZIRI PROXY SERVER')
-                console.log('='.repeat(70))
-                console.log(`Mode: ${retryConfig.mode || 'local'}`)
-                console.log(`Local URL: ${newLocalUrl}`)
-                if (retryConfig.publicUrl && retryConfig.publicUrl !== newLocalUrl) {
-                  console.log(`Public URL: ${retryConfig.publicUrl}`)
-                  console.log('')
-                  console.log('⚠️  Share this Public URL with users for API access')
-                }
-                console.log(`API Endpoints: ${newLocalUrl}/api/*`)
-                console.log(`Health Check: ${newLocalUrl}/health`)
-                console.log('')
-                if (retryConfig.email?.enabled) {
-                  console.log(`📧 Email: Enabled (${retryConfig.email.provider || 'manual'})`)
-                } else {
-                  console.log('📧 Email: Disabled')
-                }
-                console.log('='.repeat(70))
-                console.log('')
-                resolve({ port: newPort, url: newLocalUrl })
-              })
-            }).catch((findError) => {
-              reject(new Error(`Failed to find available port: ${findError.message}`))
+          const newLocalUrl = `${protocol}://${host === '0.0.0.0' ? 'localhost' : host}:${newPort}`
+          const retryConfig = loadConfig()
+          if (useHttps) {
+            server = httpsServer.listen(newPort, host, () => {
+              printStartupBanner(retryConfig, newLocalUrl)
+              resolve({ port: newPort, url: newLocalUrl })
             })
           } else {
-            reject(error)
+            server = app.listen(newPort, host, () => {
+              printStartupBanner(retryConfig, newLocalUrl)
+              resolve({ port: newPort, url: newLocalUrl })
+            })
           }
+        }).catch((findError) => {
+          reject(new Error(`Failed to find available port: ${findError.message}`))
         })
-      })
+      } else {
+        reject(error)
+      }
+    })
+  })
 }
 
 export async function stopServer(): Promise<void> {

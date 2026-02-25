@@ -5,13 +5,11 @@ import type { ProviderMetadata } from './providers.js'
 
 export interface ZiriConfig {
   mode?: 'local' | 'live'
-  
   server?: {
     host?: string
     port?: number
   }
   publicUrl?: string
-  
   email?: {
     enabled?: boolean
     provider?: string
@@ -41,7 +39,11 @@ export interface ZiriConfig {
     }
     from?: string
   }
-  
+  ssl?: {
+    enabled?: boolean
+    cert?: string
+    key?: string
+  }
   backendUrl?: string
   orgId?: string
   projectId?: string

@@ -308,12 +308,12 @@ const props = defineProps<{
   schema: NormalizedSchema
 }>()
 
-// ── Search ───────────────────────────────────────────────────────────────────
+
 const searchQuery = ref('')
 const debouncedSearchQuery = useDebounce(searchQuery, 300)
 const filtered = computed(() => filterSchema(props.schema, debouncedSearchQuery.value))
 
-// ── Section collapse ─────────────────────────────────────────────────────────
+
 const sectionsCollapsed = reactive({
   entities: false,
   commonTypes: false,
@@ -321,17 +321,17 @@ const sectionsCollapsed = reactive({
   actions: false,
 })
 
-// ── Item expansion (accordion — one or more can be open) ─────────────────────
+
 const expandedItems = reactive(new Set<string>())
-const userExpandedItems = reactive(new Set<string>()) // Track user-manually expanded items
+const userExpandedItems = reactive(new Set<string>())
 
 function toggleItem(id: string) {
   if (expandedItems.has(id)) {
     expandedItems.delete(id)
-    userExpandedItems.delete(id) // User collapsed it
+    userExpandedItems.delete(id)
   } else {
     expandedItems.add(id)
-    userExpandedItems.add(id) // User expanded it
+    userExpandedItems.add(id)
   }
 }
 
@@ -339,32 +339,32 @@ function isExpanded(id: string): boolean {
   return expandedItems.has(id)
 }
 
-// ── Auto-expand sections and items when searching ───────────────────────────
+
 watch(debouncedSearchQuery, (query) => {
   const hasQuery = query && query.trim().length > 0
   
   if (hasQuery) {
-    // Auto-expand all sections when searching
+
     sectionsCollapsed.entities = false
     sectionsCollapsed.commonTypes = false
     sectionsCollapsed.actionGroups = false
     sectionsCollapsed.actions = false
     
-    // Auto-expand all filtered items (preserve user-expanded items)
+
     filtered.value.entities.forEach(e => expandedItems.add(e.id))
     filtered.value.commonTypes.forEach(ct => expandedItems.add(ct.id))
     filtered.value.actions.forEach(a => expandedItems.add(a.id))
   } else {
-    // When search is cleared, keep only user-expanded items
+
     const itemsToKeep = new Set(userExpandedItems)
     expandedItems.clear()
     itemsToKeep.forEach(id => expandedItems.add(id))
   }
 }, { immediate: false })
 
-// ── Cross-reference navigation: expand + scroll to target ────────────────────
+
 function handleNavigate(type: 'entity' | 'action' | 'commonType', id: string) {
-  // Resolve the id
+
   let resolvedId = id
   if (type === 'entity') {
     if (!props.schema.entityMap.has(id)) {
@@ -383,7 +383,7 @@ function handleNavigate(type: 'entity' | 'action' | 'commonType', id: string) {
     }
   }
 
-  // Ensure parent section is expanded
+
   if (type === 'entity') sectionsCollapsed.entities = false
   if (type === 'commonType') sectionsCollapsed.commonTypes = false
   if (type === 'action') {
@@ -395,19 +395,19 @@ function handleNavigate(type: 'entity' | 'action' | 'commonType', id: string) {
     }
   }
 
-  // Expand the item
-  expandedItems.add(resolvedId)
-  userExpandedItems.add(resolvedId) // Mark as user-expanded
 
-  // Clear search so the item is visible
+  expandedItems.add(resolvedId)
+  userExpandedItems.add(resolvedId)
+
+
   searchQuery.value = ''
 
-  // Scroll to the element after DOM update
+
   nextTick(() => {
     const el = document.getElementById(`schema-item-${resolvedId}`)
     if (el) {
       el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-      // Brief highlight flash
+
       el.classList.add('ring-2', 'ring-indigo-400', 'ring-offset-1')
       setTimeout(() => {
         el.classList.remove('ring-2', 'ring-indigo-400', 'ring-offset-1')
@@ -416,11 +416,11 @@ function handleNavigate(type: 'entity' | 'action' | 'commonType', id: string) {
   })
 }
 
-// ── Filtered sub-lists ───────────────────────────────────────────────────────
+
 const filteredActionGroups = computed(() => filtered.value.actions.filter(a => a.kind === 'actionGroup'))
 const filteredActionItems = computed(() => filtered.value.actions.filter(a => a.kind === 'action'))
 
-// ── Compact summary helpers ──────────────────────────────────────────────────
+
 function entitySummary(entity: NormalizedEntity): string {
   if (entity.kind === 'enum') {
     return (entity.enumValues || []).slice(0, 3).join(', ') + (entity.enumValues && entity.enumValues.length > 3 ? '…' : '')
@@ -429,6 +429,7 @@ function entitySummary(entity: NormalizedEntity): string {
   if (entity.attributes.length > 0) parts.push(`${entity.attributes.length} attrs`)
   if (entity.tags) parts.push(`tags: ${entity.tags.type}`)
   if (entity.parents.length > 0) parts.push(`in: ${entity.parents.map(p => shortName(p)).join(', ')}`)
+  if (entity.parentOf?.length) parts.push(`parent of: ${entity.parentOf.map(p => shortName(p)).join(', ')}`)
   return parts.join(' · ')
 }
 

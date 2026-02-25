@@ -73,8 +73,8 @@ export const resendProvider: EmailProvider = {
     if (!apiKey) throw new Error('Resend API key not provided')
     if (!from) throw new Error('From address required for Resend')
 
-    // TODO: call the provider SDK / HTTP API here
-    // Use options.to, options.subject, options.html/text, and from.
+
+
 
     return true
   }

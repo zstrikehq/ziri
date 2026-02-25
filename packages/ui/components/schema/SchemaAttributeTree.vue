@@ -16,7 +16,7 @@ const emit = defineEmits<{
 
 const currentDepth = computed(() => props.depth ?? 0)
 
-// Collapsible state for nested records (keyed by attr name)
+
 const collapsed = reactive<Record<string, boolean>>({})
 function toggleCollapse(name: string) {
   collapsed[name] = !collapsed[name]
@@ -50,11 +50,11 @@ function resolveCommonTypeId(typeName: string): string {
   return found?.id || typeName
 }
 
-// Separate leaf attributes (no children) from nested record attributes
+
 const leafAttrs = computed(() => props.attributes.filter(a => !a.children?.length))
 const recordAttrs = computed(() => props.attributes.filter(a => a.children?.length))
 
-// Depth-based left-border accent colors so each nesting level is visually distinct
+
 const depthAccentColors = [
   'border-l-indigo-400 dark:border-l-indigo-500',
   'border-l-violet-400 dark:border-l-violet-500',

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useUsers, type User, type CreateUserInput } from '~/composables/useUsers'
+import { useRoles } from '~/composables/useRoles'
 import { useToast } from '~/composables/useToast'
 import { useDebounce } from '~/composables/useDebounce'
 import { formatDate } from '~/utils/formatters'
@@ -7,6 +8,7 @@ import { useInternalAuth } from '~/composables/useInternalAuth'
 import { useApiError } from '~/composables/useApiError'
 
 const { users, loading, loadUsers, createUser, updateUser, deleteUser, resetPassword } = useUsers()
+const { roles: rolesList, loadRoles } = useRoles()
 const toast = useToast()
 const { checkActions, checkAction } = useInternalAuth()
 const { getUserMessage } = useApiError()
@@ -42,7 +44,8 @@ const newUser = reactive<CreateUserInput>({
   tenant: '',
   isAgent: false,
   limitRequestsPerMinute: 100,
-  createApiKey: true
+  createApiKey: true,
+  roleId: undefined
 })
 
  
@@ -107,6 +110,7 @@ onMounted(async () => {
   }
   
   await fetchUsers()
+  loadRoles().catch(() => {})
 })
 
 const handleCreateUser = async () => {
@@ -149,7 +153,8 @@ const handleCreateUser = async () => {
       tenant: '',
       isAgent: false,
       limitRequestsPerMinute: 100,
-      createApiKey: true
+      createApiKey: true,
+      roleId: undefined
     })
   } catch (error: any) {
     toast.error(`Failed to create user: ${getUserMessage(error)}`)
@@ -368,6 +373,7 @@ const closeApiKeyModal = () => {
         { key: 'userId', header: 'User ID', sortable: true },
         { key: 'name', header: 'Name', sortable: true },
         { key: 'email', header: 'Email', sortable: true },
+        { key: 'roleId', header: 'Role', sortable: false },
         { key: 'status', header: 'Status', sortable: true },
         { key: 'createdAt', header: 'Created', sortable: true },
         { key: 'actions', header: '', class: 'w-32' }
@@ -387,6 +393,10 @@ const closeApiKeyModal = () => {
     >
         <template #userId="{ row }">
           <code class="text-xs font-mono">{{ row.userId }}</code>
+        </template>
+        <template #roleId="{ row }">
+          <code v-if="row.roleId" class="text-xs font-mono px-2 py-0.5 rounded bg-[rgb(var(--surface-elevated))]">{{ row.roleId }}</code>
+          <span v-else class="text-xs text-[rgb(var(--text-muted))]">-</span>
         </template>
         <template #status="{ row }">
           <span
@@ -449,35 +459,49 @@ const closeApiKeyModal = () => {
 
     <!-- Create User Modal -->
     <UiModal v-model="showCreateModal" title="Create User">
-      <form @submit.prevent="handleCreateUser" class="space-y-4">
-        <UiInput v-model="newUser.email" label="Email" type="email" required />
-        <UiInput v-model="newUser.name" label="Name" required />
-        <UiInput v-model="newUser.tenant" label="Tenant" />
-        
-        <UiToggle
-          v-model="newUser.createApiKey"
-          label="Create API Key"
-          help-text="Automatically generate an API key for this user. The key will be shown once after creation."
-        />
-        
-        <UiToggle
-          v-model="newUser.isAgent"
-          label="Is Agent"
-          help-text="Mark this user as an agent. Agents may have different rate limits or permissions."
-        />
-        
-        <UiInput 
-          v-model="newUser.limitRequestsPerMinute" 
-          label="Limit Requests Per Minute" 
-          type="number" 
-          min="1"
-          step="1"
-        />
-        <p class="text-xs text-[rgb(var(--text-secondary))]">
-          Default: 100 requests per minute
-        </p>
-        
-        <div class="flex gap-3 justify-end">
+      <form
+        @submit.prevent="handleCreateUser"
+        class="flex flex-col gap-4 max-h-[min(80vh,560px)]"
+      >
+        <div class="flex-1 overflow-y-auto space-y-4 pr-1">
+          <UiInput v-model="newUser.email" label="Email" type="email" required />
+          <UiInput v-model="newUser.name" label="Name" required />
+          <UiInput v-model="newUser.tenant" label="Tenant" />
+          <div>
+            <label class="block text-sm font-medium text-[rgb(var(--text))] mb-1">Role</label>
+            <select
+              v-model="newUser.roleId"
+              class="w-full px-3 py-2 rounded-lg border-2 border-[rgb(var(--border))] bg-[rgb(var(--surface))] text-[rgb(var(--text))] focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            >
+              <option :value="undefined">None</option>
+              <option v-for="r in rolesList" :key="r.id" :value="r.id">{{ r.id }}</option>
+            </select>
+            <p class="text-xs text-[rgb(var(--text-muted))] mt-0.5">
+              Optional. Assign a Cedar role for access control.
+            </p>
+          </div>
+          <UiToggle
+            v-model="newUser.createApiKey"
+            label="Create API Key"
+            help-text="Automatically generate an API key for this user. The key will be shown once after creation."
+          />
+          <UiToggle
+            v-model="newUser.isAgent"
+            label="Is Agent"
+            help-text="Mark this user as an agent. Agents may have different rate limits or permissions."
+          />
+          <UiInput 
+            v-model="newUser.limitRequestsPerMinute" 
+            label="Limit Requests Per Minute" 
+            type="number" 
+            min="1"
+            step="1"
+          />
+          <p class="text-xs text-[rgb(var(--text-secondary))]">
+            Default: 100 requests per minute
+          </p>
+        </div>
+        <div class="flex gap-3 justify-end pt-3 border-t border-[rgb(var(--border))]">
           <UiButton type="button" variant="ghost" @click="showCreateModal = false">
             Cancel
           </UiButton>

@@ -18,13 +18,12 @@ import { toDecimalOne, toDecimalFour, toIp } from '../utils/cedar.js'
 
 export interface CreateEntityInput {
   userId: string
- 
+  roleId?: string
   role?: string
   tenant?: string
   securityClearance?: number
   trainingCompleted?: boolean
   yearsOfService?: number
- 
   dailySpendLimit?: number
   monthlySpendLimit?: number
 }
@@ -71,7 +70,6 @@ export async function createEntityInBackend(input: CreateEntityInput): Promise<v
       user_id: input.userId,
       name: user.name,
       email: user.email,
-      role: input.role || '',
       tenant: input.tenant || '',
       security_clearance: input.securityClearance || 2,
       training_completed: input.trainingCompleted ?? false,
@@ -86,7 +84,7 @@ export async function createEntityInBackend(input: CreateEntityInput): Promise<v
       status: 'active',
       created_at: new Date().toISOString()
     },
-    parents: []
+    parents: input.roleId ? [{ type: 'Role', id: input.roleId }] : []
   }
   
  

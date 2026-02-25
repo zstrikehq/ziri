@@ -72,9 +72,14 @@ router.get('/', async (req: Request, res: Response) => {
         sortOrder: (sortOrder === 'asc' || sortOrder === 'desc') ? sortOrder as 'asc' | 'desc' : null
       })
     }
-    
+    const usersWithRole = await Promise.all(
+      result.data.map(async (u) => ({
+        ...u,
+        roleId: await userService.getRoleIdForUser(u.userId)
+      }))
+    )
     res.json({
-      users: result.data,
+      users: usersWithRole,
       total: result.total
     })
   } catch (error: any) {
@@ -101,8 +106,8 @@ router.get('/:userId', async (req: Request, res: Response) => {
       })
       return
     }
-    
-    res.json({ user })
+    const roleId = await userService.getRoleIdForUser(userId)
+    res.json({ user: { ...user, roleId } })
   } catch (error: any) {
     
     console.error('[USERS] Get error:', error)
@@ -118,7 +123,7 @@ router.get('/:userId', async (req: Request, res: Response) => {
 router.post('/', async (req: AdminRequest, res: Response) => {
   const actionStart = Date.now()
   try {
-    const { email, name, tenant, isAgent, limitRequestsPerMinute, createApiKey } = req.body
+    const { email, name, tenant, isAgent, limitRequestsPerMinute, createApiKey, roleId } = req.body
 
     if (!email || !name) {
       res.status(400).json({
@@ -154,7 +159,8 @@ router.post('/', async (req: AdminRequest, res: Response) => {
       tenant,
       isAgent: isAgent ?? false,
       limitRequestsPerMinute: limitRequestsPerMinute || 100,
-      createApiKey: shouldCreateApiKey
+      createApiKey: shouldCreateApiKey,
+      roleId: roleId || undefined
     })
     
     if (result.emailSent) {
@@ -189,6 +195,14 @@ router.post('/', async (req: AdminRequest, res: Response) => {
   } catch (error: any) {
     console.error('[USERS] Create error:', error)
     
+    if (error.message && error.message.startsWith('Role not found')) {
+      res.status(400).json({
+        error: error.message,
+        code: 'ROLE_NOT_FOUND'
+      })
+      return
+    }
+
     if (error.message.includes('already exists')) {
       res.status(409).json({
         error: error.message,
@@ -212,9 +226,9 @@ router.put('/:userId', async (req: Request, res: Response) => {
   const actionStart = Date.now()
   try {
     const { userId } = req.params
-    const { email, name } = req.body
+    const { email, name, tenant, isAgent, limitRequestsPerMinute, roleId } = req.body
     
-    const user = await userService.updateUser(userId, { email, name })
+    const user = await userService.updateUser(userId, { email, name, tenant, isAgent, limitRequestsPerMinute, roleId })
     
     res.json({ user })
 
@@ -227,6 +241,14 @@ router.put('/:userId', async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error('[USERS] Update error:', error)
     
+    if (error.message && error.message.startsWith('Role not found')) {
+      res.status(400).json({
+        error: error.message,
+        code: 'ROLE_NOT_FOUND'
+      })
+      return
+    }
+
     if (error.message === 'User not found') {
       res.status(404).json({
         error: error.message,

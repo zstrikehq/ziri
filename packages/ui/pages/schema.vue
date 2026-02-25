@@ -25,7 +25,7 @@ const canUpdateSchema = ref(false)
 
 const activeTab = ref<'simplified' | 'json' | 'cedar'>('simplified')
 
-// ── Editor mode (derived from activeTab when not simplified) ─────────────────
+
 const viewMode = computed<'json' | 'cedar'>(() => {
   return activeTab.value === 'json' ? 'json' : 'cedar'
 })
@@ -233,13 +233,13 @@ const onSchemaChange = (value: string) => {
 
 const onTabSwitch = async (newTab: 'simplified' | 'json' | 'cedar') => {
   if (newTab === 'simplified') {
-    // When switching to simplified, build the model if needed
+
     activeTab.value = newTab
     if (!normalizedSchema.value) {
       await buildSimplifiedModel(schemaFromStore.value)
     }
   } else {
-    // When switching between JSON/Cedar, handle conversion if editing
+
     if (isEditing.value && schemaContent.value.trim() && activeTab.value !== 'simplified') {
       try {
         const currentMode = activeTab.value === 'json' ? 'json' : 'cedar'

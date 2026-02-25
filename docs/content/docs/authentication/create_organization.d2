@@ -1,0 +1,30 @@
+Create Organization: {
+    shape: sequence_diagram
+    ZS_UI."User is already authenticated with Kinde"
+    ZS_UI -> ZS_UI: User chooses to create new organization
+    ZS_UI -> API: Calls create Organization API passing in Kinde access token
+    API -> API: Validated access token
+    API -> API: Create a random organization ID (UUIDv4)
+    API
+    Kinde_API
+    Kinde API Interaction (async): {
+        API."Set Kinde external_id as Organization UUID"
+        API -> Kinde_API: Calls Kinde API to create new organization        
+        Kinde_API -> API: Success, new organization created
+        API -> Kinde_API: Remove user from default organization
+        Kinde_API -> API: Success
+    }    
+    DynamoDB
+    DynamoDB Interaction (async): {
+        API -> DynamoDB: Create new tables
+        DynamoDB -> API: Success        
+    }
+        
+    API -> DynamoDB: Batch PutItems
+    DynamoDB -> API: Success, items created
+    API -> ZS_UI: Success, pass Kinde organization id
+    ZS_UI -> Kinde_UI: Call login passing in kinde org id
+    Kinde_UI."$kinde.login({\norg_code: \"<kinde org id>\"\n})"
+    Kinde_UI -> ZS_UI: New access token is created with org_id set
+    
+}

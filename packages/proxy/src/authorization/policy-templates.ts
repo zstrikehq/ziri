@@ -120,17 +120,24 @@ export const policyTemplates: PolicyTemplate[] = [
     "policy": "@id(\"agent-limited-actions\")\npermit (\n    principal,\n    action in [Action::\"completion\", Action::\"embedding\"],\n    resource\n)\nwhen {\n    principal.user.is_agent == true &&\n    principal.status == \"active\"\n};"
   },
   {
-    "id": "production-full-access",
-    "category": "Complex Combined",
-    "title": "Full production access policy",
-    "description": "Comprehensive policy combining multiple conditions: Engineering tenant, active status, business hours, corporate network, and spend limits. Ideal for production environments.",
-    "policy": "@id(\"production-full-access\")\npermit (\n    principal,\n    action,\n    resource\n)\nwhen {\n    principal.user.tenant == \"engineering\" &&\n    principal.status == \"active\" &&\n    context.hour >= 9 &&\n    context.hour < 18 &&\n    context.day_of_week != \"Saturday\" &&\n    context.day_of_week != \"Sunday\" &&\n    context.ip_address.isInRange(ip(\"10.0.0.0/8\")) &&\n    principal.current_daily_spend.lessThan(decimal(\"500.0\")) &&\n    principal.current_monthly_spend.lessThan(decimal(\"5000.0\"))\n};"
+    "id": "role-admin-full-access",
+    "category": "Role-Based",
+    "title": "Full access for admin role",
+    "description": "Allows all actions for users that have the admin_llm Cedar role. Use when you assign the admin_llm role to privileged access users.",
+    "policy": "@id(\"role-admin-full-access\")\npermit (\n    principal,\n    action,\n    resource\n)\nwhen {\n    principal.user in Role::\"admin_llm\" &&\n    principal.status == \"active\"\n};"
   },
   {
-    "id": "developer-sandbox",
-    "category": "Complex Combined",
-    "title": "Developer sandbox access",
-    "description": "Limited access for development environments: specific actions, low spend limits, internal network only, and restricted to cost-effective models. Perfect for testing and development.",
-    "policy": "@id(\"developer-sandbox\")\npermit (\n    principal,\n    action in [Action::\"completion\", Action::\"embedding\"],\n    resource == Resource::\"sandbox\"\n)\nwhen {\n    principal.status == \"active\" &&\n    context.ip_address.isInRange(ip(\"10.0.0.0/8\")) &&\n    principal.current_daily_spend.lessThan(decimal(\"50.0\")) &&\n    (\n        context.model_name == \"gpt-4o-mini\" ||\n        context.model_name == \"claude-3-haiku-20240307\" ||\n        context.model_name == \"text-embedding-3-small\"\n    )\n};"
+    "id": "role-analyst-limited-actions",
+    "category": "Role-Based",
+    "title": "Completion and embedding only for analyst role",
+    "description": "Restricts users with the analyst role to completion and embedding actions only.",
+    "policy": "@id(\"role-analyst-limited-actions\")\npermit (\n    principal,\n    action in [Action::\"completion\", Action::\"embedding\"],\n    resource\n)\nwhen {\n    principal.user in Role::\"analyst\" &&\n    principal.status == \"active\"\n};"
+  },
+  {
+    "id": "role-engineer-tenant-scoped",
+    "category": "Role-Based",
+    "title": "Engineer role with tenant restriction",
+    "description": "Allows full access for users in the engineer role and engineering tenant.",
+    "policy": "@id(\"role-engineer-tenant-scoped\")\npermit (\n    principal,\n    action,\n    resource\n)\nwhen {\n    principal.user in Role::\"engineer\" &&\n    principal.user.tenant == \"engineering\" &&\n    principal.status == \"active\"\n};"
   }
 ]

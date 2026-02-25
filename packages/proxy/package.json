@@ -19,7 +19,7 @@
 	},
 	"dependencies": {
 		"@aws-sdk/client-ses": "^3.988.0",
-		"@cedar-policy/cedar-wasm": "^4.8.2",
+		"@cedar-policy/cedar-wasm": "^4.9.0",
 		"@sendgrid/mail": "^8.1.6",
 		"bcrypt": "^5.1.1",
 		"better-queue": "^3.8.12",

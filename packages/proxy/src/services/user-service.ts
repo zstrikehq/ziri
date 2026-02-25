@@ -10,6 +10,7 @@ export interface CreateUserInput {
   isAgent: boolean
   limitRequestsPerMinute?: number
   createApiKey?: boolean
+  roleId?: string
 }
 
 export interface User {
@@ -23,6 +24,7 @@ export interface User {
   createdAt: string
   updatedAt: string
   lastSignIn?: string
+  roleId?: string
 }
 
 function generateUserId(): string {
@@ -72,7 +74,15 @@ export async function createUser(input: CreateUserInput): Promise<{ user: User; 
   
   const creationTime = new Date().toISOString()
   const limitRequestsPerMinute = input.limitRequestsPerMinute || 100
-  
+  if (input.roleId) {
+    const { listRoles } = await import('./role-entity-service.js')
+    const { roles } = await listRoles({ limit: 10000 })
+    if (!roles.some(r => r.id === input.roleId)) {
+      db.prepare('DELETE FROM auth WHERE id = ?').run(userId)
+      throw new Error(`Role not found: ${input.roleId}`)
+    }
+  }
+  const parents = input.roleId ? [{ type: 'Role', id: input.roleId }] : []
   const userEntity = {
     uid: { type: 'User', id: userId },
     attrs: {
@@ -82,7 +92,7 @@ export async function createUser(input: CreateUserInput): Promise<{ user: User; 
       is_agent: input.isAgent,
       limit_requests_per_minute: limitRequestsPerMinute
     },
-    parents: []
+    parents
   }
   
   try {
@@ -170,8 +180,10 @@ export async function createUser(input: CreateUserInput): Promise<{ user: User; 
     console.warn(`[USER SERVICE] Failed to send email to ${user.email}:`, error.message)
   }
   
+  const out = { ...user }
+  if (input.roleId) (out as User).roleId = input.roleId
   return {
-    user,
+    user: out,
     password: emailSent ? undefined : password,
     apiKey: createdApiKey,
     emailSent
@@ -407,16 +419,68 @@ export async function updateUser(userId: string, updates: Partial<CreateUserInpu
     values.push(updates.isAgent ? 1 : 0)
   }
   
-  if (fields.length === 0) {
-    return existing
+  if (fields.length > 0) {
+    fields.push('updated_at = datetime(\'now\')')
+    values.push(userId)
+    db.prepare(`UPDATE auth SET ${fields.join(', ')} WHERE id = ?`).run(...values)
   }
   
-  fields.push('updated_at = datetime(\'now\')')
-  values.push(userId)
+  if (updates.roleId !== undefined) {
+    await syncUserEntityRole(userId, updates.roleId || undefined)
+  }
   
-  db.prepare(`UPDATE auth SET ${fields.join(', ')} WHERE id = ?`).run(...values)
-  
-  return getUserById(userId)!
+  const u = getUserById(userId)!
+  const roleId = await getRoleIdForUser(userId)
+  if (roleId !== undefined) u.roleId = roleId
+  return u
+}
+
+export async function syncUserEntityRole(userId: string, roleId?: string): Promise<void> {
+  const { serviceFactory } = await import('./service-factory.js')
+  const entityStore = serviceFactory.getEntityStore()
+  const user = getUserById(userId)
+  if (!user) {
+    throw new Error('User not found')
+  }
+  if (roleId) {
+    const { listRoles } = await import('./role-entity-service.js')
+    const { roles } = await listRoles({ limit: 10000 })
+    if (!roles.some(r => r.id === roleId)) {
+      throw new Error(`Role not found: ${roleId}`)
+    }
+  }
+  const result = await entityStore.getEntities(`User::"${userId}"`)
+  const existing = result.data[0]
+  const attrs = existing?.attrs
+    ? { ...existing.attrs }
+    : {
+        user_id: userId,
+        email: user.email,
+        tenant: user.tenant || '',
+        is_agent: user.isAgent,
+        limit_requests_per_minute: 100
+      }
+  const parents = roleId ? [{ type: 'Role', id: roleId }] : []
+  const entity = {
+    uid: { type: 'User', id: userId },
+    attrs,
+    parents
+  }
+  if (existing) {
+    await entityStore.updateEntity(entity, 1)
+  } else {
+    await entityStore.createEntity(entity, 1)
+  }
+}
+
+export async function getRoleIdForUser(userId: string): Promise<string | undefined> {
+  const { serviceFactory } = await import('./service-factory.js')
+  const entityStore = serviceFactory.getEntityStore()
+  const result = await entityStore.getEntities(`User::"${userId}"`)
+  const entity = result.data[0]
+  if (!entity?.parents?.length) return undefined
+  const roleParent = entity.parents.find((p: { type: string }) => p.type === 'Role')
+  return roleParent ? (roleParent as { type: string; id: string }).id : undefined
 }
 
 export async function deleteUser(userId: string): Promise<void> {

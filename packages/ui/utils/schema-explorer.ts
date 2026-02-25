@@ -21,6 +21,7 @@ export interface NormalizedAttribute {
       asResource: string[]
     }
     referencedBy: string[]
+    parentOf: string[]
   }
   
   export interface NormalizedContextAttribute extends NormalizedAttribute {}
@@ -244,6 +245,7 @@ export interface NormalizedAttribute {
             enumValues: isEnum ? def.enum : undefined,
             usedInActions: { asPrincipal: [], asResource: [] },
             referencedBy: [],
+            parentOf: [],
           }
   
           entities.push(entity)
@@ -345,7 +347,13 @@ export interface NormalizedAttribute {
         if (parent) parent.children.push(action.id)
       }
     }
-  
+
+    for (const entity of entities) {
+      for (const parentId of entity.parents) {
+        const parent = entityMap.get(parentId)
+        if (parent) parent.parentOf.push(entity.id)
+      }
+    }
 
     for (const entity of entities) {
       collectEntityRefs(entity.attributes, entity.id, entityMap)

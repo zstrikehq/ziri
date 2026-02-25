@@ -36,7 +36,8 @@ permit (
         Action::"view_dashboard",
         Action::"view_analytics",
         Action::"view_logs",
-        Action::"list_entities"
+        Action::"list_entities",
+        Action::"list_roles"
     ],
     resource
 )
@@ -63,14 +64,17 @@ permit (
         Action::"update_key_status",
         Action::"rotate_key",
         Action::"delete_keys_by_user",
-        Action::"delete_key_by_id"
+        Action::"delete_key_by_id",
+        Action::"list_roles",
+        Action::"create_role",
+        Action::"delete_role"
     ],
     resource
 )
 when {
     principal.role == "user_admin" &&
     principal.status == "active" &&
-    (context.resourceType == "users" || context.resourceType == "keys")
+    (context.resourceType == "users" || context.resourceType == "keys" || context.resourceType == "roles")
 };`,
 
   `@id("user-admin-viewer-permissions")
@@ -92,7 +96,8 @@ permit (
         Action::"view_dashboard",
         Action::"view_analytics",
         Action::"view_logs",
-        Action::"list_entities"
+        Action::"list_entities",
+        Action::"list_roles"
     ],
     resource
 )

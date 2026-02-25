@@ -37,6 +37,7 @@ config.json
 # Misc
 .DS_Store
 *.pem
+certs/
 
 # Debug
 npm-debug.log*
@@ -90,5 +91,4 @@ DESIGN_*.md
 **/scripts/drop-tables.js
 
 # Docs
-docs/
 FLOWS.md

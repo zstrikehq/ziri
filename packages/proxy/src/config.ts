@@ -16,6 +16,11 @@ export interface ProxyConfig {
   clientSecret?: string
   rootKey: string
   logLevel: 'debug' | 'info' | 'warn' | 'error'
+  ssl?: {
+    enabled: boolean
+    cert: string
+    key: string
+  }
   email?: {
     enabled: boolean
     provider: string
@@ -88,12 +93,24 @@ export function loadConfig(): ProxyConfig {
     }
   }
 
+  let sslConfig: ProxyConfig['ssl'] = undefined
+  const sslEnabled = process.env.SSL_ENABLED === 'true' || fileConfig?.ssl?.enabled
+  const sslCert = process.env.SSL_CERT_PATH || fileConfig?.ssl?.cert
+  const sslKey = process.env.SSL_KEY_PATH || fileConfig?.ssl?.key
+  if (sslEnabled && sslCert && sslKey) {
+    sslConfig = {
+      enabled: true,
+      cert: sslCert,
+      key: sslKey
+    }
+  }
+
   return {
     mode,
     port,
     host,
     publicUrl: fileConfig?.publicUrl,
- 
+    ssl: sslConfig,
     backendUrl: fileConfig?.backendUrl,
     pdpUrl: fileConfig?.pdpUrl,
     projectId: fileConfig?.projectId,

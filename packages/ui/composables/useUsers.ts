@@ -18,6 +18,7 @@ export interface User {
   createdAt: string
   updatedAt: string
   lastSignIn?: string
+  roleId?: string
 }
 
 export interface CreateUserInput {
@@ -27,6 +28,7 @@ export interface CreateUserInput {
   isAgent: boolean
   limitRequestsPerMinute?: number
   createApiKey?: boolean
+  roleId?: string
 }
 
 const users = ref<User[]>([])

@@ -318,4 +318,22 @@ action "update_entities" appliesTo {
   resource: [Dashboard],
   context: InternalContext
 };
+
+action "list_roles" appliesTo {
+  principal: [DashboardUser],
+  resource: [Dashboard],
+  context: InternalContext
+};
+
+action "create_role" appliesTo {
+  principal: [DashboardUser],
+  resource: [Dashboard],
+  context: InternalContext
+};
+
+action "delete_role" appliesTo {
+  principal: [DashboardUser],
+  resource: [Dashboard],
+  context: InternalContext
+};
 `

@@ -9,13 +9,13 @@
 	},
 	"scripts": {
 		"build": "cross-env NODE_OPTIONS=--max-old-space-size=12288 nuxt build",
-		"dev": "nuxt dev",
+		"dev": "cross-env NODE_EXTRA_CA_CERTS=../../certs/rootCA.pem nuxt dev",
 		"generate": "nuxt generate",
 		"preview": "nuxt preview",
 		"postinstall": "nuxt prepare"
 	},
 	"dependencies": {
-		"@cedar-policy/cedar-wasm": "^4.8.2",
+		"@cedar-policy/cedar-wasm": "^4.9.0",
 		"@heroicons/vue": "^2.2.0",
 		"@pinia/nuxt": "^0.9.0",
 		"chart.js": "^4.4.7",

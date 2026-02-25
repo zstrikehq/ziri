@@ -34,6 +34,10 @@ const routeActionMap: Record<string, { action: string; resourceType: string }> =
   'GET:/api/entities': { action: 'list_entities', resourceType: 'entities' },
   'PUT:/api/entities': { action: 'update_entities', resourceType: 'entities' },
 
+  'GET:/api/roles': { action: 'list_roles', resourceType: 'roles' },
+  'POST:/api/roles': { action: 'create_role', resourceType: 'roles' },
+  'DELETE:/api/roles/:id': { action: 'delete_role', resourceType: 'roles' },
+
   'POST:/api/ai-policy/generate': { action: 'generate_policy_with_ai', resourceType: 'policies' },
 
   'GET:/api/providers': { action: 'list_providers', resourceType: 'providers' },

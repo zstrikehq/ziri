@@ -213,6 +213,87 @@ Common patterns:
 
 For more details, see the configuration section of the documentation.
 
+## SSL / HTTPS Configuration
+
+ZIRI supports optional HTTPS for both the proxy server and the frontend dev server. SSL is opt-in — without certificates, everything runs on HTTP as before. Any PEM-format certificate works (mkcert, Let's Encrypt, corporate CA).
+
+### Quick Setup (Local Development)
+
+1. **Install [mkcert](https://github.com/FiloSottile/mkcert)**:
+
+   ```bash
+   # Windows: choco install mkcert (or scoop install mkcert)
+   # macOS: brew install mkcert
+   # Linux: sudo apt install libnss3-tools && brew install mkcert
+   ```
+
+2. **Generate certificates**:
+
+   ```bash
+   mkcert -install
+   mkdir certs
+   mkcert -key-file ./certs/key.pem -cert-file ./certs/cert.pem localhost 127.0.0.1
+   cp "$(mkcert -CAROOT)/rootCA.pem" ./certs/rootCA.pem
+   ```
+
+   On Windows (PowerShell), replace the last line with:
+   ```powershell
+   Copy-Item "$(mkcert -CAROOT)\rootCA.pem" .\certs\rootCA.pem
+   ```
+
+3. **Add SSL to your config** (`%APPDATA%\ziri\config.json` on Windows, `~/.ziri/config.json` on macOS/Linux):
+
+   ```json
+   {
+     "ssl": {
+       "enabled": true,
+       "cert": "/absolute/path/to/certs/cert.pem",
+       "key": "/absolute/path/to/certs/key.pem"
+     }
+   }
+   ```
+
+4. **Start the dev servers** — the frontend auto-detects the certs and switches to HTTPS:
+
+   ```bash
+   npm run dev
+   ```
+
+You can also configure SSL via environment variables: `SSL_ENABLED`, `SSL_CERT_PATH`, `SSL_KEY_PATH`.
+
+### Docker with SSL
+
+```yaml
+services:
+  proxy:
+    image: ziri/proxy:latest
+    ports:
+      - "3100:3100"
+    volumes:
+      - ziri-data:/data
+      - ./certs:/certs:ro
+    environment:
+      - CONFIG_DIR=/data
+      - HOST=0.0.0.0
+      - SSL_ENABLED=true
+      - SSL_CERT_PATH=/certs/cert.pem
+      - SSL_KEY_PATH=/certs/key.pem
+    restart: unless-stopped
+
+volumes:
+  ziri-data:
+```
+
+For public-facing deployments, consider using a reverse proxy (nginx, Caddy) with Let's Encrypt instead of terminating TLS in ZIRI directly.
+
+### Troubleshooting
+
+- **"fetch failed" in dev mode** — `rootCA.pem` is missing from `certs/`. Run: `cp "$(mkcert -CAROOT)/rootCA.pem" ./certs/rootCA.pem`
+- **Browser shows certificate warning** — Run `mkcert -install` and restart your browser
+- **Proxy falls back to HTTP** — Check that `cert` and `key` paths in `config.json` are absolute and the files exist
+
+To disable SSL, remove the `ssl` section from `config.json` or set `"enabled": false`.
+
 ## Development
 
 If you are working on ZIRI itself (not just using it), you will need:
