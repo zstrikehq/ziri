@@ -1,6 +1,8 @@
 ---
 title: Docs
-weight: 1
+breadcrumb_hidden: true
+cascade:
+  type: docs
 ---
 
-Documentation for ZIRI.
+<meta http-equiv="refresh" content="0; url=getting-started/introduction">
