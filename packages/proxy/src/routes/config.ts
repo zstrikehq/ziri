@@ -13,7 +13,6 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
     const config = loadConfig()
 
     res.json({
-      mode: config.mode,
       server: {
         host: config.host,
         port: config.port
@@ -41,7 +40,7 @@ router.get('/email-providers', requireAdmin, async (_req: Request, res: Response
 router.post('/', requireAdmin, (req: Request, res: Response) => {
   const actionStart = Date.now()
   try {
-    const { mode, server, publicUrl, email, logLevel } = req.body
+    const { server, publicUrl, email, logLevel } = req.body
 
     const existing = loadConfig()
 
@@ -61,7 +60,6 @@ router.post('/', requireAdmin, (req: Request, res: Response) => {
     }
 
     const updatedConfig: any = {
-      mode: mode || existing.mode || 'local',
       server: server || {
         host: existing.host || '127.0.0.1',
         port: existing.port || 3100
@@ -71,21 +69,15 @@ router.post('/', requireAdmin, (req: Request, res: Response) => {
       logLevel: logLevel || existing.logLevel || 'info'
     }
 
-    if (existing.backendUrl) updatedConfig.backendUrl = existing.backendUrl
-    if (existing.orgId) updatedConfig.orgId = existing.orgId
-    if (existing.projectId) updatedConfig.projectId = existing.projectId
-    if (existing.clientId) updatedConfig.clientId = existing.clientId
-    if (existing.clientSecret) updatedConfig.clientSecret = existing.clientSecret
-    if (existing.pdpUrl) updatedConfig.pdpUrl = existing.pdpUrl
-
     writeConfig(updatedConfig)
 
     res.json({
       success: true,
       message: 'Config saved. Restart the server for changes to take effect.',
       config: {
-        mode: updatedConfig.mode, server: updatedConfig.server,
-        publicUrl: updatedConfig.publicUrl, email: updatedConfig.email,
+        server: updatedConfig.server,
+        publicUrl: updatedConfig.publicUrl,
+        email: updatedConfig.email,
         logLevel: updatedConfig.logLevel
       }
     })
