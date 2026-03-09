@@ -42,7 +42,6 @@ const emailProviders = ref<EmailProviderDef[]>([])
 
  
 const form = reactive({
-  mode: 'local' as 'local' | 'live',
   publicUrl: '',
   email: {
     enabled: false,
@@ -165,21 +164,18 @@ onMounted(async () => {
     const response = await fetch('/api/config', { headers })
     if (response.ok) {
       const config = await response.json()
-      form.mode = config.mode || 'local'
       form.publicUrl = config.publicUrl || ''
       mapEmailConfigToForm(config.email)
       form.logLevel = config.logLevel || 'info'
     } else {
- 
-      form.mode = 'local'
+
       form.publicUrl = configStore.publicUrl || ''
       const stored = configStore.email
       mapEmailConfigToForm(stored)
       form.logLevel = configStore.logLevel || 'info'
     }
   } catch (e) {
- 
-    form.mode = 'local'
+
     form.publicUrl = configStore.publicUrl || ''
     const stored = configStore.email
     mapEmailConfigToForm(stored)
@@ -279,7 +275,6 @@ const saveConfig = async () => {
 }
 
 const resetToDefaults = async () => {
-  form.mode = 'local'
   form.publicUrl = ''
   form.email = {
     enabled: false,
