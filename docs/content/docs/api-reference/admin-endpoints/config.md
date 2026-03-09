@@ -26,7 +26,6 @@ curl -H "Authorization: Bearer your-token" \
 
 ```json
 {
-  "mode": "local",
   "server": {
     "host": "127.0.0.1",
     "port": 3100
@@ -53,7 +52,6 @@ POST /api/config
 
 ```typescript
 {
-  mode?: 'local' | 'live'           // Optional
   server?: {                        // Optional
     host?: string
     port?: number
@@ -76,7 +74,6 @@ curl -X POST http://localhost:3100/api/config \
   -H "Authorization: Bearer your-token" \
   -H "Content-Type: application/json" \
   -d '{
-    "mode": "local",
     "server": {
       "host": "0.0.0.0",
       "port": 3100
@@ -110,7 +107,6 @@ curl -X POST http://localhost:3100/api/config \
 	"success": true,
 	"message": "Configuration saved successfully. Restart the proxy server for server settings to take effect.",
 	"config": {
-		"mode": "local",
 		"server": {
 			"host": "0.0.0.0",
 			"port": 3100
@@ -128,10 +124,6 @@ curl -X POST http://localhost:3100/api/config \
 **Note**: Server settings (host, port) require a restart to take effect.
 
 ## Configuration Fields
-
-### Mode
-
--   `local` - Local mode (default)
 
 ### Server
 
