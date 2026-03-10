@@ -9,6 +9,7 @@ test-*.js
 *.test.js
 *.spec.js
 test-*.mjs
+packages/proxy/bruno/environments/Local.bru
 
 # Production
 dist/

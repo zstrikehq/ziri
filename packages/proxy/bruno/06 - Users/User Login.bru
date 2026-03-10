@@ -1,0 +1,58 @@
+meta {
+  name: User Login
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/api/auth/login
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "userId": "{{testUserId}}",
+    "password": "{{testUserPassword}}"
+  }
+}
+
+script:post-response {
+  const body = res.getBody();
+  if (body.accessToken) {
+    bru.setEnvVar("userToken", body.accessToken);
+  }
+  if (body.refreshToken) {
+    bru.setEnvVar("refreshToken", body.refreshToken);
+  }
+}
+
+tests {
+  test("should return 200 on success", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("success: should return accessToken and refreshToken", function() {
+    if (res.getStatus() === 200) {
+      const body = res.getBody();
+      expect(body).to.have.property("accessToken");
+      expect(body.accessToken).to.be.a("string").and.not.empty;
+      expect(body).to.have.property("refreshToken");
+      expect(body.refreshToken).to.be.a("string").and.not.empty;
+    }
+  });
+
+  test("failure 401: should return error when userId or password is wrong", function() {
+    if (res.getStatus() === 401) {
+      const body = res.getBody();
+      expect(body).to.have.property("error");
+    }
+  });
+
+  test("failure 404: should return error when userId is not found", function() {
+    if (res.getStatus() === 404) {
+      const body = res.getBody();
+      expect(body).to.have.property("error");
+    }
+  });
+}

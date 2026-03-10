@@ -1,0 +1,42 @@
+meta {
+  name: List Policies
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/policies
+  body: none
+  auth: inherit
+}
+
+params:query {
+  ~search:
+  ~limit: 100
+  ~offset: 0
+  ~effect: permit
+  ~sortBy: createdAt
+  ~sortOrder: asc
+}
+
+tests {
+  test("should return 200 on success", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("success: should return data with policies array", function() {
+    if (res.getStatus() === 200) {
+      const body = res.getBody();
+      expect(body).to.have.property("data");
+      expect(body.data).to.have.property("policies");
+      expect(body.data.policies).to.be.an("array");
+    }
+  });
+
+  test("failure 401: should return error when unauthorized", function() {
+    if (res.getStatus() === 401) {
+      const body = res.getBody();
+      expect(body).to.have.property("error");
+    }
+  });
+}

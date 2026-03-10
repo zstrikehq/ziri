@@ -1,0 +1,58 @@
+meta {
+  name: Admin Login
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/auth/admin/login
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "username": "{{adminUsername}}",
+    "password": "{{rootKey}}"
+  }
+}
+
+script:post-response {
+  const body = res.getBody();
+  if (body.accessToken) {
+    bru.setEnvVar("adminToken", body.accessToken);
+  }
+  if (body.refreshToken) {
+    bru.setEnvVar("refreshToken", body.refreshToken);
+  }
+}
+
+tests {
+  test("should return 200 on valid credentials", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("success: should return accessToken and refreshToken", function() {
+    if (res.getStatus() === 200) {
+      const body = res.getBody();
+      expect(body).to.have.property("accessToken");
+      expect(body.accessToken).to.be.a("string").and.not.empty;
+      expect(body).to.have.property("refreshToken");
+      expect(body.refreshToken).to.be.a("string").and.not.empty;
+    }
+  });
+
+  test("failure 401: should return error when credentials are wrong", function() {
+    if (res.getStatus() === 401) {
+      const body = res.getBody();
+      expect(body).to.have.property("error");
+    }
+  });
+
+  test("failure 400: should return error when request body is malformed", function() {
+    if (res.getStatus() === 400) {
+      const body = res.getBody();
+      expect(body).to.have.property("error");
+    }
+  });
+}

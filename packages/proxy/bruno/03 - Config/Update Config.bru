@@ -1,0 +1,58 @@
+meta {
+  name: Update Config
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/config
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "mode": "local",
+    "server": {
+      "host": "127.0.0.1",
+      "port": 3100
+    },
+    "publicUrl": "http://localhost:3100",
+    "logLevel": "info",
+    "email": {
+      "enabled": false,
+      "provider": "smtp",
+      "options": {},
+      "fromByProvider": {}
+    }
+  }
+}
+
+tests {
+  test("should return 200 on success", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("success: should return success, message, config", function() {
+    if (res.getStatus() === 200) {
+      const body = res.getBody();
+      expect(body).to.have.property("success");
+      expect(body).to.have.property("message");
+      expect(body).to.have.property("config");
+    }
+  });
+
+  test("failure 401: should return error when unauthorized", function() {
+    if (res.getStatus() === 401) {
+      const body = res.getBody();
+      expect(body).to.have.property("error");
+    }
+  });
+
+  test("failure 400: should return error when invalid config values", function() {
+    if (res.getStatus() === 400) {
+      const body = res.getBody();
+      expect(body).to.have.property("error");
+    }
+  });
+}
