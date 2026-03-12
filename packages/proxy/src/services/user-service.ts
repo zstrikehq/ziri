@@ -118,7 +118,7 @@ export async function createUser(input: CreateUserInput): Promise<{ user: User; 
 
     try {
       const { generateApiKey, hashApiKey } = await import('../utils/api-key.js')
-      apiKey = generateApiKey(id)
+      apiKey = generateApiKey()
       db.prepare(`INSERT INTO user_agent_keys (id, key_value, key_hash, auth_id, status) VALUES (?,?,?,?,'active')`)
         .run(`key-${randomBytes(8).toString('hex')}`, apiKey.slice(-5), hashApiKey(apiKey), id)
     } catch (err: any) {
