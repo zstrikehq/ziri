@@ -202,20 +202,20 @@ onMounted(() => {
           class="input pl-10"
         />
       </div>
-      <select v-model="filterDecision" class="input w-32" @change="fetchLogs">
+      <select v-model="filterDecision" class="input" @change="fetchLogs">
         <option value="">All Decisions</option>
         <option value="permit">Permit</option>
         <option value="forbid">Forbid</option>
       </select>
-      <select v-model="filterProvider" class="input w-32" @change="fetchLogs">
+      <select v-model="filterProvider" class="input" @change="fetchLogs">
         <option value="">All Providers</option>
         <option v-for="provider in uniqueProviders" :key="provider" :value="provider">{{ provider }}</option>
       </select>
-      <select v-model="filterModel" class="input w-32" @change="fetchLogs">
+      <select v-model="filterModel" class="input" @change="fetchLogs">
         <option value="">All Models</option>
         <option v-for="model in uniqueModels" :key="model" :value="model">{{ model }}</option>
       </select>
-      <select v-model="dateRange" class="input w-32" @change="fetchLogs">
+      <select v-model="dateRange" class="input" @change="fetchLogs">
           <option value="today">Today</option>
           <option value="7d">Last 7 days</option>
           <option value="30d">Last 30 days</option>

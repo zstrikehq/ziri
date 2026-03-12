@@ -140,7 +140,7 @@ const {
         </div>
         <select 
           v-model="filterEffect"
-          class="input w-32"
+          class="input"
         >
           <option value="">All Effects</option>
           <option value="permit">Permit</option>

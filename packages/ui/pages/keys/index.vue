@@ -581,7 +581,7 @@ const closeKeyModal = () => {
         </div>
         <select 
           v-model="filterStatus"
-          class="input w-32"
+          class="input"
         >
           <option value="">All Status</option>
           <option value="active">Active</option>
