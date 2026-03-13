@@ -128,7 +128,7 @@ const getSortIcon = (column: Column) => {
                 </svg>
                 <svg 
                   v-else-if="getSortIcon(column) === 'sort-asc'"
-                  class="w-3 h-3 text-indigo-500"
+                  class="w-3 h-3 text-lime-500"
                   fill="none" 
                   stroke="currentColor" 
                   viewBox="0 0 24 24"
@@ -137,7 +137,7 @@ const getSortIcon = (column: Column) => {
                 </svg>
                 <svg 
                   v-else-if="getSortIcon(column) === 'sort-desc'"
-                  class="w-3 h-3 text-indigo-500"
+                  class="w-3 h-3 text-lime-500"
                   fill="none" 
                   stroke="currentColor" 
                   viewBox="0 0 24 24"

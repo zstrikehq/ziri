@@ -222,7 +222,7 @@ const {
         </UiButton>
       </template>
       <template #effect="{ row }">
-        <span :class="row.effect === 'permit' ? 'badge-success' : 'badge-danger'" class="badge">
+        <span :class="[row.effect === 'permit' ? 'badge-info' : 'badge-danger', 'table-pill']">
           {{ row.effect }}
         </span>
       </template>
@@ -239,14 +239,14 @@ const {
       <template #status="{ row }">
         <!-- Status pill with improved styling -->
         <span
-          class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold border-2 shadow-sm"
+          class="table-pill shadow-sm"
           :class="row.isActive
-            ? 'border-emerald-500/50 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-500/60 shadow-emerald-500/10'
-            : 'border-amber-500/50 bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-500/60 shadow-amber-500/10'"
+            ? 'bg-lime-100 text-lime-900 dark:bg-lime-900/40 dark:text-lime-200 shadow-lime-500/10'
+            : 'bg-gray-100 text-gray-700 dark:bg-gray-800/80 dark:text-gray-300 shadow-gray-500/10'"
         >
           <span
             class="h-2 w-2 rounded-full animate-pulse"
-            :class="row.isActive ? 'bg-emerald-500' : 'bg-amber-500'"
+            :class="row.isActive ? 'bg-lime-500' : 'bg-gray-500'"
           />
           <span>{{ row.isActive ? 'Enabled' : 'Disabled' }}</span>
         </span>
@@ -257,7 +257,7 @@ const {
           <button 
             v-if="canUpdatePolicy"
             @click="handleEditRule(row)"
-            class="icon-btn text-[rgb(var(--text-muted))] hover:text-indigo-500"
+            class="icon-btn text-[rgb(var(--text-muted))] hover:text-[rgb(var(--color-text-accent))]"
             title="Edit policy"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -300,7 +300,7 @@ const {
     <!-- Template Selector Modal -->
     <UiModal v-model="showTemplateModal" title="Policy Templates" size="lg">
       <div v-if="templatesLoading" class="flex items-center justify-center py-8">
-        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-lime-500"></div>
       </div>
       <div v-else-if="templates.length === 0" class="text-center py-8 text-[rgb(var(--text-muted))]">
         No templates available
@@ -314,7 +314,7 @@ const {
             <div 
               v-for="template in categoryTemplates" 
               :key="template.id"
-              class="p-4 rounded-lg border border-[rgb(var(--border))] bg-[rgb(var(--surface-elevated))] hover:border-indigo-400 transition-colors"
+              class="p-4 rounded-lg border border-[rgb(var(--border))] bg-[rgb(var(--surface-elevated))] hover:border-lime-400 transition-colors"
             >
               <div class="space-y-3">
                 <div>

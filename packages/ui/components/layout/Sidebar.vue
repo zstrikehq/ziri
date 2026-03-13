@@ -89,7 +89,7 @@ const navSections = computed(() => getNavSections(isDashboardUser.value))
     >
         <div class="flex items-center gap-3 min-w-0">
           <!-- Logo Icon -->
-          <div class="w-8 h-8 flex-shrink-0 rounded-lg bg-gradient-to-br from-indigo-500 to-indigo-600 dark:from-indigo-400 dark:to-indigo-500 p-1.5 flex items-center justify-center shadow-md shadow-indigo-500/25 dark:shadow-indigo-500/15 ring-1 ring-indigo-500/20 dark:ring-indigo-400/20">
+          <div class="w-8 h-8 flex-shrink-0 rounded-lg bg-gradient-to-br from-lime-500 to-lime-600 dark:from-lime-300 dark:to-lime-400 p-1.5 flex items-center justify-center shadow-md shadow-lime-500/25 dark:shadow-lime-400/20 ring-1 ring-lime-500/20 dark:ring-lime-300/20">
             <img 
               :src="ziriLogo" 
               alt="Ziri Logo" 
@@ -97,7 +97,7 @@ const navSections = computed(() => getNavSections(isDashboardUser.value))
             />
           </div>
           <div v-if="!isCollapsed" class="overflow-hidden min-w-0 flex-1">
-            <h1 class="text-sm font-black tracking-tight truncate uppercase bg-gradient-to-r from-indigo-600 to-indigo-500 dark:from-indigo-400 dark:to-indigo-300 bg-clip-text text-transparent drop-shadow-sm">Ziri</h1>
+            <h1 class="text-sm font-black tracking-tight truncate uppercase bg-gradient-to-r from-lime-700 to-lime-500 dark:from-lime-300 dark:to-lime-200 bg-clip-text text-transparent drop-shadow-sm">Ziri</h1>
             <p class="text-[10px] font-bold text-[rgb(var(--text-muted))] truncate tracking-widest uppercase opacity-70">AI LLM  gateway auth</p>
           </div>
         </div>
@@ -226,7 +226,7 @@ const navSections = computed(() => getNavSections(isDashboardUser.value))
 }
 
 .nav-item.active {
-  @apply bg-[rgb(var(--primary))/0.1] text-[rgb(var(--primary))] font-semibold;
+  @apply bg-[rgb(var(--primary))/0.06] text-[rgb(var(--color-text-accent))] font-semibold;
 }
 </style>
 

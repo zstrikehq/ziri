@@ -56,24 +56,24 @@ const recordAttrs = computed(() => props.attributes.filter(a => a.children?.leng
 
 
 const depthAccentColors = [
-  'border-l-indigo-400 dark:border-l-indigo-500',
-  'border-l-violet-400 dark:border-l-violet-500',
-  'border-l-pink-400 dark:border-l-pink-500',
-  'border-l-amber-400 dark:border-l-amber-500',
+  'border-l-lime-400 dark:border-l-lime-500',
+  'border-l-lime-500 dark:border-l-lime-400',
+  'border-l-lime-300 dark:border-l-lime-600',
+  'border-l-lime-200 dark:border-l-lime-700',
 ]
 
 const depthBgColors = [
-  'bg-indigo-50/50 dark:bg-indigo-950/25',
-  'bg-violet-50/50 dark:bg-violet-950/25',
-  'bg-pink-50/50 dark:bg-pink-950/25',
-  'bg-amber-50/50 dark:bg-amber-950/25',
+  'bg-lime-50/50 dark:bg-lime-950/25',
+  'bg-lime-100/40 dark:bg-lime-900/25',
+  'bg-lime-200/30 dark:bg-lime-900/20',
+  'bg-lime-100/50 dark:bg-lime-950/30',
 ]
 
 const depthDotColors = [
-  'bg-indigo-400',
-  'bg-violet-400',
-  'bg-pink-400',
-  'bg-amber-400',
+  'bg-lime-400',
+  'bg-lime-500',
+  'bg-lime-300',
+  'bg-lime-200',
 ]
 
 function getAccentColor(depth: number): string {
@@ -110,7 +110,7 @@ function getDotColor(depth: number): string {
             <td class="px-3 py-1.5">
               <button
                 v-if="isClickableEntity(attr.type)"
-                class="font-mono text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
+                class="font-mono text-lime-700 dark:text-lime-200 hover:underline cursor-pointer"
                 @click="emit('navigate', 'entity', resolveEntityId(attr.type))"
                 v-html="highlightText(attr.type, searchQuery)"
               ></button>

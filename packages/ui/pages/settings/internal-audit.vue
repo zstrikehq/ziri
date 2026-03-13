@@ -115,7 +115,7 @@ onMounted(() => {
       <h1 class="text-2xl font-bold text-[rgb(var(--text))]">Internal Audit Logs</h1>
       <span
         class="text-xs px-2 py-1 rounded-full"
-        :class="isSseConnected ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'"
+        :class="isSseConnected ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200' : 'bg-amber-50 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200'"
       >
         {{ isSseConnected ? 'Live updates' : 'Offline' }}
       </span>

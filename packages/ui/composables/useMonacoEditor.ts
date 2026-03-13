@@ -1,12 +1,12 @@
 import type * as monacoedi from "monaco-editor";
 
 function getThemeName(): string {
-	if (typeof window === "undefined") return "catppuccin-latte";
+	if (typeof window === "undefined") return "min-light";
 
 
 	const stored = localStorage.getItem("theme");
 	if (stored) {
-		return stored === "dark" ? "catppuccin-mocha" : "catppuccin-latte";
+		return stored === "dark" ? "github-dark-default" : "min-light";
 	}
 
 
@@ -17,15 +17,15 @@ function getThemeName(): string {
 		const cookieVal = cookie?.split("=")[1];
 		if (cookieVal) {
 			return cookieVal === "dark"
-				? "catppuccin-mocha"
-				: "catppuccin-latte";
+				? "github-dark-default"
+				: "min-light";
 		}
 	}
 
 
 	if (typeof document !== "undefined") {
 		if (document.documentElement.classList.contains("dark")) {
-			return "catppuccin-mocha";
+			return "github-dark-default";
 		}
 	}
 
@@ -34,15 +34,15 @@ function getThemeName(): string {
 		typeof window !== "undefined" &&
 		window.matchMedia("(prefers-color-scheme: dark)").matches
 	) {
-		return "catppuccin-mocha";
+		return "github-dark-default";
 	}
 
-	return "catppuccin-latte";
+	return "min-light";
 }
 
 
 const currentTheme = ref(
-	typeof window !== "undefined" ? getThemeName() : "catppuccin-latte"
+	typeof window !== "undefined" ? getThemeName() : "min-light"
 );
 
 export const useMonacoEditor = () => {
