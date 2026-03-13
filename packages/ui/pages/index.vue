@@ -438,7 +438,7 @@ const totalModelRequests = computed(() => {
             No model spend data
           </div>
           <div v-else>
-            <KeysSpendChart type="pie" :data="modelSpendPieData" />
+            <KeysSpendChart type="pie" :data="modelSpendPieData" tone="solid" />
             <div class="mt-3 space-y-2">
               <div v-for="item in topModelsBySpend" :key="`spend-${item.model_used}`" class="flex items-center justify-between text-xs">
                 <span class="text-[rgb(var(--text-secondary))] truncate max-w-[70%]">{{ item.model_used || 'N/A' }}</span>
@@ -462,7 +462,7 @@ const totalModelRequests = computed(() => {
             No model request data
           </div>
           <div v-else>
-            <KeysSpendChart type="pie" :data="modelRequestPieData" />
+            <KeysSpendChart type="pie" :data="modelRequestPieData" tone="solid" />
             <div class="mt-3 space-y-2">
               <div v-for="item in topModelsByRequests" :key="`req-${item.model_used}`" class="flex items-center justify-between text-xs">
                 <span class="text-[rgb(var(--text-secondary))] truncate max-w-[70%]">{{ item.model_used || 'N/A' }}</span>
