@@ -370,24 +370,24 @@ const resetToDefaults = async () => {
     <!-- Mode Display (Read-only for now) -->
     <!-- <section class="card">
       <div class="flex items-center gap-3 mb-5">
-        <div class="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
-          <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="p-2 rounded-lg bg-lime-50 dark:bg-lime-900/30">
+          <svg class="w-5 h-5 text-lime-600 dark:text-lime-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
           </svg>
         </div>
         <h3 class="text-sm font-bold text-[rgb(var(--text))]">Operation Mode</h3>
       </div>
       <div class="space-y-3">
-        <div class="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+        <div class="p-3 rounded-lg bg-lime-50/70 dark:bg-lime-900/20 border border-lime-200 dark:border-lime-800">
           <div class="flex items-center justify-between">
             <div>
-              <p class="text-xs font-semibold text-blue-900 dark:text-blue-100 mb-1">Current Mode</p>
-              <p class="text-sm font-bold text-blue-700 dark:text-blue-300 uppercase">
+              <p class="text-xs font-semibold text-lime-900 dark:text-lime-100 mb-1">Current Mode</p>
+              <p class="text-sm font-bold text-lime-700 dark:text-lime-300 uppercase">
                 {{ form.mode }}
               </p>
             </div>
-            <div class="px-3 py-1 rounded-lg bg-blue-100 dark:bg-blue-800">
-              <span class="text-xs font-bold text-blue-900 dark:text-blue-100">
+            <div class="px-3 py-1 rounded-lg bg-lime-50 dark:bg-lime-800">
+              <span class="text-xs font-bold text-lime-900 dark:text-lime-100">
                 {{ form.mode === 'local' ? '🔒 Local' : '🌐 Live' }}
               </span>
             </div>
@@ -406,8 +406,8 @@ const resetToDefaults = async () => {
     <!-- Server Settings -->
     <section class="card">
       <div class="flex items-center gap-3 mb-5">
-        <div class="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30">
-          <svg class="w-5 h-5 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="p-2 rounded-lg bg-lime-50 dark:bg-lime-900/30">
+          <svg class="w-5 h-5 text-lime-600 dark:text-lime-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" />
           </svg>
         </div>

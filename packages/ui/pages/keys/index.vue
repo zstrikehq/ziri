@@ -638,7 +638,7 @@ const closeKeyModal = () => {
         </UiButton>
       </template>
       <template #userId="{ value }">
-        <code class="px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-900/30 font-mono text-xs text-indigo-600 dark:text-indigo-400 font-semibold">{{ value }}</code>
+        <code class="px-2 py-0.5 rounded-md bg-lime-50 dark:bg-lime-900/30 font-mono text-xs text-lime-700 dark:text-lime-200 font-semibold">{{ value }}</code>
       </template>
       
       <template #name="{ row }">
@@ -662,11 +662,11 @@ const closeKeyModal = () => {
       <template #status="{ value }">
         <span 
           :class="[
-            'px-2 py-1 rounded text-xs font-semibold',
+            'table-pill',
             value === 'active' || value === 1 
-              ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+              ? 'bg-green-50 text-green-800 dark:bg-green-900/30 dark:text-green-200'
               : value === 'disabled'
-              ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+              ? 'bg-amber-50 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200'
               : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
           ]"
         >
@@ -680,7 +680,7 @@ const closeKeyModal = () => {
             v-if="canUpdateKeyStatus"
             size="sm" 
             variant="ghost"
-            class="text-indigo-500 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20"
+            class="text-lime-600 hover:text-lime-700 hover:bg-lime-50 dark:hover:bg-lime-900/20"
             @click.stop="handleEditKey(row)"
             :loading="isEditing"
             title="Edit Key"

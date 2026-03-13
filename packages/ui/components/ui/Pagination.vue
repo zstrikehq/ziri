@@ -91,7 +91,7 @@ const itemsPerPageOptions = computed(() => {
               :class="[
                 'px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200',
                 currentPage === page
-                  ? 'bg-indigo-500 text-white'
+                  ? 'bg-lime-500 text-[#0a0a0a]'
                   : 'text-[rgb(var(--text-secondary))] hover:bg-[rgb(var(--surface-elevated))] hover:text-[rgb(var(--text))]'
               ]"
             >
@@ -105,7 +105,7 @@ const itemsPerPageOptions = computed(() => {
               :class="[
                 'px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200',
                 currentPage === 1
-                  ? 'bg-indigo-500 text-white'
+                  ? 'bg-lime-500 text-[#0a0a0a]'
                   : 'text-[rgb(var(--text-secondary))] hover:bg-[rgb(var(--surface-elevated))] hover:text-[rgb(var(--text))]'
               ]"
             >
@@ -119,7 +119,7 @@ const itemsPerPageOptions = computed(() => {
               :class="[
                 'px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200',
                 currentPage === page
-                  ? 'bg-indigo-500 text-white'
+                  ? 'bg-lime-500 text-[#0a0a0a]'
                   : 'text-[rgb(var(--text-secondary))] hover:bg-[rgb(var(--surface-elevated))] hover:text-[rgb(var(--text))]'
               ]"
             >
@@ -132,7 +132,7 @@ const itemsPerPageOptions = computed(() => {
               :class="[
                 'px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200',
                 currentPage === totalPages
-                  ? 'bg-indigo-500 text-white'
+                  ? 'bg-lime-500 text-[#0a0a0a]'
                   : 'text-[rgb(var(--text-secondary))] hover:bg-[rgb(var(--surface-elevated))] hover:text-[rgb(var(--text))]'
               ]"
             >

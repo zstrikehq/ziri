@@ -127,17 +127,17 @@ watch(
               :key="entity.id"
               class="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-left transition-colors"
               :class="selectedId === entity.id
-                ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 border-r-2 border-indigo-500'
+                ? 'bg-lime-50 dark:bg-lime-900/30 text-lime-800 dark:text-lime-200 border-r-2 border-lime-500'
                 : 'text-[rgb(var(--text-secondary))] hover:bg-[rgb(var(--surface-elevated))]'"
               @click="select('entity', entity.id)"
             >
               <span
                 class="shrink-0 w-1.5 h-1.5 rounded-full"
-                :class="entity.kind === 'enum' ? 'bg-amber-400' : 'bg-blue-400'"
+                :class="entity.kind === 'enum' ? 'bg-amber-400' : 'bg-lime-400'"
               ></span>
               <span class="font-mono truncate">{{ entity.name }}</span>
               <span v-if="entity.kind === 'enum'" class="ml-auto text-xs text-amber-600 dark:text-amber-400 shrink-0">enum</span>
-              <span v-if="entity.tags" class="ml-auto text-xs text-violet-500 dark:text-violet-400 shrink-0">tags</span>
+              <span v-if="entity.tags" class="ml-auto text-xs text-lime-700 dark:text-lime-200 shrink-0">tags</span>
             </button>
           </div>
         </div>
@@ -162,7 +162,7 @@ watch(
               :key="ct.id"
               class="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-left transition-colors"
               :class="selectedId === ct.id
-                ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 border-r-2 border-indigo-500'
+                ? 'bg-lime-50 dark:bg-lime-900/30 text-lime-800 dark:text-lime-200 border-r-2 border-lime-500'
                 : 'text-[rgb(var(--text-secondary))] hover:bg-[rgb(var(--surface-elevated))]'"
               @click="select('commonType', ct.id)"
             >
@@ -193,11 +193,11 @@ watch(
               :key="ag.id"
               class="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-left transition-colors"
               :class="selectedId === ag.id
-                ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 border-r-2 border-indigo-500'
+                ? 'bg-lime-50 dark:bg-lime-900/30 text-lime-800 dark:text-lime-200 border-r-2 border-lime-500'
                 : 'text-[rgb(var(--text-secondary))] hover:bg-[rgb(var(--surface-elevated))]'"
               @click="select('action', ag.id)"
             >
-              <span class="shrink-0 w-1.5 h-1.5 rounded-full bg-purple-400"></span>
+              <span class="shrink-0 w-1.5 h-1.5 rounded-full bg-lime-500"></span>
               <span class="font-mono truncate">{{ ag.name }}</span>
               <span class="ml-auto text-xs text-[rgb(var(--text-muted))] shrink-0">{{ ag.children.length }} children</span>
             </button>
@@ -224,7 +224,7 @@ watch(
               :key="action.id"
               class="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-left transition-colors"
               :class="selectedId === action.id
-                ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 border-r-2 border-indigo-500'
+                ? 'bg-lime-50 dark:bg-lime-900/30 text-lime-800 dark:text-lime-200 border-r-2 border-lime-500'
                 : 'text-[rgb(var(--text-secondary))] hover:bg-[rgb(var(--surface-elevated))]'"
               @click="select('action', action.id)"
             >
@@ -408,9 +408,9 @@ function handleNavigate(type: 'entity' | 'action' | 'commonType', id: string) {
     if (el) {
       el.scrollIntoView({ behavior: 'smooth', block: 'start' })
 
-      el.classList.add('ring-2', 'ring-indigo-400', 'ring-offset-1')
+      el.classList.add('ring-2', 'ring-lime-400', 'ring-offset-1')
       setTimeout(() => {
-        el.classList.remove('ring-2', 'ring-indigo-400', 'ring-offset-1')
+        el.classList.remove('ring-2', 'ring-lime-400', 'ring-offset-1')
       }, 1500)
     }
   })
@@ -475,7 +475,7 @@ const hasResults = computed(() =>
       </div>
       <div class="hidden sm:flex items-center gap-2 text-[10px] text-[rgb(var(--text-muted))]">
         <span class="inline-flex items-center gap-1">
-          <span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+          <span class="w-1.5 h-1.5 rounded-full bg-lime-400"></span>
           {{ schema.stats.totalEntities + schema.stats.totalEnums }} entities
         </span>
         <span class="inline-flex items-center gap-1">
@@ -483,7 +483,7 @@ const hasResults = computed(() =>
           {{ schema.stats.totalCommonTypes }} types
         </span>
         <span class="inline-flex items-center gap-1">
-          <span class="w-1.5 h-1.5 rounded-full bg-purple-400"></span>
+          <span class="w-1.5 h-1.5 rounded-full bg-lime-500"></span>
           {{ schema.stats.totalActions + schema.stats.totalActionGroups }} actions
         </span>
       </div>
@@ -497,7 +497,7 @@ const hasResults = computed(() =>
           @click="sectionsCollapsed.entities = !sectionsCollapsed.entities"
         >
           <span class="flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full bg-blue-400"></span>
+            <span class="w-2 h-2 rounded-full bg-lime-400"></span>
             Entities ({{ filtered.entities.length }})
           </span>
           <svg
@@ -519,7 +519,7 @@ const hasResults = computed(() =>
             <button
               class="w-full flex items-center gap-2 px-3 py-2 text-left transition-colors group"
               :class="isExpanded(entity.id)
-                ? 'bg-indigo-50/60 dark:bg-indigo-950/20'
+                ? 'bg-lime-50/60 dark:bg-lime-950/20'
                 : 'hover:bg-[rgb(var(--surface-elevated))]/60'"
               @click="toggleItem(entity.id)"
             >
@@ -536,8 +536,8 @@ const hasResults = computed(() =>
               <span
                 class="px-1.5 py-px text-[9px] font-bold uppercase tracking-wider rounded shrink-0"
                 :class="entity.kind === 'enum'
-                  ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'
-                  : 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'"
+                  ? 'bg-amber-50 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200'
+                  : 'bg-lime-50 dark:bg-lime-900/30 text-lime-800 dark:text-lime-200'"
               >
                 {{ entity.kind }}
               </span>
@@ -585,7 +585,7 @@ const hasResults = computed(() =>
             <button
               class="w-full flex items-center gap-2 px-3 py-2 text-left transition-colors group"
               :class="isExpanded(ct.id)
-                ? 'bg-indigo-50/60 dark:bg-indigo-950/20'
+                ? 'bg-lime-50/60 dark:bg-lime-950/20'
                 : 'hover:bg-[rgb(var(--surface-elevated))]/60'"
               @click="toggleItem(ct.id)"
             >
@@ -599,7 +599,7 @@ const hasResults = computed(() =>
 
               <span class="font-mono text-xs font-semibold text-[rgb(var(--text))]" v-html="highlightText(ct.name, debouncedSearchQuery)"></span>
 
-              <span class="px-1.5 py-px text-[9px] font-bold uppercase tracking-wider rounded shrink-0 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300">
+              <span class="px-1.5 py-px text-[9px] font-bold uppercase tracking-wider rounded shrink-0 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-200">
                 type
               </span>
 
@@ -624,7 +624,7 @@ const hasResults = computed(() =>
           @click="sectionsCollapsed.actionGroups = !sectionsCollapsed.actionGroups"
         >
           <span class="flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full bg-purple-400"></span>
+            <span class="w-2 h-2 rounded-full bg-lime-500"></span>
             Action Groups ({{ filteredActionGroups.length }})
           </span>
           <svg
@@ -646,7 +646,7 @@ const hasResults = computed(() =>
             <button
               class="w-full flex items-center gap-2 px-3 py-2 text-left transition-colors group"
               :class="isExpanded(ag.id)
-                ? 'bg-indigo-50/60 dark:bg-indigo-950/20'
+                ? 'bg-lime-50/60 dark:bg-lime-950/20'
                 : 'hover:bg-[rgb(var(--surface-elevated))]/60'"
               @click="toggleItem(ag.id)"
             >
@@ -660,7 +660,7 @@ const hasResults = computed(() =>
 
               <span class="font-mono text-xs font-semibold text-[rgb(var(--text))]" v-html="highlightText(ag.name, debouncedSearchQuery)"></span>
 
-              <span class="px-1.5 py-px text-[9px] font-bold uppercase tracking-wider rounded shrink-0 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300">
+              <span class="px-1.5 py-px text-[9px] font-bold uppercase tracking-wider rounded shrink-0 bg-lime-50 dark:bg-lime-900/30 text-lime-800 dark:text-lime-200">
                 group
               </span>
 
@@ -685,7 +685,7 @@ const hasResults = computed(() =>
           @click="sectionsCollapsed.actions = !sectionsCollapsed.actions"
         >
           <span class="flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full bg-purple-400"></span>
+            <span class="w-2 h-2 rounded-full bg-lime-500"></span>
             Actions ({{ filteredActionItems.length }})
           </span>
           <svg
@@ -707,7 +707,7 @@ const hasResults = computed(() =>
             <button
               class="w-full flex items-center gap-2 px-3 py-2 text-left transition-colors group"
               :class="isExpanded(action.id)
-                ? 'bg-indigo-50/60 dark:bg-indigo-950/20'
+                ? 'bg-lime-50/60 dark:bg-lime-950/20'
                 : 'hover:bg-[rgb(var(--surface-elevated))]/60'"
               @click="toggleItem(action.id)"
             >
@@ -721,7 +721,7 @@ const hasResults = computed(() =>
 
               <span class="font-mono text-xs font-semibold text-[rgb(var(--text))]" v-html="highlightText(action.name, debouncedSearchQuery)"></span>
 
-              <span class="px-1.5 py-px text-[9px] font-bold uppercase tracking-wider rounded shrink-0 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300">
+              <span class="px-1.5 py-px text-[9px] font-bold uppercase tracking-wider rounded shrink-0 bg-lime-50 dark:bg-lime-900/30 text-lime-800 dark:text-lime-200">
                 action
               </span>
 
@@ -729,7 +729,7 @@ const hasResults = computed(() =>
                 <span
                   v-for="parentId in action.memberOf"
                   :key="parentId"
-                  class="px-1 py-px text-[9px] rounded bg-purple-100/60 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400"
+                  class="px-1 py-px text-[9px] rounded bg-lime-50/70 dark:bg-lime-900/20 text-lime-700 dark:text-lime-200"
                 >
                   <span v-html="highlightText(shortName(parentId), debouncedSearchQuery)"></span>
                 </span>
