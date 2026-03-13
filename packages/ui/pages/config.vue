@@ -361,8 +361,8 @@ const resetToDefaults = async () => {
     <!-- Server Settings -->
     <section class="card">
       <div class="flex items-center gap-3 mb-5">
-        <div class="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30">
-          <svg class="w-5 h-5 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="p-2 rounded-lg bg-lime-50 dark:bg-lime-900/30">
+          <svg class="w-5 h-5 text-lime-600 dark:text-lime-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" />
           </svg>
         </div>

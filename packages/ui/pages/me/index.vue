@@ -11,7 +11,7 @@
 
     <div v-if="loading" class="card">
       <div class="flex items-center justify-center py-12">
-        <svg class="animate-spin h-8 w-8 text-[rgb(var(--primary))]" fill="none" viewBox="0 0 24 24">
+        <svg class="animate-spin h-8 w-8 text-[rgb(var(--color-text-accent))]" fill="none" viewBox="0 0 24 24">
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
           <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
         </svg>
@@ -42,7 +42,7 @@
           <div class="grid grid-cols-2 gap-4">
             <div>
               <p class="text-xs font-semibold text-[rgb(var(--text-muted))] uppercase tracking-wider mb-1">User ID</p>
-              <code class="px-2 py-1 rounded-md bg-indigo-50 dark:bg-indigo-900/30 font-mono text-sm text-indigo-600 dark:text-indigo-400 font-semibold">{{ userInfo.userId }}</code>
+              <code class="px-2 py-1 rounded-md bg-lime-50 dark:bg-lime-900/30 font-mono text-sm text-lime-700 dark:text-lime-200 font-semibold">{{ userInfo.userId }}</code>
             </div>
             <div>
               <p class="text-xs font-semibold text-[rgb(var(--text-muted))] uppercase tracking-wider mb-1">Role</p>
@@ -70,10 +70,10 @@
                   :class="[
                     'px-2 py-0.5 rounded text-xs font-semibold',
                     keyStatus === 'active' 
-                      ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                      ? 'bg-green-50 text-green-800 dark:bg-green-900/30 dark:text-green-200'
                       : keyStatus === 'revoked'
-                      ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                      : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                      ? 'bg-red-50 text-red-800 dark:bg-red-900/30 dark:text-red-200'
+                      : 'bg-amber-50 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200'
                   ]"
                 >
                   {{ keyStatus.charAt(0).toUpperCase() + keyStatus.slice(1) }}
@@ -131,7 +131,7 @@
             </div>
             <!-- <div class="progress-bar h-3">
               <div 
-                class="progress-bar-fill bg-gradient-to-r from-indigo-500 to-purple-500" 
+                class="progress-bar-fill bg-gradient-to-r from-lime-500 to-lime-300" 
                 :style="{ width: `${Math.min(100, (usage.currentDailySpend / 100) * 100)}%` }"
               />
             </div> -->

@@ -473,7 +473,7 @@ watch(activeTab, async (tab) => {
               :class="[
                 'px-3 py-1 rounded text-xs font-medium transition-all',
                 activeTab === 'simplified'
-                  ? 'bg-indigo-500 text-white'
+                  ? 'bg-lime-500 text-[#0a0a0a]'
                   : 'text-[rgb(var(--text-secondary))] hover:text-[rgb(var(--text))]'
               ]"
             >
@@ -484,7 +484,7 @@ watch(activeTab, async (tab) => {
               :class="[
                 'px-3 py-1 rounded text-xs font-medium transition-all',
                 activeTab === 'json'
-                  ? 'bg-indigo-500 text-white'
+                  ? 'bg-lime-500 text-[#0a0a0a]'
                   : 'text-[rgb(var(--text-secondary))] hover:text-[rgb(var(--text))]'
               ]"
             >
@@ -495,7 +495,7 @@ watch(activeTab, async (tab) => {
               :class="[
                 'px-3 py-1 rounded text-xs font-medium transition-all',
                 activeTab === 'cedar'
-                  ? 'bg-indigo-500 text-white'
+                  ? 'bg-lime-500 text-[#0a0a0a]'
                   : 'text-[rgb(var(--text-secondary))] hover:text-[rgb(var(--text))]'
               ]"
             >
@@ -576,7 +576,7 @@ watch(activeTab, async (tab) => {
               {{ simplifiedError }}
             </p>
             <button
-              class="mt-2 px-4 py-1.5 text-xs font-medium rounded-lg bg-indigo-500 text-white hover:bg-indigo-600 transition-colors"
+              class="mt-2 px-4 py-1.5 text-xs font-medium rounded-lg bg-lime-500 text-[#0a0a0a] hover:bg-lime-400 transition-colors"
               @click="onTabSwitch('cedar')"
             >
               Open Cedar Tab
@@ -638,14 +638,14 @@ watch(activeTab, async (tab) => {
             class="flex-1 min-h-0"
             @load="(editor) => { onEditorMounted(editor); onSchemaContentChanged(editor); monitorSchemaMarkerChanges(editor); }"
           />
-          <div class="shrink-0 flex items-center justify-between text-xs px-2 py-1 bg-neutral-200 dark:bg-slate-900 text-neutral-500 dark:text-neutral-400">
-            <span class="font-medium uppercase tracking-wide">{{ activeTab === 'cedar' ? 'Cedar' : 'JSON' }}</span>
+          <div class="shrink-0 flex items-center justify-between text-xs px-2 py-1 border-t border-[rgb(var(--border))] bg-slate-100 dark:bg-slate-800/70 text-[rgb(var(--text-secondary))]">
+            <span class="font-medium uppercase tracking-wide text-[rgb(var(--text-muted))]">{{ activeTab === 'cedar' ? 'Cedar' : 'JSON' }}</span>
             <span class="flex items-center gap-3">
-              <span class="inline-flex items-center gap-1" :class="isEditing ? 'text-amber-600 dark:text-amber-400' : ''">
-                <span class="inline-block w-1.5 h-1.5 rounded-full" :class="isEditing ? 'bg-amber-500' : 'bg-neutral-400 dark:bg-neutral-500'"></span>
+              <span class="inline-flex items-center gap-1" :class="isEditing ? 'text-lime-700 dark:text-lime-200' : 'text-[rgb(var(--text-muted))]'">
+                <span class="inline-block w-1.5 h-1.5 rounded-full" :class="isEditing ? 'bg-lime-500' : 'bg-[rgb(var(--text-muted))]'"></span>
                 {{ isEditing ? 'EDIT' : 'READ' }}
               </span>
-              |
+              <span class="text-[rgb(var(--text-muted))]">|</span>
               <span>Ln {{ schemaEditor.cursorPos.line }}, Col {{ schemaEditor.cursorPos.column }}</span>
             </span>
           </div>
