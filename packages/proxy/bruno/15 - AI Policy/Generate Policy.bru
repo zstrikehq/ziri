@@ -1,0 +1,53 @@
+meta {
+  name: Generate Policy
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/ai-policy/generate
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "provider": "{{testProvider}}",
+    "model": "{{testModel}}",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Create a policy that allows users with the engineer role to use chat completions and embeddings"
+      }
+    ]
+  }
+}
+
+tests {
+  test("should return 200 on success", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("success: should return policy and usage", function() {
+    if (res.getStatus() === 200) {
+      const body = res.getBody();
+      expect(body).to.have.property("policy");
+      expect(body.policy).to.be.a("string").and.not.empty;
+      expect(body).to.have.property("usage");
+    }
+  });
+
+  test("failure 401: should return error when unauthorized", function() {
+    if (res.getStatus() === 401) {
+      const body = res.getBody();
+      expect(body).to.have.property("error");
+    }
+  });
+
+  test("failure 403: should return error when LLM access denied by policy", function() {
+    if (res.getStatus() === 403) {
+      const body = res.getBody();
+      expect(body).to.have.property("error");
+    }
+  });
+}

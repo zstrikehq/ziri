@@ -1,0 +1,52 @@
+meta {
+  name: Create Role
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/roles
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "id": "tester"
+  }
+}
+
+script:post-response {
+  const body = res.getBody();
+  if (body.role && body.role.id) {
+    bru.setEnvVar("testRoleId", body.role.id);
+  }
+}
+
+tests {
+  test("should return 201 on success", function() {
+    expect(res.getStatus()).to.equal(201);
+  });
+
+  test("success: should return role.id", function() {
+    if (res.getStatus() === 201) {
+      const body = res.getBody();
+      expect(body).to.have.property("role");
+      expect(body.role).to.have.property("id");
+    }
+  });
+
+  test("failure 401: should return error when unauthorized", function() {
+    if (res.getStatus() === 401) {
+      const body = res.getBody();
+      expect(body).to.have.property("error");
+    }
+  });
+
+  test("failure 409: should return error when role already exists", function() {
+    if (res.getStatus() === 409) {
+      const body = res.getBody();
+      expect(body).to.have.property("error");
+    }
+  });
+}

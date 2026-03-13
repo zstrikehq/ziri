@@ -405,6 +405,8 @@ export function useRulesPageState() {
       }
       showCreateModal.value = false
       resetRuleForm()
+      currentPage.value = 1
+      await fetchRules()
     } catch {
     }
   }
@@ -506,6 +508,12 @@ export function useRulesPageState() {
       await deleteRule(ruleToDelete.value.policy)
       showDeleteModal.value = false
       ruleToDelete.value = null
+      await fetchRules()
+      const total = totalRules.value || 0
+      const maxIndex = (currentPage.value - 1) * itemsPerPage.value
+      if (currentPage.value > 1 && maxIndex >= total) {
+        currentPage.value = currentPage.value - 1
+      }
     } catch {
     }
   }

@@ -15,7 +15,7 @@ new UserSDK(config: UserSDKConfig)
 
 **Parameters**:
 
--   `config.apiKey` (string, required) - ZIRI API key (must start with `ziri-`)
+-   `config.apiKey` (string, required) - ZIRI API key (format: `ziri_<uuidv4withoutdashes>`)
 -   `config.proxyUrl` (string | URL, optional) - ZIRI server URL (defaults to `ZIRI_PROXY_URL` env var or `http://localhost:3100`)
 -   `config.timeoutMs` (number, optional) - Request timeout in milliseconds (default: `30000`)
 -   `config.fetch` (function, optional) - Custom fetch implementation (defaults to global `fetch`)
@@ -91,14 +91,6 @@ images(params: {
 -   `model` (string, required)
 -   `prompt` (string, required)
 -   `n`, `size`, `quality`, `response_format` optional
-
-#### `getUserId`
-
-Get the user ID extracted from the API key.
-
-```typescript
-getUserId(): string
-```
 
 ## Error Handling
 

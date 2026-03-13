@@ -227,6 +227,11 @@ const handleDeleteUser = async () => {
     userToDelete.value = null
     toast.success('User deleted')
     await fetchUsers()
+    const total = totalUsers.value
+    const maxIndex = (currentPage.value - 1) * itemsPerPage.value
+    if (currentPage.value > 1 && maxIndex >= total) {
+      currentPage.value = currentPage.value - 1
+    }
   } catch (error: any) {
     toast.error(getUserMessage(error))
   } finally {
@@ -617,7 +622,7 @@ const getRoleBadgeColor = (role: string) => {
           >
             <option 
               value="admin" 
-              :disabled="!canUpdateAdmin && (selectedUser?.role === 'admin' || editUser.role === 'admin')"
+              :disabled="!canUpdateAdmin"
             >
               Admin
             </option>

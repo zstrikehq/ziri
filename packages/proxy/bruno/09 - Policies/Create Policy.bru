@@ -1,0 +1,45 @@
+meta {
+  name: Create Policy
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/policies
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "policy": "@id(\"allow-all-completions\")\npermit(\n  principal,\n  action == Action::\"completion\",\n  resource\n);",
+    "description": "Allow all users to use chat completions"
+  }
+}
+
+tests {
+  test("should return 200 on success", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("success: should return success", function() {
+    if (res.getStatus() === 200) {
+      const body = res.getBody();
+      expect(body).to.have.property("success");
+    }
+  });
+
+  test("failure 401: should return error when unauthorized", function() {
+    if (res.getStatus() === 401) {
+      const body = res.getBody();
+      expect(body).to.have.property("error");
+    }
+  });
+
+  test("failure 409: should return error when policy already exists", function() {
+    if (res.getStatus() === 409) {
+      const body = res.getBody();
+      expect(body).to.have.property("error");
+    }
+  });
+}

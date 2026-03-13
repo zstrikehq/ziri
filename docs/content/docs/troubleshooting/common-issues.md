@@ -48,7 +48,7 @@ Make sure only one container is running.
 
 **Solutions**:
 
-1. **Check format** - API keys must start with `ziri-` and have format `ziri-{userId}-{hash}`
+1. **Check format** - API keys must start with `ziri_` and have format `ziri_<uuidv4withoutdashes>`
 2. **Verify key exists** - Check the Keys page in UI
 3. **Check key status** - Make sure the key is active (not revoked)
 4. **Use correct header** - Include `X-API-Key` header (not `Authorization`)

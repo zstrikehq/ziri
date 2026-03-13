@@ -1,0 +1,42 @@
+meta {
+  name: List Entities
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/entities
+  body: none
+  auth: inherit
+}
+
+params:query {
+  ~search:
+  ~limit: 50
+  ~offset: 0
+  ~entityType: UserKey
+  ~includeApiKeys: true
+  ~sortBy: uid
+  ~sortOrder: asc
+}
+
+tests {
+  test("should return 200 on success", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("success: should return data and total", function() {
+    if (res.getStatus() === 200) {
+      const body = res.getBody();
+      expect(body).to.have.property("data");
+      expect(body).to.have.property("total");
+    }
+  });
+
+  test("failure 401: should return error when unauthorized", function() {
+    if (res.getStatus() === 401) {
+      const body = res.getBody();
+      expect(body).to.have.property("error");
+    }
+  });
+}

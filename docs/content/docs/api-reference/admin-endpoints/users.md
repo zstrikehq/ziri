@@ -162,7 +162,7 @@ If email is configured:
 		"createdAt": "2025-01-01 12:00:00",
 		"updatedAt": "2025-01-01 12:00:00"
 	},
-	"apiKey": "ziri-user-123-a1b2c3d4e5f67890",
+	"apiKey": "<your_ziri_api_key>",
 	"message": "User created successfully. Credentials have been sent to the user's email address."
 }
 ```
@@ -184,7 +184,7 @@ If email is not configured:
 		"updatedAt": "2025-01-01 12:00:00"
 	},
 	"password": "generated-password-here",
-	"apiKey": "ziri-user-123-a1b2c3d4e5f67890",
+	"apiKey": "<your_ziri_api_key>",
 	"message": "User created successfully. Save the password - it won't be shown again! Email was not sent (email service not configured or failed)."
 }
 ```

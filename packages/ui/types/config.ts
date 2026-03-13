@@ -1,19 +1,14 @@
 export interface GatewayConfig {
- 
-    mode?: 'local' | 'live'
-    
- 
     server?: {
         host?: string
         port?: number
     }
     publicUrl?: string
-    
- 
+
     email?: {
         enabled?: boolean
-    provider?: string
-    options?: Record<string, unknown>
+        provider?: string
+        options?: Record<string, unknown>
         smtp?: {
             host: string
             port: number
@@ -38,13 +33,7 @@ export interface GatewayConfig {
         }
         from?: string
     }
-    
- 
-    projectId?: string
-    orgId?: string
-    clientId?: string
-    clientSecret?: string
-    pdpUrl?: string
+
     proxyUrl?: string
     port?: number
     logLevel?: 'debug' | 'info' | 'warn' | 'error'
@@ -52,7 +41,6 @@ export interface GatewayConfig {
 }
 
 export const defaultConfig: GatewayConfig = {
-    mode: 'local',
     server: {
         host: '127.0.0.1',
         port: 3100

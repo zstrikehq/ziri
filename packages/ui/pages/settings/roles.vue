@@ -99,6 +99,11 @@ const handleDelete = async () => {
     showDeleteModal.value = false
     roleToDelete.value = null
     await fetchRoles()
+    const total = totalRoles.value
+    const maxIndex = (currentPage.value - 1) * itemsPerPage.value
+    if (currentPage.value > 1 && maxIndex >= total) {
+      currentPage.value = currentPage.value - 1
+    }
   } catch (e: any) {
     toast.error(getUserMessage(e))
   } finally {

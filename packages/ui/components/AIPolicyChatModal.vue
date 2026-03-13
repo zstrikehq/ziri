@@ -270,6 +270,9 @@ const {
   font-size: 11px;
   cursor: pointer;
   transition: all 0.2s ease;
+  width: fit-content;
+  max-width: min(100%, 420px);
+  flex-shrink: 0;
 }
 
 .model-select:hover {

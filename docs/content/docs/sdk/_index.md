@@ -35,7 +35,7 @@ npm install @ziri/sdk
 import { UserSDK } from "@ziri/sdk";
 
 const sdk = new UserSDK({
-	apiKey: "ziri-user-123-a1b2c3d4e5f67890",
+	apiKey: "<your_ziri_api_key>",
 	proxyUrl: "http://localhost:3100",
 });
 

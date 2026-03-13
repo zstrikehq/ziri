@@ -64,7 +64,7 @@ Make a test request:
 ```bash
 curl -X POST http://localhost:3100/api/chat/completions \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: ziri-user-123-a1b2c3d4e5f67890" \
+  -H "X-API-Key: <your_ziri_api_key>" \
   -d '{
     "provider": "openai",
     "model": "gpt-4o-mini",

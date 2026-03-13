@@ -40,7 +40,7 @@ Before diving in, here are the main concepts you'll work with:
 
 **Users** - People or services that make requests. Each user has attributes like department, email, and rate limits.
 
-**API Keys** - Keys that identify users. Format: `ziri-{userId}-{hash}`. You can create an API key during user creation or create/rotate keys later from the Keys page.
+**API Keys** - Keys that authenticate user access. Format: `ziri_<uuidv4withoutdashes>`. You can create an API key during user creation or create/rotate keys later from the Keys page.
 
 **Policies** - Cedar policies that define what's allowed. Examples: "Engineering can use any model", "Research can only use embeddings", "Block requests outside business hours".
 

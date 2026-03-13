@@ -29,6 +29,7 @@ const showResetPasswordModal = ref(false)
 const generatedPassword = ref('')
 const generatedApiKey = ref('')
 const selectedUser = ref<User | null>(null)
+const userToEdit = ref<User | null>(null)
 const userToDelete = ref<User | null>(null)
 const userToResetPassword = ref<User | null>(null)
 
@@ -36,6 +37,8 @@ const userToResetPassword = ref<User | null>(null)
 const isCreatingUser = ref(false)
 const isResettingPassword = ref(false)
 const isDeletingUser = ref(false)
+const isUpdatingUser = ref(false)
+const showEditModal = ref(false)
 
  
 const newUser = reactive<CreateUserInput>({
@@ -45,6 +48,16 @@ const newUser = reactive<CreateUserInput>({
   isAgent: false,
   limitRequestsPerMinute: 100,
   createApiKey: true,
+  roleId: undefined
+})
+
+const editUser = reactive<{
+  name: string
+  tenant: string
+  roleId?: string
+}>({
+  name: '',
+  tenant: '',
   roleId: undefined
 })
 
@@ -118,22 +131,20 @@ const handleCreateUser = async () => {
     toast.warning('Email and name are required')
     return
   }
-  
 
   const check = await checkAction('create_user', 'users')
   if (!check.allowed) {
     toast.error('You do not have permission to create users')
     return
   }
-  
+
   if (isCreatingUser.value) return
-  
+
   try {
     isCreatingUser.value = true
     const result = await createUser(newUser)
     showCreateModal.value = false
-    
- 
+
     if (result.password) {
       generatedPassword.value = result.password
       showPasswordModal.value = true
@@ -141,12 +152,12 @@ const handleCreateUser = async () => {
     } else {
       toast.success('User created. Credentials sent via email.')
     }
+
     if (result.apiKey) {
       generatedApiKey.value = result.apiKey
       showApiKeyModal.value = true
     }
-    
- 
+
     Object.assign(newUser, {
       email: '',
       name: '',
@@ -156,10 +167,49 @@ const handleCreateUser = async () => {
       createApiKey: true,
       roleId: undefined
     })
+
+    await fetchUsers()
   } catch (error: any) {
     toast.error(`Failed to create user: ${getUserMessage(error)}`)
   } finally {
     isCreatingUser.value = false
+  }
+}
+
+const openEditModal = (user: User) => {
+  if (!canUpdateUser.value) return
+  userToEdit.value = user
+  editUser.name = user.name
+  editUser.tenant = user.tenant || ''
+  editUser.roleId = user.roleId
+  selectedUser.value = user
+  showEditModal.value = true
+}
+
+const handleUpdateUser = async () => {
+  if (!userToEdit.value || isUpdatingUser.value) return
+
+  const check = await checkAction('update_user', 'users')
+  if (!check.allowed) {
+    toast.error('You do not have permission to update users')
+    return
+  }
+
+  try {
+    isUpdatingUser.value = true
+    await updateUser(userToEdit.value.userId, {
+      name: editUser.name.trim(),
+      tenant: editUser.tenant.trim() || undefined,
+      roleId: editUser.roleId || undefined
+    })
+    userToEdit.value = null
+    selectedUser.value = null
+    showEditModal.value = false
+    await fetchUsers()
+  } catch (error: any) {
+    toast.error(`Failed to update user: ${getUserMessage(error)}`)
+  } finally {
+    isUpdatingUser.value = false
   }
 }
 
@@ -202,6 +252,12 @@ const handleDeleteUser = async () => {
     showDeleteModal.value = false
     userToDelete.value = null
     toast.success('User deleted')
+    await fetchUsers()
+    const total = totalUsers.value
+    const maxIndex = (currentPage.value - 1) * itemsPerPage.value
+    if (currentPage.value > 1 && maxIndex >= total) {
+      currentPage.value = currentPage.value - 1
+    }
   } catch (error: any) {
     toast.error(`Failed to delete user: ${getUserMessage(error)}`)
   } finally {
@@ -418,6 +474,18 @@ const closeApiKeyModal = () => {
         <template #actions="{ row }">
           <div class="flex gap-2">
             <UiButton
+              v-if="canUpdateUser"
+              variant="ghost"
+              size="sm"
+              @click="openEditModal(row)"
+              :disabled="row.userId === 'ziri'"
+              title="Edit User"
+            >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+            </UiButton>
+            <UiButton
               v-if="canResetPassword && row.userId !== 'ziri'"
               variant="ghost"
               size="sm"
@@ -479,7 +547,8 @@ const closeApiKeyModal = () => {
             </p>
           </div>
           <UiToggle
-            v-model="newUser.createApiKey"
+            :model-value="!!newUser.createApiKey"
+            @update:model-value="newUser.createApiKey = $event"
             label="Create API Key"
             help-text="Automatically generate an API key for this user. The key will be shown once after creation."
           />
@@ -505,6 +574,64 @@ const closeApiKeyModal = () => {
           </UiButton>
           <UiButton type="submit" :loading="isCreatingUser">
             Create User
+          </UiButton>
+        </div>
+      </form>
+    </UiModal>
+
+    <!-- Edit User Modal -->
+    <UiModal v-model="showEditModal" title="Edit User">
+      <form
+        v-if="userToEdit"
+        @submit.prevent="handleUpdateUser"
+        class="flex flex-col gap-4 max-h-[min(80vh,480px)]"
+      >
+        <div class="flex-1 overflow-y-auto space-y-4 pr-1">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="space-y-1">
+              <p class="text-xs font-semibold text-[rgb(var(--text-secondary))]">Email</p>
+              <p class="text-sm text-[rgb(var(--text))] break-all">{{ userToEdit.email }}</p>
+            </div>
+            <div class="space-y-1">
+              <p class="text-xs font-semibold text-[rgb(var(--text-secondary))]">User ID</p>
+              <code class="text-xs font-mono break-all">{{ userToEdit.userId }}</code>
+            </div>
+          </div>
+          <div class="space-y-1">
+            <p class="text-xs font-semibold text-[rgb(var(--text-secondary))]">Agent</p>
+            <span
+              v-if="userToEdit.isAgent"
+              class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300"
+            >
+              Agent
+            </span>
+            <span
+              v-else
+              class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"
+            >
+              Standard user
+            </span>
+          </div>
+          <UiInput v-model="editUser.name" label="Name" required />
+          <UiInput v-model="editUser.tenant" label="Tenant" />
+          <div>
+            <label class="block text-sm font-medium text-[rgb(var(--text))] mb-1">Role</label>
+            <select
+              v-model="editUser.roleId"
+              class="w-full px-3 py-2 rounded-lg border-2 border-[rgb(var(--border))] bg-[rgb(var(--surface))] text-[rgb(var(--text))] focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              :disabled="userToEdit.userId === 'ziri'"
+            >
+              <option :value="undefined">None</option>
+              <option v-for="r in rolesList" :key="r.id" :value="r.id">{{ r.id }}</option>
+            </select>
+          </div>
+        </div>
+        <div class="flex justify-end gap-3 pt-2">
+          <UiButton type="button" variant="ghost" @click="showEditModal = false; userToEdit = null">
+            Cancel
+          </UiButton>
+          <UiButton type="submit" :loading="isUpdatingUser">
+            Save changes
           </UiButton>
         </div>
       </form>

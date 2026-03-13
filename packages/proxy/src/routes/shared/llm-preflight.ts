@@ -1,5 +1,5 @@
 import type { Request, Response } from 'express'
-import { extractUserIdFromApiKey, hashApiKey, validateApiKeyFormat } from '../../utils/api-key.js'
+import { hashApiKey, validateApiKeyFormat } from '../../utils/api-key.js'
 import * as keyService from '../../services/key-service.js'
 import { serviceFactory } from '../../services/service-factory.js'
 import { getDatabase } from '../../db/index.js'
@@ -60,20 +60,10 @@ export async function runLlmPreflight(req: Request, res: Response): Promise<LlmP
     return null
   }
 
-  const userId = extractUserIdFromApiKey(apiKey)
-  if (!userId) {
-    res.status(401).json({
-      error: 'Invalid API key format',
-      code: 'INVALID_API_KEY_FORMAT',
-      requestId
-    })
-    return null
-  }
-
   const keyHash = hashApiKey(apiKey)
   const db = getDatabase()
   const dbKey = db.prepare("SELECT id, auth_id FROM user_agent_keys WHERE key_hash = ? AND status = 'active'").get(keyHash) as { id: string; auth_id: string } | undefined
-  if (!dbKey || dbKey.auth_id !== userId) {
+  if (!dbKey) {
     res.status(403).json({
       error: 'API key not found or invalid',
       code: 'API_KEY_INVALID',
@@ -81,6 +71,7 @@ export async function runLlmPreflight(req: Request, res: Response): Promise<LlmP
     })
     return null
   }
+  const userId = dbKey.auth_id
 
   const authRow = db.prepare('SELECT role, status FROM auth WHERE id = ?').get(userId) as { role: string | null; status: number } | undefined
   if (authRow?.role != null && authRow.status === 2) {

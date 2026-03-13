@@ -13,14 +13,14 @@ Create a new SDK instance:
 import { UserSDK } from "@ziri/sdk";
 
 const sdk = new UserSDK({
-	apiKey: "ziri-user-123-a1b2c3d4e5f67890",
+	apiKey: "<your_ziri_api_key>",
 	proxyUrl: "http://localhost:3100", // Optional if ZIRI_PROXY_URL is set
 });
 ```
 
 ### Configuration Options
 
--   `apiKey` (required) - Your ZIRI API key (format: `ziri-{userId}-{hash}`)
+-   `apiKey` (required) - Your ZIRI API key (format: `ziri_<uuidv4withoutdashes>`)
 -   `proxyUrl` (optional) - ZIRI server URL (defaults to `ZIRI_PROXY_URL` env var or `http://localhost:3100`)
 -   `timeoutMs` (optional) - Request timeout in milliseconds (default: `30000`)
 -   `fetch` (optional) - Custom fetch implementation for environments without global `fetch`
@@ -88,22 +88,13 @@ try {
 }
 ```
 
-## Getting User ID
-
-Get the user ID from the API key:
-
-```javascript
-const userId = sdk.getUserId();
-console.log(userId); // "user-123"
-```
-
 ## TypeScript Usage
 
 ```typescript
 import { UserSDK, UserSDKConfig } from "@ziri/sdk";
 
 const config: UserSDKConfig = {
-	apiKey: "ziri-user-123-a1b2c3d4e5f67890",
+	apiKey: "<your_ziri_api_key>",
 	proxyUrl: "http://localhost:3100",
 };
 

@@ -32,8 +32,6 @@ export default defineNuxtConfig({
 
 
 
-      backendUrl: process.env.NUXT_PUBLIC_BACKEND_URL || '',
-
       proxyUrl: process.env.NUXT_PUBLIC_PROXY_URL || (hasCerts ? 'https://localhost:3100' : 'http://localhost:3100')
     }
   },

@@ -73,7 +73,7 @@ export async function createKey(input: CreateKeyInput): Promise<{ apiKey: string
     }, 1)
   }
 
-  const key = generateApiKey(input.userId)
+  const key = generateApiKey()
   db.prepare(`INSERT INTO user_agent_keys (id, key_value, key_hash, auth_id, status) VALUES (?,?,?,?,'active')`)
     .run(`key-${randomBytes(8).toString('hex')}`, key.slice(-5), hashApiKey(key), input.userId)
 
@@ -124,7 +124,7 @@ export async function rotateKey(userId: string): Promise<{ apiKey: string; userI
   // soft-delete old keys
   db.prepare(`UPDATE user_agent_keys SET status = 'deleted', updated_at = datetime('now') WHERE auth_id = ?`).run(userId)
 
-  const key = generateApiKey(userId)
+  const key = generateApiKey()
   db.prepare(`INSERT INTO user_agent_keys (id, key_value, key_hash, auth_id, status) VALUES (?,?,?,?,'active')`)
     .run(`key-${randomBytes(8).toString('hex')}`, key.slice(-5), hashApiKey(key), userId)
 

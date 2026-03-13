@@ -15,11 +15,11 @@ ZIRI is a proxy server that sits between your applications and LLM providers. It
 
 ZIRI adds enterprise features:
 
--   Fine-grained access control with Cedar policies
--   Rate limiting and queue management
--   Cost tracking and spend limits
--   Comprehensive audit logging
--   Centralized API key management
+- Fine-grained access control with Cedar policies
+- Rate limiting and queue management
+- Cost tracking and spend limits
+- Comprehensive audit logging
+- Centralized API key management
 
 ### Is ZIRI open source?
 
@@ -29,9 +29,9 @@ Check the repository license. This documentation assumes you have access to the 
 
 ### What are the system requirements?
 
--   Docker and Docker Compose
--   2GB+ RAM recommended
--   Disk space for data (grows with usage)
+- Docker and Docker Compose
+- 2GB+ RAM recommended
+- Disk space for data (grows with usage)
 
 ### Can I run ZIRI on Windows?
 
@@ -45,9 +45,9 @@ Yes, ZIRI is distributed as a Docker image. You need Docker and Docker Compose t
 
 ### Where is the config file stored?
 
--   Windows: `%APPDATA%\ziri\config.json`
--   macOS/Linux: `~/.ziri/config.json`
--   Docker: `/data/config.json` (when `CONFIG_DIR=/data`)
+- Windows: `%APPDATA%\ziri\config.json`
+- macOS/Linux: `~/.ziri/config.json`
+- Docker: `/data/config.json` (when `CONFIG_DIR=/data`)
 
 ### Can I change the config directory?
 
@@ -65,9 +65,9 @@ Server settings (host, port) require restart. Other settings (email, etc.) take 
 
 ### How are API keys formatted?
 
-Format: `ziri-{userId}-{hash}`
+Format: `ziri_<uuidv4withoutdashes>`
 
-Example: `ziri-user-123-a1b2c3d4e5f67890`
+Example: `ziri_550e8400e29b41d4a716446655440000`
 
 ### Can I see my API key again after creation?
 
@@ -112,14 +112,14 @@ Costs are tracked with precision. Check the Costs API or UI for accurate cost in
 
 ### How are costs calculated?
 
--   **Completions**: (input tokens × input cost) + (output tokens × output cost) - (cached tokens × input cost)
--   **Embeddings**: input tokens × input cost
--   **Images**: number of images × price per image
+- **Completions**: (input tokens × input cost) + (output tokens × output cost) - (cached tokens × input cost)
+- **Embeddings**: input tokens × input cost
+- **Images**: number of images × price per image
 
 ### When do spend limits reset?
 
--   Daily: Midnight UTC
--   Monthly: 1st of each month
+- Daily: Midnight UTC
+- Monthly: 1st of each month
 
 ## Rate Limiting
 
@@ -141,28 +141,28 @@ Set `limit_requests_per_minute` to 0 or null for unlimited requests.
 
 Check:
 
--   Port is available
--   Database file is writable
--   Config file is valid
--   Dependencies are installed
+- Port is available
+- Database file is writable
+- Config file is valid
+- Dependencies are installed
 
 ### UI not loading
 
 Check:
 
--   UI is built: `npm run build:ui`
--   UI files are in `packages/proxy/dist/ui`
--   Server is running
--   Check server logs for UI path resolution
+- UI is built: `npm run build:ui`
+- UI files are in `packages/proxy/dist/ui`
+- Server is running
+- Check server logs for UI path resolution
 
 ### Requests always denied
 
 Check:
 
--   At least one permit policy exists
--   Policy is active
--   Request matches policy conditions
--   UserKey entity has `status == "active"`
+- At least one permit policy exists
+- Policy is active
+- Request matches policy conditions
+- UserKey entity has `status == "active"`
 
 ## Security
 
@@ -198,4 +198,4 @@ docker compose up -d
 
 ## Next Steps
 
--   [Common Issues](/docs/troubleshooting/common-issues) - Common problems and solutions
+- [Common Issues](/docs/troubleshooting/common-issues) - Common problems and solutions

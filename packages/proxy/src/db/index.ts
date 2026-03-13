@@ -1,8 +1,8 @@
 import Database from 'better-sqlite3'
-import { join } from 'path'
-import { existsSync, mkdirSync } from 'fs'
+import { dirname, join } from 'path'
+import { existsSync, mkdirSync, readdirSync, readFileSync } from 'fs'
+import { fileURLToPath } from 'url'
 import { getConfigDir } from '../config/index.js'
-import { ALL_SCHEMAS } from './schema.js'
 
 const CONFIG_DIR = getConfigDir()
 const DB_PATH = join(CONFIG_DIR, 'proxy.db')
@@ -41,91 +41,7 @@ export async function ensureSchemaInitialized(): Promise<void> {
 }
 
 async function initializeSchema(database: Database.Database): Promise<void> {
-  for (const schema of ALL_SCHEMAS) {
-    try {
-      database.exec(schema)
-    } catch (error: any) {
-      if (!error.message?.includes('already exists')) {
-        console.warn('schema exec warning:', error.message)
-      }
-    }
-  }
-
-
-  try {
-
-    const auditLogsColumns = database.prepare("PRAGMA table_info(audit_logs)").all() as Array<{ name: string }>
-    const hasAuthName = auditLogsColumns.some(col => col.name === 'auth_name')
-    if (!hasAuthName) {
-      database.exec('ALTER TABLE audit_logs ADD COLUMN auth_name TEXT')
-    }
-
-
-    const userAgentKeysColumns = database.prepare("PRAGMA table_info(user_agent_keys)").all() as Array<{ name: string }>
-    const hasStatus = userAgentKeysColumns.some(col => col.name === 'status')
-    if (!hasStatus) {
-      database.exec("ALTER TABLE user_agent_keys ADD COLUMN status TEXT NOT NULL DEFAULT 'active'")
-      database.exec("CREATE INDEX IF NOT EXISTS idx_user_agent_keys_status ON user_agent_keys(status)")
-    }
-
-
-    try {
-      database.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_auth_email_hash_active ON auth(email_hash) WHERE status != 0")
-    } catch (idxError: any) {
-      if (!idxError.message?.includes('already exists')) {
-        console.warn('idx_auth_email_hash_active warning:', idxError.message)
-      }
-    }
-
-
-    const schemaPolicyColumns = database.prepare("PRAGMA table_info(schema_policy)").all() as Array<{ name: string }>
-    const hasPolicyId = schemaPolicyColumns.some(col => col.name === 'policy_id')
-    if (!hasPolicyId) {
-      database.exec('ALTER TABLE schema_policy ADD COLUMN policy_id TEXT')
-    }
-
-
-    const policyRows = database.prepare(`
-      SELECT id, content FROM schema_policy
-      WHERE obj_type = 'policy' AND policy_id IS NULL
-    `).all() as Array<{ id: string; content: string }>
-
-    const usedIds = new Set(
-      (database.prepare('SELECT policy_id FROM schema_policy WHERE obj_type = ? AND policy_id IS NOT NULL').all('policy') as Array<{ policy_id: string }>)
-        .map(r => r.policy_id)
-    )
-
-    const parsePolicyId = (content: string): string | null => {
-      const match = content.trim().match(/^\s*@id\s*\(\s*"([^"]+)"\s*\)/)
-      return match ? match[1] : null
-    }
-
-    for (const row of policyRows) {
-      const parsed = parsePolicyId(row.content)
-      let policyId: string
-      if (parsed && !usedIds.has(parsed)) {
-        policyId = parsed
-      } else {
-        policyId = `legacy-${row.id}`
-      }
-      usedIds.add(policyId)
-      database.prepare('UPDATE schema_policy SET policy_id = ? WHERE id = ?').run(policyId, row.id)
-    }
-
-    try {
-      database.exec(`
-        CREATE UNIQUE INDEX IF NOT EXISTS idx_schema_policy_policy_id
-        ON schema_policy(policy_id)
-        WHERE obj_type = 'policy' AND policy_id IS NOT NULL
-      `)
-    } catch (idxError: any) {
-      if (!idxError.message?.includes('already exists')) {
-        console.warn('idx_schema_policy_policy_id warning:', idxError.message)
-      }
-    }
-  } catch (error: any) {
-    console.warn('column addition warning:', error.message)
-  }
+  runSqlMigrations(database)
 
   try {
     const { seedPricing } = await import('./seed-pricing.js')
@@ -135,6 +51,57 @@ async function initializeSchema(database: Database.Database): Promise<void> {
       console.warn('pricing seed failed:', error.message)
     }
   }
+}
+
+function runSqlMigrations(database: Database.Database): void {
+  database.exec(`
+    CREATE TABLE IF NOT EXISTS schema_migrations (
+      id TEXT PRIMARY KEY,
+      applied_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `)
+
+  const migrationsDir = join(dirname(fileURLToPath(import.meta.url)), 'migrations')
+  const files = readdirSync(migrationsDir)
+    .filter((f) => /^\d+_.*\.sql$/i.test(f))
+    .sort((a, b) => a.localeCompare(b))
+
+  const applied = new Set(
+    (database.prepare('SELECT id FROM schema_migrations').all() as Array<{ id: string }>).map((r) => r.id)
+  )
+
+  for (const file of files) {
+    if (applied.has(file)) continue
+    const fullPath = join(migrationsDir, file)
+    const sql = readFileSync(fullPath, 'utf8')
+    execSqlBatch(database, sql, file)
+    database.prepare('INSERT INTO schema_migrations (id) VALUES (?)').run(file)
+  }
+}
+
+function execSqlBatch(database: Database.Database, sql: string, migrationId: string): void {
+  const parts = sql
+    .split(/;\s*(?:\r?\n|$)/g)
+    .map((s) => s.trim())
+    .filter(Boolean)
+
+  for (const stmt of parts) {
+    try {
+      database.exec(`${stmt};`)
+    } catch (error: any) {
+      const msg = String(error?.message || '')
+      if (isIgnorableMigrationError(msg)) continue
+      console.error(`migration ${migrationId} failed:`, msg)
+      throw error
+    }
+  }
+}
+
+function isIgnorableMigrationError(msg: string): boolean {
+  const m = msg.toLowerCase()
+  if (m.includes('already exists')) return true
+  if (m.includes('duplicate column name')) return true
+  return false
 }
 
 export function closeDatabase(): void {

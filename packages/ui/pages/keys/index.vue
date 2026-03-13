@@ -448,6 +448,11 @@ const handleDeleteKey = async () => {
     showDeleteKeyModal.value = false
     keyToDelete.value = null
     await fetchKeys()
+    const total = totalKeys.value
+    const maxIndex = (currentPage.value - 1) * itemsPerPage.value
+    if (currentPage.value > 1 && maxIndex >= total) {
+      currentPage.value = currentPage.value - 1
+    }
   } catch (e) {
 
   } finally {
@@ -581,7 +586,7 @@ const closeKeyModal = () => {
         </div>
         <select 
           v-model="filterStatus"
-          class="input w-32"
+          class="input"
         >
           <option value="">All Status</option>
           <option value="active">Active</option>

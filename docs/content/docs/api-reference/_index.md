@@ -62,7 +62,7 @@ All endpoints are relative to your ZIRI server URL:
 Include the `X-API-Key` header:
 
 ```bash
-curl -H "X-API-Key: ziri-user-123-a1b2c3d4e5f67890" \
+curl -H "X-API-Key: <your_ziri_api_key>" \
   https://your-server.com/api/chat/completions
 ```
 
