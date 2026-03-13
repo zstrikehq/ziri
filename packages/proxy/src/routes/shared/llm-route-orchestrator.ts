@@ -204,24 +204,47 @@ export async function handleLlmRequest<TPrepared extends LlmPreparedRequest, TRe
     const modelUsed = spec.getModelUsed?.(llmResponse, prepared) || (llmResponse as any).model || model
     const providerRequestId = spec.getProviderRequestId?.(llmResponse, prepared) || (llmResponse as any).id || ''
 
-    const costTrackingId = await costTrackingService.trackCost({
-      requestId,
-      executionKey: apiKeyId,
-      auditLogId,
-      provider,
-      providerRequestId,
-      modelRequested: model,
-      modelUsed,
-      inputTokens: usage.inputTokens,
-      outputTokens: usage.outputTokens,
-      totalTokens: usage.totalTokens,
-      cachedTokens: usage.cachedTokens,
-      requestTimestamp: new Date(llmRequestStartTime).toISOString(),
-      responseTimestamp: new Date(llmResponseTime).toISOString(),
-      latencyMs: llmResponseTime - llmRequestStartTime,
-      status: 'completed',
-      action: spec.action
-    })
+    let costTrackingId: number
+
+    if (spec.action === 'image_generation') {
+      const imgPrepared = prepared as any
+      costTrackingId = await costTrackingService.trackImageCost({
+        requestId,
+        executionKey: apiKeyId,
+        auditLogId,
+        provider,
+        providerRequestId,
+        modelRequested: model,
+        modelUsed,
+        totalCost: imgPrepared.estimatedCost || 0,
+        numImages: imgPrepared.n || 1,
+        imageQuality: imgPrepared.imageQuality || 'standard',
+        imageSize: imgPrepared.imageSize || '1024x1024',
+        requestTimestamp: new Date(llmRequestStartTime).toISOString(),
+        responseTimestamp: new Date(llmResponseTime).toISOString(),
+        latencyMs: llmResponseTime - llmRequestStartTime,
+        status: 'completed'
+      })
+    } else {
+      costTrackingId = await costTrackingService.trackCost({
+        requestId,
+        executionKey: apiKeyId,
+        auditLogId,
+        provider,
+        providerRequestId,
+        modelRequested: model,
+        modelUsed,
+        inputTokens: usage.inputTokens,
+        outputTokens: usage.outputTokens,
+        totalTokens: usage.totalTokens,
+        cachedTokens: usage.cachedTokens,
+        requestTimestamp: new Date(llmRequestStartTime).toISOString(),
+        responseTimestamp: new Date(llmResponseTime).toISOString(),
+        latencyMs: llmResponseTime - llmRequestStartTime,
+        status: 'completed',
+        action: spec.action
+      })
+    }
 
     eventEmitterService.emitEvent('cost_tracked', {
       costTrackingId,
