@@ -109,6 +109,9 @@ export function useRealtimeUpdates(options: UseRealtimeUpdatesOptions = {}) {
       eventSource.onopen = () => {
         isConnected.value = true
         error.value = null
+        if (import.meta.dev) {
+          console.log('[REALTIME] SSE connected')
+        }
       }
       
       eventSource.onmessage = (e) => {
@@ -118,6 +121,9 @@ export function useRealtimeUpdates(options: UseRealtimeUpdatesOptions = {}) {
         
         try {
           const event: RealtimeEvent = JSON.parse(e.data)
+          if (import.meta.dev) {
+            console.log('[REALTIME] Event received', event.type, event.data)
+          }
           processEvent(event)
         } catch (err: any) {
           console.error('[REALTIME] Error parsing event:', err, 'Data:', e.data)
@@ -126,6 +132,9 @@ export function useRealtimeUpdates(options: UseRealtimeUpdatesOptions = {}) {
       
       eventSource.onerror = (err) => {
         const readyState = eventSource?.readyState
+        if (import.meta.dev) {
+          console.warn('[REALTIME] SSE error', err, 'readyState:', readyState)
+        }
         
         if (readyState === EventSource.CLOSED) {
           isConnected.value = false
@@ -156,6 +165,9 @@ export function useRealtimeUpdates(options: UseRealtimeUpdatesOptions = {}) {
               if (eventSource) {
                 eventSource.close()
                 eventSource = null
+              }
+              if (import.meta.dev) {
+                console.log('[REALTIME] Reconnecting SSE...')
               }
               connect()
             }
