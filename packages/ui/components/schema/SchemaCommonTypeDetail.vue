@@ -20,7 +20,7 @@ const emit = defineEmits<{
     <!-- <div>
       <div class="flex items-center gap-2 mb-1">
         <h3 class="text-base font-semibold text-[rgb(var(--text))]">{{ commonType.name }}</h3>
-        <span class="px-1.5 py-0.5 text-xs font-bold uppercase tracking-wider rounded bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300">
+        <span class="px-1.5 py-0.5 text-xs font-bold uppercase tracking-wider rounded bg-emerald-50 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-200">
           Common Type
         </span>
       </div>
@@ -78,7 +78,7 @@ const emit = defineEmits<{
           class="px-2 py-0.5 text-xs font-mono rounded-full border transition-colors cursor-pointer"
           :class="
             schema.entityMap.has(refId)
-              ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/40'
+              ? 'bg-lime-50 dark:bg-lime-900/20 text-lime-800 dark:text-lime-200 border-lime-200 dark:border-lime-800 hover:bg-lime-100 dark:hover:bg-lime-900/40'
               : 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/40'
           "
           @click="emit('navigate', schema.entityMap.has(refId) ? 'entity' : 'action', refId)"

@@ -399,12 +399,12 @@ const closeApiKeyModal = () => {
         <template #status="{ row }">
           <span
             :class="[
-              'px-2 py-1 rounded text-xs font-semibold',
+              'table-pill',
               row.status === 1 
-                ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                ? 'bg-green-50 text-green-800 dark:bg-green-900/30 dark:text-green-200'
                 : row.status === 0
                 ? 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
-                : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                : 'bg-red-50 text-red-800 dark:bg-red-900/30 dark:text-red-200'
             ]"
           >
             {{ row.status === 1 ? 'Active' : row.status === 0 ? 'Inactive' : 'Revoked' }}
@@ -469,7 +469,7 @@ const closeApiKeyModal = () => {
             <label class="block text-sm font-medium text-[rgb(var(--text))] mb-1">Role</label>
             <select
               v-model="newUser.roleId"
-              class="w-full px-3 py-2 rounded-lg border-2 border-[rgb(var(--border))] bg-[rgb(var(--surface))] text-[rgb(var(--text))] focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              class="w-full px-3 py-2 rounded-lg border-2 border-[rgb(var(--border))] bg-[rgb(var(--surface))] text-[rgb(var(--text))] focus:outline-none focus:ring-2 focus:ring-lime-400"
             >
               <option :value="undefined">None</option>
               <option v-for="r in rolesList" :key="r.id" :value="r.id">{{ r.id }}</option>
@@ -622,7 +622,7 @@ const closeApiKeyModal = () => {
           <UiButton type="button" variant="outline" @click="showResetPasswordModal = false; userToResetPassword = null">
             Cancel
           </UiButton>
-          <UiButton type="button" @click="handleResetPassword" :loading="isResettingPassword" class="bg-amber-500 hover:bg-amber-600 text-white">
+          <UiButton type="button" @click="handleResetPassword" :loading="isResettingPassword">
             Reset Password
           </UiButton>
         </div>

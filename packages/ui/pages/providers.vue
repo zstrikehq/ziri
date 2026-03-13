@@ -401,7 +401,7 @@ const columns = computed(() => {
           <span 
             v-for="model in row.models.slice(0, 3)" 
             :key="model"
-            class="px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-900/30 text-xs text-indigo-600 dark:text-indigo-400"
+            class="px-2 py-0.5 rounded-md bg-lime-50 dark:bg-lime-900/30 text-xs text-lime-700 dark:text-lime-200"
           >
             {{ model }}
           </span>
@@ -417,13 +417,13 @@ const columns = computed(() => {
       <template #hasCredentials="{ row }">
         <span 
           v-if="row.hasCredentials"
-          class="px-2 py-1 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
+          class="px-2 py-1 rounded-full text-xs font-medium bg-green-50 dark:bg-green-900/30 text-green-800 dark:text-green-200"
         >
           Configured
         </span>
         <span 
           v-else
-          class="px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400"
+          class="px-2 py-1 rounded-full text-xs font-medium bg-amber-50 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200"
         >
           Missing Key
         </span>

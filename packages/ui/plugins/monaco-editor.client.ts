@@ -74,7 +74,7 @@ export default defineNuxtPlugin(async () => {
 
 	const highlighter = await createHighlighter({
 		langs: [cedar, cedarSchema, json],
-		themes: ["catppuccin-latte", "catppuccin-mocha"],
+		themes: ["catppuccin-latte", "catppuccin-mocha", "light-plus", "min-light", "vitesse-dark", "vitesse-black", "vesper", "material-theme-ocean", "github-dark-high-contrast", "github-dark-default", "github-light-high-contrast",],
 	});
 
 

@@ -10,11 +10,11 @@ const html = ref('')
 let highlighter: Highlighter | null = null
 
 const getTheme = () => {
-  if (typeof document === 'undefined') return 'catppuccin-latte'
+  if (typeof document === 'undefined') return 'min-light'
   const stored = localStorage.getItem('theme')
-  if (stored) return stored === 'dark' ? 'catppuccin-mocha' : 'catppuccin-latte'
-  if (document.documentElement.classList.contains('dark')) return 'catppuccin-mocha'
-  return 'catppuccin-latte'
+  if (stored) return stored === 'dark' ? 'github-dark-default' : 'min-light'
+  if (document.documentElement.classList.contains('dark')) return 'github-dark-default'
+  return 'min-light'
 }
 
 const highlight = async () => {
@@ -36,7 +36,7 @@ const highlight = async () => {
 
       highlighter = await createHighlighter({
         langs: [cedarGrammar],
-        themes: ['catppuccin-latte', 'catppuccin-mocha'],
+        themes: ['min-light', 'catppuccin-latte', 'catppuccin-mocha', 'vitesse-dark', 'vesper', 'material-theme-ocean', 'github-dark-high-contrast', 'github-dark-default'],
       })
     }
 

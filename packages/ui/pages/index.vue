@@ -220,7 +220,7 @@ const totalModelRequests = computed(() => {
             <UiLoadingSkeleton :lines="1" height="h-8" width="60%" />
             <UiLoadingSkeleton :lines="1" height="h-3" width="70%" />
           </div>
-          <div class="w-12 h-12 rounded-xl bg-indigo-100 dark:bg-indigo-900/30">
+          <div class="w-12 h-12 rounded-xl bg-lime-50 dark:bg-lime-900/30">
             <UiLoadingSkeleton :lines="1" height="h-full" width="100%" rounded="rounded-xl" />
           </div>
         </div>
@@ -233,9 +233,9 @@ const totalModelRequests = computed(() => {
               <span class="text-red-400">{{ overviewStats.forbidCount }}</span> denied
             </p>
           </div>
-          <div class="p-3 rounded-xl bg-indigo-100 dark:bg-indigo-900/30 group-hover:scale-110 transition-transform">
-            <svg class="w-6 h-6 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          <div class="p-3 rounded-xl bg-lime-50 dark:bg-lime-900/30 group-hover:scale-110 transition-transform">
+            <svg class="w-6 h-6 text-lime-700 dark:text-lime-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3v18h18M7 16v-5m4 5V8m4 8v-3m4 3V6" />
             </svg>
           </div>
         </div>
@@ -305,7 +305,7 @@ const totalModelRequests = computed(() => {
             <UiLoadingSkeleton :lines="1" height="h-8" width="50%" />
             <UiLoadingSkeleton :lines="1" height="h-3" width="75%" />
           </div>
-          <div class="w-12 h-12 rounded-xl bg-purple-100 dark:bg-purple-900/30">
+          <div class="w-12 h-12 rounded-xl bg-lime-50 dark:bg-lime-900/30">
             <UiLoadingSkeleton :lines="1" height="h-full" width="100%" rounded="rounded-xl" />
           </div>
         </div>
@@ -317,9 +317,9 @@ const totalModelRequests = computed(() => {
               per request
             </p>
           </div>
-          <div class="p-3 rounded-xl bg-purple-100 dark:bg-purple-900/30 group-hover:scale-110 transition-transform">
-            <svg class="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          <div class="p-3 rounded-xl bg-lime-50 dark:bg-lime-900/30 group-hover:scale-110 transition-transform">
+            <svg class="w-6 h-6 text-lime-700 dark:text-lime-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 3h8a2 2 0 012 2v14a2 2 0 01-2 2H8a2 2 0 01-2-2V5a2 2 0 012-2zm1 4h6m-6 4h2m2 0h2m-6 4h2m2 0h2" />
             </svg>
           </div>
         </div>
@@ -336,7 +336,7 @@ const totalModelRequests = computed(() => {
             <UiLoadingSkeleton :lines="1" height="h-8" width="60%" />
             <UiLoadingSkeleton :lines="1" height="h-3" width="70%" />
           </div>
-          <div class="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/30">
+          <div class="w-12 h-12 rounded-xl bg-lime-50 dark:bg-lime-900/30">
             <UiLoadingSkeleton :lines="1" height="h-full" width="100%" rounded="rounded-xl" />
           </div>
         </div>
@@ -348,9 +348,9 @@ const totalModelRequests = computed(() => {
               {{ new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) }}
             </p>
           </div>
-          <div class="p-3 rounded-xl bg-blue-100 dark:bg-blue-900/30 group-hover:scale-110 transition-transform">
-            <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          <div class="p-3 rounded-xl bg-lime-50 dark:bg-lime-900/30 group-hover:scale-110 transition-transform">
+            <svg class="w-6 h-6 text-lime-700 dark:text-lime-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2zm3-6h4m-4 3h7" />
             </svg>
           </div>
         </div>
@@ -406,7 +406,7 @@ const totalModelRequests = computed(() => {
           </div>
           <div class="p-3 rounded-xl bg-teal-100 dark:bg-teal-900/30 group-hover:scale-110 transition-transform">
             <svg class="w-6 h-6 text-teal-600 dark:text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2zm3-4l2-2 2 2 3-3" />
             </svg>
           </div>
         </div>

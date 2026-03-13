@@ -34,23 +34,24 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  color: 'blue'
+  color: 'lime'
 })
 
 const colorMap = {
-  blue: { bg: 'rgba(59, 130, 246, 0.1)', border: 'rgb(59, 130, 246)' },
-  green: { bg: 'rgba(34, 197, 94, 0.1)', border: 'rgb(34, 197, 94)' },
-  purple: { bg: 'rgba(168, 85, 247, 0.1)', border: 'rgb(168, 85, 247)' }
+  lime: { bg: 'rgba(212, 245, 51, 0.2)', border: 'rgb(212, 245, 51)' },
+  blue: { bg: 'rgba(212, 245, 51, 0.2)', border: 'rgb(212, 245, 51)' },
+  green: { bg: 'rgba(190, 228, 40, 0.2)', border: 'rgb(190, 228, 40)' },
+  purple: { bg: 'rgba(170, 206, 32, 0.2)', border: 'rgb(170, 206, 32)' }
 }
 
 const pieColors = [
-  'rgba(59, 130, 246, 0.85)',
-  'rgba(34, 197, 94, 0.85)',
-  'rgba(168, 85, 247, 0.85)',
+  'rgba(212, 245, 51, 0.9)',
+  'rgba(190, 228, 40, 0.9)',
+  'rgba(170, 206, 32, 0.9)',
+  'rgba(138, 170, 26, 0.9)',
+  'rgba(106, 131, 20, 0.9)',
+  'rgba(237, 255, 163, 0.9)',
   'rgba(245, 158, 11, 0.85)',
-  'rgba(236, 72, 153, 0.85)',
-  'rgba(20, 184, 166, 0.85)',
-  'rgba(99, 102, 241, 0.85)',
   'rgba(239, 68, 68, 0.85)'
 ]
 
@@ -61,10 +62,10 @@ const chartData = computed(() => ({
       data: props.data.values,
       backgroundColor: props.type === 'pie'
         ? props.data.values.map((_, idx) => pieColors[idx % pieColors.length])
-        : colorMap[props.color as keyof typeof colorMap]?.bg || colorMap.blue.bg,
+        : colorMap[props.color as keyof typeof colorMap]?.bg || colorMap.lime.bg,
       borderColor: props.type === 'pie'
         ? 'rgba(17, 24, 39, 0.15)'
-        : colorMap[props.color as keyof typeof colorMap]?.border || colorMap.blue.border,
+        : colorMap[props.color as keyof typeof colorMap]?.border || colorMap.lime.border,
       borderWidth: props.type === 'pie' ? 1 : 2,
       fill: props.type !== 'pie',
       tension: props.type === 'line' ? 0.4 : 0,
