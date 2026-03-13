@@ -3,6 +3,7 @@ import { formatCurrency, formatDateShort } from '~/utils/formatters'
 import { useUnifiedAuth } from '~/composables/useUnifiedAuth'
 import { useRealtimeUpdates } from '~/composables/useRealtimeUpdates'
 import KeysSpendChart from '~/components/keys/SpendChart.vue'
+import { TOP_MODEL_PROGRESS_COLORS } from '~/constants/chart-colors'
 
 definePageMeta({
   layout: 'default'
@@ -224,6 +225,8 @@ const topModels = computed(() => {
     .slice(0, 5)
 })
 
+const getTopModelBarColor = (idx: number) => TOP_MODEL_PROGRESS_COLORS[idx % TOP_MODEL_PROGRESS_COLORS.length]
+
 const dailyCostChartData = computed(() => {
   if (!dailyCost.value || dailyCost.value.length === 0) {
     return { labels: [], values: [] }
@@ -401,7 +404,7 @@ onMounted(() => {
         <div v-else-if="dailyCostChartData.labels.length === 0" class="h-40 flex items-center justify-center text-[rgb(var(--text-muted))]">
           No cost data available for selected period
         </div>
-        <KeysSpendChart v-else type="line" :data="dailyCostChartData" color="green" />
+        <KeysSpendChart v-else type="line" :data="dailyCostChartData" :fill-area="false" />
       </div>
 
       <!-- Cost by Provider -->
@@ -416,7 +419,7 @@ onMounted(() => {
         <div v-else-if="costByProviderChartData.labels.length === 0" class="h-40 flex items-center justify-center text-[rgb(var(--text-muted))]">
           No provider data available
         </div>
-        <KeysSpendChart v-else type="bar" :data="costByProviderChartData" color="lime" />
+        <KeysSpendChart v-else type="bar" :data="costByProviderChartData" />
       </div>
     </div>
 
@@ -432,7 +435,7 @@ onMounted(() => {
       <div v-else-if="costByModelChartData.labels.length === 0" class="h-40 flex items-center justify-center text-[rgb(var(--text-muted))]">
         No model data available
       </div>
-      <KeysSpendChart v-else type="bar" :data="costByModelChartData" color="lime" />
+      <KeysSpendChart v-else type="bar" :data="costByModelChartData" />
     </div>
 
     <!-- Cost by Provider Table -->
@@ -480,7 +483,7 @@ onMounted(() => {
       </div>
       <div v-else class="space-y-3">
         <div 
-          v-for="model in topModels" 
+          v-for="(model, idx) in topModels" 
           :key="model.model"
           class="flex items-center justify-between p-3 rounded-lg bg-[rgb(var(--surface-elevated))]"
         >
@@ -495,8 +498,8 @@ onMounted(() => {
             </div>
             <div class="mt-2 progress-bar">
               <div 
-                class="progress-bar-fill bg-lime-500" 
-                :style="{ width: `${model.percentage}%` }"
+                class="progress-bar-fill"
+                :style="{ width: `${model.percentage}%`, backgroundColor: getTopModelBarColor(idx) }"
               />
             </div>
           </div>

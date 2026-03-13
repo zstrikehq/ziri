@@ -173,6 +173,13 @@
 		box-shadow: 0 0 0 3px rgba(var(--color-glow), 0.18);
 	}
 
+	/* Select helpers: avoid clipping long labels in dropdown controls */
+	select.input {
+		width: fit-content;
+		max-width: 100%;
+		text-overflow: clip;
+	}
+
 	/* Modern cards with depth */
 	.card {
 		@apply rounded-xl border-2 p-5;
