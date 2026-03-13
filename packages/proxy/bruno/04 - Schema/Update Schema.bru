@@ -1,0 +1,45 @@
+meta {
+  name: Update Schema
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/schema
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "schema": "type RequestContext = {\n  \"day_of_week\": __cedar::String,\n  \"hour\": __cedar::Long,\n  \"ip_address\": __cedar::ipaddr,\n  \"is_emergency\": __cedar::Bool,\n  \"model_name\": __cedar::String,\n  \"model_provider\": __cedar::String,\n  \"request_time\": __cedar::String,\n};\n\nentity Resource;\n\nentity Role;\n\nentity User in [Role] = {\n  \"user_id\": __cedar::String,\n  \"email\": __cedar::String,\n  \"tenant\"?: __cedar::String,\n  \"is_agent\": __cedar::Bool,\n  \"limit_requests_per_minute\": __cedar::Long,\n};\n\nentity UserKey = {\n  \"current_daily_spend\": __cedar::decimal,\n  \"current_monthly_spend\": __cedar::decimal,\n  \"last_daily_reset\": __cedar::String,\n  \"last_monthly_reset\": __cedar::String,\n  \"status\": __cedar::String,\n  \"user\": User,\n};\n\naction \"completion\" appliesTo {\n  principal: [UserKey],\n  resource: [Resource],\n  context: RequestContext,\n};\n\naction \"fine_tuning\" appliesTo {\n  principal: [UserKey],\n  resource: [Resource],\n  context: RequestContext,\n};\n\naction \"image_generation\" appliesTo {\n  principal: [UserKey],\n  resource: [Resource],\n  context: RequestContext,\n};\n\naction \"embedding\" appliesTo {\n  principal: [UserKey],\n  resource: [Resource],\n  context: RequestContext,\n};\n\naction \"moderation\" appliesTo {\n  principal: [UserKey],\n  resource: [Resource],\n  context: RequestContext,\n};"
+  }
+}
+
+tests {
+  test("should return 200 on success", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("success: should return success and data", function() {
+    if (res.getStatus() === 200) {
+      const body = res.getBody();
+      expect(body).to.have.property("success");
+      expect(body).to.have.property("data");
+    }
+  });
+
+  test("failure 401: should return error when unauthorized", function() {
+    if (res.getStatus() === 401) {
+      const body = res.getBody();
+      expect(body).to.have.property("error");
+    }
+  });
+
+  test("failure 400: should return error when invalid schema", function() {
+    if (res.getStatus() === 400) {
+      const body = res.getBody();
+      expect(body).to.have.property("error");
+    }
+  });
+}

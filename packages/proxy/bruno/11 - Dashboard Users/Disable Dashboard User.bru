@@ -1,0 +1,38 @@
+meta {
+  name: Disable Dashboard User
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/api/dashboard-users/{{testDashboardUserId}}/disable
+  body: none
+  auth: inherit
+}
+
+tests {
+  test("should return 200 on success", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("success: should return user", function() {
+    if (res.getStatus() === 200) {
+      const body = res.getBody();
+      expect(body).to.have.property("user");
+    }
+  });
+
+  test("failure 401: should return error when unauthorized", function() {
+    if (res.getStatus() === 401) {
+      const body = res.getBody();
+      expect(body).to.have.property("error");
+    }
+  });
+
+  test("failure 404: should return error when user not found", function() {
+    if (res.getStatus() === 404) {
+      const body = res.getBody();
+      expect(body).to.have.property("error");
+    }
+  });
+}

@@ -1,0 +1,48 @@
+meta {
+  name: Query Audit Logs
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/audit
+  body: none
+  auth: inherit
+}
+
+params:query {
+  limit: 10
+  offset: 0
+  ~authId:
+  ~apiKeyId:
+  ~provider:
+  ~model:
+  ~decision: permit
+  ~startDate:
+  ~endDate:
+  ~search:
+  ~sortBy: request_timestamp
+  ~sortOrder: desc
+}
+
+tests {
+  test("should return 200 on success", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("success: should return data, count, total", function() {
+    if (res.getStatus() === 200) {
+      const body = res.getBody();
+      expect(body).to.have.property("data");
+      expect(body).to.have.property("count");
+      expect(body).to.have.property("total");
+    }
+  });
+
+  test("failure 401: should return error when unauthorized", function() {
+    if (res.getStatus() === 401) {
+      const body = res.getBody();
+      expect(body).to.have.property("error");
+    }
+  });
+}

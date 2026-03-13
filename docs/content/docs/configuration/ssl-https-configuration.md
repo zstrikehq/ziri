@@ -244,6 +244,9 @@ From the project root:
 - **TLS errors in dev but proxy works in the browser**  
   This usually means Node.js does not trust your CA. Confirm that `NODE_EXTRA_CA_CERTS=../../certs/rootCA.pem` is present in the `dev` script in `packages/ui/package.json` and that `certs/rootCA.pem` exists.
 
+- **Bruno: "unable to verify the first certificate"**  
+  Bruno uses Node.js and does not use the system trust store by default. Keep SSL verification **enabled** and configure Bruno → Preferences → **Use Custom CA Certificate** to point at your mkcert root CA (e.g. `certs/rootCA.pem` at the repo root, or `%LOCALAPPDATA%\mkcert\rootCA.pem` on Windows). See the proxy README for details.
+
 ## Security Notes
 
 - ZIRI does not use `NODE_TLS_REJECT_UNAUTHORIZED=0` anywhere.

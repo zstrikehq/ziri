@@ -1,0 +1,32 @@
+meta {
+  name: List Email Providers
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/config/email-providers
+  body: none
+  auth: inherit
+}
+
+tests {
+  test("should return 200 on success", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("success: should return providers array", function() {
+    if (res.getStatus() === 200) {
+      const body = res.getBody();
+      expect(body).to.have.property("providers");
+      expect(body.providers).to.be.an("array");
+    }
+  });
+
+  test("failure 401: should return error when unauthorized", function() {
+    if (res.getStatus() === 401) {
+      const body = res.getBody();
+      expect(body).to.have.property("error");
+    }
+  });
+}

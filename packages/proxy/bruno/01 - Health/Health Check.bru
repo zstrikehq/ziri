@@ -1,0 +1,32 @@
+meta {
+  name: Health Check
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/health
+  body: none
+  auth: none
+}
+
+tests {
+  test("should return 200 on success", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("success: should return status ok", function() {
+    if (res.getStatus() === 200) {
+      const body = res.getBody();
+      expect(body).to.have.property("status");
+      expect(body.status).to.equal("ok");
+    }
+  });
+
+  test("failure 503: should return error when server unhealthy", function() {
+    if (res.getStatus() === 503) {
+      const body = res.getBody();
+      expect(body).to.have.property("error");
+    }
+  });
+}

@@ -1,0 +1,21 @@
+vars {
+  baseUrl: https://localhost:3100
+  adminToken:
+  userToken:
+  refreshToken:
+  rootKey:
+  testUserId:
+  testDashboardUserId:
+  testProvider: openrouter
+  testModel: openai/gpt-4o-mini
+  testUserPassword:
+  testApiKey:
+  testKeyId:
+  testRoleId: tester
+  testProviderApiKey:
+  adminUsername: ziri
+  testUserEmail: testuser@example.com
+  testUserName: Test User
+  testDashboardUserEmail: viewer@example.com
+  testDashboardUserName: Test Viewer
+}
