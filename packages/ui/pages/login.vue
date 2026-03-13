@@ -3,18 +3,18 @@
     <!-- Header with theme toggle -->
     <header class="h-14 flex-shrink-0 border-b-2 border-[rgb(var(--border))] bg-[rgb(var(--surface))] flex items-center justify-between px-4 md:px-6">
       <div class="flex items-center gap-3">
-        <div class="w-8 h-8 flex-shrink-0 rounded-lg bg-gradient-to-br from-lime-500 to-lime-600 dark:from-lime-300 dark:to-lime-400 p-1.5 flex items-center justify-center shadow-md shadow-lime-500/25 dark:shadow-lime-400/20 ring-1 ring-lime-500/20 dark:ring-lime-300/20">
+        <div class="w-8 h-8 flex-shrink-0 rounded-lg bg-gradient-to-br from-lime-500 to-lime-600 p-1.5 flex items-center justify-center shadow-md shadow-lime-500/25 ring-1 ring-lime-500/20">
           <img
             :src="ziriLogo"
             alt="Ziri Logo"
-            class="w-full h-full object-contain invert brightness-0 contrast-200"
+            class="w-full h-full object-contain brightness-0"
           />
         </div>
-        <h1 class="text-lg font-bold text-[rgb(var(--text))]">
+        <h1 class="text-xl font-black tracking-wider uppercase text-lime-600 dark:text-lime-400 drop-shadow-sm">
           ZIRI
         </h1>
       </div>
-      
+
       <div class="flex items-center gap-2">
         <LayoutThemeToggle />
       </div>
