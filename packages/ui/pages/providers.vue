@@ -8,7 +8,7 @@ import { useApiError } from '~/composables/useApiError'
 import type { Provider, CreateProviderInput } from '~/composables/useProviders'
 
 const configStore = useConfigStore()
-const { providers, loading, listProviders, addProvider, removeProvider, testProvider } = useProviders()
+const { providers, loading, listProviders, addProvider, removeProvider, testProvider, updateProvider } = useProviders()
 const toast = useToast()
 const { checkActions, checkAction } = useInternalAuth()
 const { getUserMessage } = useApiError()
@@ -18,6 +18,7 @@ const permissionsLoading = ref(true)
 const canCreateProvider = ref(false)
 const canDeleteProvider = ref(false)
 const canTestProvider = ref(false)
+const canUpdateProvider = ref(false)
 
  
 const PROVIDER_TEMPLATES: Record<string, { displayName: string; baseUrl: string; models: string[] }> = {
@@ -81,12 +82,14 @@ onMounted(async () => {
     const permissions = await checkActions([
       { action: 'create_provider', resourceType: 'providers' },
       { action: 'delete_provider', resourceType: 'providers' },
-      { action: 'test_provider', resourceType: 'providers' }
+      { action: 'test_provider', resourceType: 'providers' },
+      { action: 'update_provider', resourceType: 'providers' }
     ])
     
     canCreateProvider.value = permissions.results.find(r => r.action === 'create_provider')?.allowed || false
     canDeleteProvider.value = permissions.results.find(r => r.action === 'delete_provider')?.allowed || false
     canTestProvider.value = permissions.results.find(r => r.action === 'test_provider')?.allowed || false
+    canUpdateProvider.value = permissions.results.find(r => r.action === 'update_provider')?.allowed || false
   } finally {
     permissionsLoading.value = false
   }
@@ -100,8 +103,10 @@ onMounted(async () => {
 
  
 const showCreateModal = ref(false)
+const showEditModal = ref(false)
 const showDeleteModal = ref(false)
 const providerToDelete = ref<Provider | null>(null)
+const providerToEdit = ref<Provider | null>(null)
 const testingProvider = ref<string | null>(null)
 
  
@@ -116,6 +121,12 @@ const sortOrder = ref<'asc' | 'desc' | null>(null)
 const newProvider = reactive<CreateProviderInput & { providerType: string }>({
   name: '',
   providerType: 'openai',
+  apiKey: '',
+  displayName: ''
+})
+
+const editProviderState = reactive<{ displayName: string; apiKey: string }>({
+  displayName: '',
   apiKey: ''
 })
 
@@ -161,6 +172,13 @@ const paginatedProviders = computed(() => {
   return providers.value
 })
 
+watch(() => newProvider.providerType, (val, prev) => {
+  if (!val) return
+  if (!newProvider.displayName || newProvider.displayName === prev) {
+    newProvider.displayName = val
+  }
+})
+
 const handleAddProvider = async () => {
 
   const check = await checkAction('create_provider', 'providers')
@@ -176,10 +194,12 @@ const handleAddProvider = async () => {
     }
     
     newProvider.name = newProvider.providerType
+    const displayName = (newProvider.displayName || newProvider.name).trim()
     
     await addProvider({
       name: newProvider.name,
-      apiKey: newProvider.apiKey
+      apiKey: newProvider.apiKey,
+      displayName
     })
     
     toast.success(`${newProvider.name} added`)
@@ -189,6 +209,7 @@ const handleAddProvider = async () => {
     newProvider.name = ''
     newProvider.providerType = 'openai'
     newProvider.apiKey = ''
+    newProvider.displayName = ''
   } catch (e: any) {
     toast.error(getUserMessage(e))
   }
@@ -209,6 +230,41 @@ const handleRemoveProvider = async () => {
     toast.success(`${providerToDelete.value.name} removed`)
     showDeleteModal.value = false
     providerToDelete.value = null
+  } catch (e: any) {
+    toast.error(getUserMessage(e))
+  }
+}
+
+const openEditProvider = (provider: Provider) => {
+  if (!canUpdateProvider.value) return
+  providerToEdit.value = provider
+  editProviderState.displayName = provider.displayName
+  editProviderState.apiKey = ''
+  showEditModal.value = true
+}
+
+const handleUpdateProvider = async () => {
+  if (!providerToEdit.value) return
+
+  const check = await checkAction('update_provider', 'providers')
+  if (!check.allowed) {
+    toast.error('You do not have permission to update providers')
+    return
+  }
+
+  if (!editProviderState.displayName.trim() && !editProviderState.apiKey.trim()) {
+    toast.error('Nothing to update')
+    return
+  }
+
+  try {
+    await updateProvider(providerToEdit.value.name, {
+      displayName: editProviderState.displayName.trim(),
+      apiKey: editProviderState.apiKey.trim() || undefined
+    })
+    toast.success('Provider updated')
+    showEditModal.value = false
+    providerToEdit.value = null
   } catch (e: any) {
     toast.error(getUserMessage(e))
   }
@@ -239,6 +295,10 @@ const handleTestProvider = async (provider: Provider) => {
 }
 
 const handleOpenCreateModal = () => {
+  newProvider.providerType = 'openai'
+  newProvider.name = ''
+  newProvider.apiKey = ''
+  newProvider.displayName = newProvider.providerType
   showCreateModal.value = true
 }
 
@@ -432,6 +492,16 @@ const columns = computed(() => {
       <template #actions="{ row }">
         <div class="flex items-center gap-2">
           <UiButton
+            v-if="canUpdateProvider"
+            size="sm"
+            variant="ghost"
+            @click="openEditProvider(row)"
+          >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+          </UiButton>
+          <UiButton
             v-if="canTestProvider"
             size="sm"
             variant="ghost"
@@ -488,6 +558,19 @@ const columns = computed(() => {
             disabled
           />
         </div>
+
+        <div v-if="newProvider.providerType">
+          <label class="block text-sm font-medium mb-2">Provider name</label>
+          <input
+            v-model="newProvider.displayName"
+            type="text"
+            class="input"
+            placeholder="Name used in requests, e.g. openai or chatGPT"
+          />
+          <p class="text-xs text-[rgb(var(--text-secondary))] mt-1">
+            You can use this value as the provider field in chat, image, or embeddings requests.
+          </p>
+        </div>
         
         <div>
           <label class="block text-sm font-medium mb-2">API Key</label>
@@ -503,6 +586,60 @@ const columns = computed(() => {
         <div class="flex justify-end gap-3">
           <UiButton type="button" variant="ghost" @click="showCreateModal = false">Cancel</UiButton>
           <UiButton type="submit" :disabled="loading">Add Provider</UiButton>
+        </div>
+      </form>
+    </UiModal>
+
+    <!-- Edit Provider Modal -->
+    <UiModal v-model="showEditModal" title="Edit Provider">
+      <form @submit.prevent="handleUpdateProvider" class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium mb-1">Provider ID</label>
+          <input
+            :value="providerToEdit?.name || ''"
+            type="text"
+            class="input"
+            disabled
+          />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium mb-1">Base URL</label>
+          <input
+            :value="providerToEdit?.baseUrl || ''"
+            type="text"
+            class="input"
+            disabled
+          />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium mb-1">Provider name</label>
+          <input
+            v-model="editProviderState.displayName"
+            type="text"
+            class="input"
+            placeholder="Name used in requests, e.g. openai or chatGPT"
+          />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium mb-1">API Key</label>
+          <input
+            v-model="editProviderState.apiKey"
+            type="password"
+            class="input"
+            placeholder="Leave blank to keep existing key"
+          />
+        </div>
+
+        <div class="flex justify-end gap-3 pt-2 border-t border-[rgb(var(--border))]">
+          <UiButton type="button" variant="ghost" @click="showEditModal = false; providerToEdit = null">
+            Cancel
+          </UiButton>
+          <UiButton type="submit" :disabled="loading">
+            Save changes
+          </UiButton>
         </div>
       </form>
     </UiModal>
