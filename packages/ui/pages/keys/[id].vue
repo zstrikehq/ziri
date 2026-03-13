@@ -352,7 +352,7 @@ watch(() => key.value.executionKey, () => {
           <div class="grid grid-cols-2 gap-4">
             <div>
               <p class="text-xs font-semibold text-[rgb(var(--text-muted))] uppercase tracking-wider mb-1">User ID</p>
-              <code class="px-2 py-1 rounded-md bg-indigo-50 dark:bg-indigo-900/30 font-mono text-sm text-indigo-600 dark:text-indigo-400 font-semibold">{{ key.userId }}</code>
+              <code class="px-2 py-1 rounded-md bg-lime-50 dark:bg-lime-900/30 font-mono text-sm text-lime-700 dark:text-lime-200 font-semibold">{{ key.userId }}</code>
             </div>
             <div>
               <p class="text-xs font-semibold text-[rgb(var(--text-muted))] uppercase tracking-wider mb-1">Is Agent</p>
@@ -433,13 +433,13 @@ watch(() => key.value.executionKey, () => {
             </div>
             <div class="progress-bar h-3">
               <div 
-                class="progress-bar-fill bg-gradient-to-r from-indigo-500 to-purple-500" 
+                class="progress-bar-fill bg-gradient-to-r from-lime-500 to-lime-300" 
                 :style="{ width: `${Math.min(100, (key.currentDailySpend / 100) * 100)}%` }"
               />
             </div>
           </div>
           
-          <KeysSpendChart :data="dailySpendData" type="line" color="blue" />
+          <KeysSpendChart :data="dailySpendData" type="line" color="lime" />
         </div>
         
         <!-- Monthly Spend Chart -->

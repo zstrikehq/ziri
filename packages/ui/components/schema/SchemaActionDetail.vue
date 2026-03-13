@@ -20,10 +20,10 @@ const emit = defineEmits<{
     <!-- <div>
       <div class="flex items-center gap-2 mb-1">
         <h3 class="text-base font-semibold text-[rgb(var(--text))]">{{ action.name }}</h3>
-        <span v-if="action.kind === 'actionGroup'" class="px-1.5 py-0.5 text-xs font-bold uppercase tracking-wider rounded bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300">
+        <span v-if="action.kind === 'actionGroup'" class="px-1.5 py-0.5 text-xs font-bold uppercase tracking-wider rounded bg-lime-50 dark:bg-lime-900/40 text-lime-800 dark:text-lime-200">
           Action Group
         </span>
-        <span v-else class="px-1.5 py-0.5 text-xs font-bold uppercase tracking-wider rounded bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300">
+        <span v-else class="px-1.5 py-0.5 text-xs font-bold uppercase tracking-wider rounded bg-emerald-50 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-200">
           Action
         </span>
       </div>
@@ -39,7 +39,7 @@ const emit = defineEmits<{
         <button
           v-for="parentId in action.memberOf"
           :key="parentId"
-          class="px-2 py-0.5 text-xs font-mono rounded-full bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-colors cursor-pointer"
+          class="px-2 py-0.5 text-xs font-mono rounded-full bg-lime-50 dark:bg-lime-900/20 text-lime-800 dark:text-lime-200 border border-lime-200 dark:border-lime-800 hover:bg-lime-100 dark:hover:bg-lime-900/40 transition-colors cursor-pointer"
           @click="emit('navigate', 'action', parentId)"
         >
           <span v-html="highlightText(shortName(parentId), searchQuery)"></span>
@@ -54,7 +54,7 @@ const emit = defineEmits<{
         <button
           v-for="pt in action.principalTypes"
           :key="pt"
-          class="px-2 py-0.5 text-xs font-mono rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors cursor-pointer"
+          class="px-2 py-0.5 text-xs font-mono rounded-full bg-lime-50 dark:bg-lime-900/20 text-lime-800 dark:text-lime-200 border border-lime-200 dark:border-lime-800 hover:bg-lime-100 dark:hover:bg-lime-900/40 transition-colors cursor-pointer"
           @click="emit('navigate', 'entity', pt)"
         >
           <span v-html="highlightText(shortName(pt), searchQuery)"></span>

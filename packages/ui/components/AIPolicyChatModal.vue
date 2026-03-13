@@ -194,7 +194,7 @@ const {
           <button
             @click="sendMessage"
             :disabled="!currentMessage.trim() || isLoading || !selectedModel || availableModels.length === 0"
-            class="px-3 py-2 rounded bg-[rgb(var(--primary))] text-white hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+            class="px-3 py-2 rounded bg-[rgb(var(--primary))] text-[#0a0a0a] hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
@@ -234,12 +234,13 @@ const {
 .ai-avatar-large {
   width: 40px;
   height: 40px;
-  background: rgb(var(--primary));
+  background: rgb(var(--color-primary-soft));
+  border: 1px solid rgba(var(--color-border-accent), 0.55);
   border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
+  color: rgb(var(--color-text-accent));
   flex-shrink: 0;
 }
 
@@ -424,7 +425,7 @@ const {
 .code-icon {
   width: 14px;
   height: 14px;
-  color: rgb(var(--primary));
+  color: rgb(var(--color-text-accent));
 }
 
 .copy-button {
@@ -443,7 +444,7 @@ const {
 }
 
 .copy-button:hover {
-  color: rgb(var(--primary));
+  color: rgb(var(--color-text-accent));
   background: rgb(var(--surface-elevated));
 }
 
@@ -481,7 +482,7 @@ const {
 .builder-button {
   background: rgb(var(--primary));
   border: none;
-  color: white;
+  color: #0a0a0a;
   border-radius: 6px;
   padding: 8px 16px;
   font-size: 12px;
@@ -563,9 +564,9 @@ const {
 
 .message-input:focus {
   outline: none;
-  border-color: rgb(var(--primary));
+  border-color: rgb(var(--color-border-accent));
   background: rgb(var(--surface));
-  box-shadow: 0 0 0 2px rgba(var(--primary), 0.1);
+  box-shadow: 0 0 0 2px rgba(var(--color-glow), 0.16);
 }
 
 .message-input::placeholder {
@@ -578,7 +579,7 @@ const {
   padding: 0;
   background: rgb(var(--primary));
   border: none;
-  color: white;
+  color: #0a0a0a;
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;

@@ -149,7 +149,7 @@ const uniqueModels = computed(() => {
 const getStatusBadgeClass = (decision: string) => {
   switch (decision) {
     case 'permit':
-      return 'badge-success'
+      return 'badge-info'
     case 'forbid':
       return 'badge-danger'
     default:
@@ -286,7 +286,7 @@ onMounted(() => {
       </template>
 
       <template #decision="{ row }">
-        <span :class="[getStatusBadgeClass(row.decision), 'badge']">
+        <span :class="[getStatusBadgeClass(row.decision), 'table-pill']">
           {{ row.decision === 'permit' ? 'Permit' : 'Forbid' }}
         </span>
       </template>
@@ -297,7 +297,7 @@ onMounted(() => {
             <span
               v-for="policy in getPoliciesArray(row.policies_evaluated)"
               :key="policy"
-              class="badge badge-neutral text-xs"
+              class="table-pill badge-neutral"
             >
               {{ policy }}
             </span>

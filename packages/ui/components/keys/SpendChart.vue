@@ -13,6 +13,7 @@ import {
   Legend,
   Filler
 } from 'chart.js'
+import { CATEGORICAL_COLOR_MAP, LINE_COLOR_MAP, type ChartColorKey } from '~/constants/chart-colors'
 
 ChartJS.register(
   CategoryScale, 
@@ -30,29 +31,24 @@ ChartJS.register(
 interface Props {
   type: 'line' | 'bar' | 'pie'
   data: { labels: string[], values: number[] }
-  color?: string
+  color?: ChartColorKey
+  tone?: 'solid' | 'outlined'
+  fillArea?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  color: 'blue'
+  color: 'lime',
+  tone: 'solid',
+  fillArea: true
 })
 
-const colorMap = {
-  blue: { bg: 'rgba(59, 130, 246, 0.1)', border: 'rgb(59, 130, 246)' },
-  green: { bg: 'rgba(34, 197, 94, 0.1)', border: 'rgb(34, 197, 94)' },
-  purple: { bg: 'rgba(168, 85, 247, 0.1)', border: 'rgb(168, 85, 247)' }
-}
+const activeColorMap = computed(() => (
+  LINE_COLOR_MAP[props.tone]
+))
 
-const pieColors = [
-  'rgba(59, 130, 246, 0.85)',
-  'rgba(34, 197, 94, 0.85)',
-  'rgba(168, 85, 247, 0.85)',
-  'rgba(245, 158, 11, 0.85)',
-  'rgba(236, 72, 153, 0.85)',
-  'rgba(20, 184, 166, 0.85)',
-  'rgba(99, 102, 241, 0.85)',
-  'rgba(239, 68, 68, 0.85)'
-]
+const activeCategoricalColors = computed(() => (
+  CATEGORICAL_COLOR_MAP[props.tone]
+))
 
 const chartData = computed(() => ({
   labels: props.data.labels,
@@ -60,16 +56,23 @@ const chartData = computed(() => ({
     {
       data: props.data.values,
       backgroundColor: props.type === 'pie'
-        ? props.data.values.map((_, idx) => pieColors[idx % pieColors.length])
-        : colorMap[props.color as keyof typeof colorMap]?.bg || colorMap.blue.bg,
-      borderColor: props.type === 'pie'
-        ? 'rgba(17, 24, 39, 0.15)'
-        : colorMap[props.color as keyof typeof colorMap]?.border || colorMap.blue.border,
-      borderWidth: props.type === 'pie' ? 1 : 2,
-      fill: props.type !== 'pie',
+        ? props.data.values.map((_, idx) => activeCategoricalColors.value[idx % activeCategoricalColors.value.length].bg)
+        : props.type === 'bar'
+          ? props.data.values.map((_, idx) => activeCategoricalColors.value[idx % activeCategoricalColors.value.length].bg)
+          : activeColorMap.value[props.color as keyof typeof activeColorMap.value]?.bg || activeColorMap.value.lime.bg,
+      borderColor: props.type === 'line'
+        ? activeColorMap.value[props.color as keyof typeof activeColorMap.value]?.border || activeColorMap.value.lime.border
+        : 'rgba(0, 0, 0, 0)',
+      borderWidth: props.type === 'line' ? 2 : 0,
+      fill: props.type === 'line' ? props.fillArea : props.type !== 'pie',
       tension: props.type === 'line' ? 0.4 : 0,
       pointRadius: props.type === 'line' ? 2 : 0,
-      pointHoverRadius: props.type === 'line' ? 4 : 0
+      pointHoverRadius: props.type === 'line' ? 4 : 0,
+      pointBackgroundColor: props.type === 'line'
+        ? activeColorMap.value[props.color as keyof typeof activeColorMap.value]?.border || activeColorMap.value.lime.border
+        : undefined,
+      pointBorderColor: 'rgba(0, 0, 0, 0)',
+      pointBorderWidth: 0
     }
   ]
 }))

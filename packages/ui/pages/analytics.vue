@@ -3,6 +3,7 @@ import { formatCurrency, formatDateShort } from '~/utils/formatters'
 import { useUnifiedAuth } from '~/composables/useUnifiedAuth'
 import { useRealtimeUpdates } from '~/composables/useRealtimeUpdates'
 import KeysSpendChart from '~/components/keys/SpendChart.vue'
+import { TOP_MODEL_PROGRESS_COLORS } from '~/constants/chart-colors'
 
 definePageMeta({
   layout: 'default'
@@ -224,6 +225,8 @@ const topModels = computed(() => {
     .slice(0, 5)
 })
 
+const getTopModelBarColor = (idx: number) => TOP_MODEL_PROGRESS_COLORS[idx % TOP_MODEL_PROGRESS_COLORS.length]
+
 const dailyCostChartData = computed(() => {
   if (!dailyCost.value || dailyCost.value.length === 0) {
     return { labels: [], values: [] }
@@ -324,9 +327,9 @@ onMounted(() => {
               <span class="text-red-400">{{ overviewStats.forbidCount }}</span> denied
             </p>
           </div>
-          <div class="p-3 rounded-xl bg-indigo-100 dark:bg-indigo-900/30 group-hover:scale-110 transition-transform">
-            <svg class="w-6 h-6 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          <div class="p-3 rounded-xl bg-lime-50 dark:bg-lime-900/30 group-hover:scale-110 transition-transform">
+            <svg class="w-6 h-6 text-lime-700 dark:text-lime-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3v18h18M7 16v-5m4 5V8m4 8v-3m4 3V6" />
             </svg>
           </div>
         </div>
@@ -360,8 +363,8 @@ onMounted(() => {
               authorization pass rate
             </p>
           </div>
-          <div class="p-3 rounded-xl bg-blue-100 dark:bg-blue-900/30 group-hover:scale-110 transition-transform">
-            <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="p-3 rounded-xl bg-lime-50 dark:bg-lime-900/30 group-hover:scale-110 transition-transform">
+            <svg class="w-6 h-6 text-lime-700 dark:text-lime-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
@@ -378,9 +381,9 @@ onMounted(() => {
               per authorization
             </p>
           </div>
-          <div class="p-3 rounded-xl bg-purple-100 dark:bg-purple-900/30 group-hover:scale-110 transition-transform">
-            <svg class="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          <div class="p-3 rounded-xl bg-lime-50 dark:bg-lime-900/30 group-hover:scale-110 transition-transform">
+            <svg class="w-6 h-6 text-lime-700 dark:text-lime-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 3h8a2 2 0 012 2v14a2 2 0 01-2 2H8a2 2 0 01-2-2V5a2 2 0 012-2zm1 4h6m-6 4h2m2 0h2m-6 4h2m2 0h2" />
             </svg>
           </div>
         </div>
@@ -401,7 +404,7 @@ onMounted(() => {
         <div v-else-if="dailyCostChartData.labels.length === 0" class="h-40 flex items-center justify-center text-[rgb(var(--text-muted))]">
           No cost data available for selected period
         </div>
-        <KeysSpendChart v-else type="line" :data="dailyCostChartData" color="green" />
+        <KeysSpendChart v-else type="line" :data="dailyCostChartData" :fill-area="false" />
       </div>
 
       <!-- Cost by Provider -->
@@ -416,7 +419,7 @@ onMounted(() => {
         <div v-else-if="costByProviderChartData.labels.length === 0" class="h-40 flex items-center justify-center text-[rgb(var(--text-muted))]">
           No provider data available
         </div>
-        <KeysSpendChart v-else type="bar" :data="costByProviderChartData" color="blue" />
+        <KeysSpendChart v-else type="bar" :data="costByProviderChartData" />
       </div>
     </div>
 
@@ -432,7 +435,7 @@ onMounted(() => {
       <div v-else-if="costByModelChartData.labels.length === 0" class="h-40 flex items-center justify-center text-[rgb(var(--text-muted))]">
         No model data available
       </div>
-      <KeysSpendChart v-else type="bar" :data="costByModelChartData" color="purple" />
+      <KeysSpendChart v-else type="bar" :data="costByModelChartData" />
     </div>
 
     <!-- Cost by Provider Table -->
@@ -480,7 +483,7 @@ onMounted(() => {
       </div>
       <div v-else class="space-y-3">
         <div 
-          v-for="model in topModels" 
+          v-for="(model, idx) in topModels" 
           :key="model.model"
           class="flex items-center justify-between p-3 rounded-lg bg-[rgb(var(--surface-elevated))]"
         >
@@ -495,8 +498,8 @@ onMounted(() => {
             </div>
             <div class="mt-2 progress-bar">
               <div 
-                class="progress-bar-fill bg-indigo-500" 
-                :style="{ width: `${model.percentage}%` }"
+                class="progress-bar-fill"
+                :style="{ width: `${model.percentage}%`, backgroundColor: getTopModelBarColor(idx) }"
               />
             </div>
           </div>

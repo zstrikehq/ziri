@@ -20,10 +20,10 @@ const emit = defineEmits<{
     <!-- <div>
       <div class="flex items-center gap-2 mb-1">
         <h3 class="text-base font-semibold text-[rgb(var(--text))]">{{ entity.name }}</h3>
-        <span v-if="entity.kind === 'enum'" class="px-1.5 py-0.5 text-xs font-bold uppercase tracking-wider rounded bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300">
+        <span v-if="entity.kind === 'enum'" class="px-1.5 py-0.5 text-xs font-bold uppercase tracking-wider rounded bg-amber-50 dark:bg-amber-900/40 text-amber-800 dark:text-amber-200">
           Enum
         </span>
-        <span v-else class="px-1.5 py-0.5 text-xs font-bold uppercase tracking-wider rounded bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300">
+        <span v-else class="px-1.5 py-0.5 text-xs font-bold uppercase tracking-wider rounded bg-lime-50 dark:bg-lime-900/40 text-lime-800 dark:text-lime-200">
           Entity
         </span>
       </div>
@@ -80,7 +80,7 @@ const emit = defineEmits<{
         <button
           v-for="parent in entity.parents"
           :key="parent"
-          class="px-2 py-0.5 text-xs font-mono rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors cursor-pointer"
+          class="px-2 py-0.5 text-xs font-mono rounded-full bg-lime-50 dark:bg-lime-900/20 text-lime-800 dark:text-lime-200 border border-lime-200 dark:border-lime-800 hover:bg-lime-100 dark:hover:bg-lime-900/40 transition-colors cursor-pointer"
           @click="emit('navigate', 'entity', parent)"
         >
           <span v-html="highlightText(shortName(parent), searchQuery)"></span>
@@ -95,7 +95,7 @@ const emit = defineEmits<{
         <button
           v-for="childId in entity.parentOf"
           :key="childId"
-          class="px-2 py-0.5 text-xs font-mono rounded-full bg-sky-50 dark:bg-sky-900/20 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800 hover:bg-sky-100 dark:hover:bg-sky-900/40 transition-colors cursor-pointer"
+          class="px-2 py-0.5 text-xs font-mono rounded-full bg-lime-50 dark:bg-lime-900/20 text-lime-800 dark:text-lime-200 border border-lime-200 dark:border-lime-800 hover:bg-lime-100 dark:hover:bg-lime-900/40 transition-colors cursor-pointer"
           @click="emit('navigate', 'entity', childId)"
         >
           <span v-html="highlightText(shortName(childId), searchQuery)"></span>
@@ -110,7 +110,7 @@ const emit = defineEmits<{
         <button
           v-for="ref in entity.referencedBy"
           :key="ref"
-          class="px-2 py-0.5 text-xs font-mono rounded-full bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-800 hover:bg-violet-100 dark:hover:bg-violet-900/40 transition-colors cursor-pointer"
+          class="px-2 py-0.5 text-xs font-mono rounded-full bg-lime-50 dark:bg-lime-900/20 text-lime-800 dark:text-lime-200 border border-lime-200 dark:border-lime-800 hover:bg-lime-100 dark:hover:bg-lime-900/40 transition-colors cursor-pointer"
           @click="emit('navigate', 'entity', ref)"
         >
           <span v-html="highlightText(shortName(ref), searchQuery)"></span>

@@ -4,12 +4,27 @@
 
 /* Modern color palette */
 :root {
-	--primary: 99 102 241;
-	/* Indigo-500 */
-	--primary-hover: 79 70 229;
-	/* Indigo-600 */
-	--accent: 168 85 247;
-	/* Purple-500 */
+	--lime: 212 245 51; /* #d4f533 */
+	--lime-light: 237 255 163; /* #edffa3 */
+	--lime-50: 248 255 222;
+	--lime-100: 237 255 163;
+	--lime-200: 225 251 118;
+	--lime-300: 212 245 51;
+	--lime-400: 190 228 40;
+	--lime-500: 170 206 32;
+	--lime-600: 138 170 26;
+	--lime-700: 106 131 20;
+
+	--color-primary: var(--lime);
+	--color-primary-hover: var(--lime-500);
+	--color-primary-soft: var(--lime-50);
+	--color-glow: var(--lime-300);
+	--color-border-accent: var(--lime-400);
+	--color-text-accent: var(--lime-700);
+
+	--primary: var(--color-primary);
+	--primary-hover: var(--color-primary-hover);
+	--accent: var(--lime-500);
 	--success: 34 197 94;
 	/* Green-500 */
 	--warning: 245 158 11;
@@ -17,38 +32,38 @@
 	--danger: 239 68 68;
 	/* Red-500 */
 	--surface: 255 255 255;
-	--surface-elevated: 249 250 251;
-	--border: 229 231 235;
-	--border-strong: 209 213 219;
+	--surface-elevated: 250 252 242;
+	--border: 225 231 206;
+	--border-strong: 199 208 174;
 	--text: 17 24 39;
 	--text-secondary: 107 114 128;
 	--text-muted: 156 163 175;
 }
 
 .dark {
-	--primary: 129 140 248;
-	/* Indigo-400 */
-	--primary-hover: 165 180 252;
-	/* Indigo-300 */
-	--accent: 192 132 252;
-	/* Purple-400 */
+	--color-primary: var(--lime-400);
+	--color-primary-hover: var(--lime-300);
+	--color-primary-soft: var(--lime-700);
+	--color-glow: var(--lime-400);
+	--color-border-accent: var(--lime-400);
+	--color-text-accent: var(--lime-200);
+
+	--primary: var(--color-primary);
+	--primary-hover: var(--color-primary-hover);
+	--accent: var(--lime-300);
 	--success: 74 222 128;
 	/* Green-400 */
 	--warning: 251 191 36;
 	/* Amber-400 */
 	--danger: 248 113 113;
 	/* Red-400 */
-	--surface: 17 24 39;
-	/* Gray-900 */
-	--surface-elevated: 31 41 55;
-	/* Gray-800 */
-	--border: 55 65 81;
-	/* Gray-700 */
-	--border-strong: 75 85 99;
-	/* Gray-600 */
+	--surface: 14 16 11;
+	--surface-elevated: 24 28 18;
+	--border: 58 66 44;
+	--border-strong: 82 94 62;
 	--text: 249 250 251;
-	--text-secondary: 156 163 175;
-	--text-muted: 107 114 128;
+	--text-secondary: 203 207 193;
+	--text-muted: 151 158 137;
 }
 
 @layer base {
@@ -69,6 +84,12 @@
 		transition-duration: 150ms;
 		transition-timing-function: ease-out;
 	}
+
+	button:focus-visible,
+	a:focus-visible {
+		outline: 2px solid rgba(var(--color-border-accent), 0.45);
+		outline-offset: 2px;
+	}
 }
 
 @layer components {
@@ -77,18 +98,32 @@
 		@apply relative inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-all duration-200 ease-out focus:outline-none focus:ring-2 focus:ring-offset-2 active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100;
 	}
 
+	.btn:focus-visible {
+		--tw-ring-color: rgba(var(--color-border-accent), 0.45);
+		--tw-ring-offset-color: rgb(var(--surface));
+	}
+
 	.btn-primary {
 		background-color: rgb(var(--primary));
-		@apply text-white shadow-md shadow-indigo-500/25 hover:shadow-lg hover:shadow-indigo-500/30;
+		color: #0a0a0a;
+		box-shadow: 0 8px 20px rgba(var(--color-glow), 0.25);
 	}
 
 	.btn-primary:hover {
 		background-color: rgb(var(--primary-hover));
+		box-shadow: 0 10px 24px rgba(var(--color-glow), 0.3);
 		@apply -translate-y-0.5;
 	}
 
 	.dark .btn-primary {
-		@apply shadow-indigo-500/15 hover:shadow-indigo-400/25;
+		background-color: rgb(var(--lime-300)) !important;
+		color: #0a0a0a !important;
+		box-shadow: 0 8px 24px rgba(var(--lime-300), 0.3) !important;
+	}
+
+	.dark .btn-primary:hover {
+		background-color: rgb(var(--lime-200)) !important;
+		box-shadow: 0 10px 28px rgba(var(--lime-300), 0.38) !important;
 	}
 
 	.btn-outline {
@@ -99,8 +134,8 @@
 
 	.btn-outline:hover {
 		background-color: rgb(var(--surface-elevated));
-		border-color: rgb(var(--primary));
-		color: rgb(var(--primary));
+		border-color: rgb(var(--color-border-accent));
+		color: rgb(var(--color-text-accent));
 	}
 
 	.btn-danger {
@@ -134,8 +169,8 @@
 	}
 
 	.input:focus {
-		border-color: rgb(var(--primary));
-		box-shadow: 0 0 0 3px rgba(var(--primary), 0.1);
+		border-color: rgb(var(--color-border-accent));
+		box-shadow: 0 0 0 3px rgba(var(--color-glow), 0.18);
 	}
 
 	/* Select helpers: avoid clipping long labels in dropdown controls */
@@ -180,7 +215,7 @@
 
 	.card-interactive:hover {
 		@apply -translate-y-0.5;
-		border-color: rgb(var(--primary));
+		border-color: rgb(var(--color-border-accent));
 	}
 
 	/* Status badges */
@@ -188,24 +223,32 @@
 		@apply inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold;
 	}
 
+	.table-pill {
+		@apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold;
+	}
+
 	.badge-success {
-		@apply bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400;
+		@apply bg-green-50 text-green-800 dark:bg-green-900/30 dark:text-green-200;
 	}
 
 	.badge-danger {
-		@apply bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400;
+		@apply bg-red-50 text-red-800 dark:bg-red-900/30 dark:text-red-200;
 	}
 
 	.badge-warning {
-		@apply bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400;
+		@apply bg-amber-50 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200;
 	}
 
 	.badge-info {
-		@apply bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400;
+		@apply bg-lime-50 text-lime-800 dark:bg-lime-900/30 dark:text-lime-200;
 	}
 
 	.badge-neutral {
-		@apply bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400;
+		@apply bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300;
+	}
+
+	.badge-muted {
+		@apply bg-gray-50 text-gray-600 dark:bg-gray-800/70 dark:text-gray-400;
 	}
 
 	/* Sidebar nav item */
@@ -221,19 +264,24 @@
 	}
 
 	.nav-item.active {
-		background-color: rgb(var(--primary) / 0.1);
-		color: rgb(var(--primary));
+		background-color: rgb(var(--primary) / 0.06);
+		color: rgb(var(--color-text-accent));
 		@apply font-semibold;
 	}
 
 	.nav-item.active:hover {
-		background-color: rgb(var(--primary) / 0.15);
+		background-color: rgb(var(--primary) / 0.1);
 	}
 
 	/* Icon button */
 	.icon-btn {
 		@apply p-2 rounded-lg transition-all duration-200 ease-out;
 		color: rgb(var(--text-secondary));
+	}
+
+	.icon-btn:focus-visible {
+		outline: 2px solid rgba(var(--color-border-accent), 0.45);
+		outline-offset: 2px;
 	}
 
 	.icon-btn:hover {

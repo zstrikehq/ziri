@@ -100,11 +100,11 @@ const pageTitle = computed(() => {
         class="md:hidden flex-shrink-0 flex flex-col border-r-2 border-[rgb(var(--border))] bg-[rgb(var(--surface))] w-16 h-screen"
       >
         <div class="h-14 px-2 py-2 border-b-2 border-[rgb(var(--border))] flex items-center justify-center">
-          <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-indigo-600 dark:from-indigo-400 dark:to-indigo-500 p-1.5 flex items-center justify-center shadow-md shadow-indigo-500/25 dark:shadow-indigo-500/15 ring-1 ring-indigo-500/20 dark:ring-indigo-400/20">
+          <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-lime-500 to-lime-600 p-1.5 flex items-center justify-center shadow-md shadow-lime-500/25 ring-1 ring-lime-500/20">
             <img 
               :src="ziriLogo" 
               alt="Ziri Logo" 
-              class="w-full h-full object-contain invert brightness-0 contrast-200"
+              class="w-full h-full object-contain brightness-0"
             />
           </div>
         </div>

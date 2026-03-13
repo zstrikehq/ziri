@@ -7,25 +7,25 @@ const typeStyles = {
   success: {
     bg: 'bg-green-50 dark:bg-green-900/20',
     border: 'border-green-200 dark:border-green-800',
-    text: 'text-green-700 dark:text-green-300',
+    text: 'text-green-800 dark:text-green-200',
     icon: 'text-green-500'
   },
   error: {
     bg: 'bg-red-50 dark:bg-red-900/20',
     border: 'border-red-200 dark:border-red-800',
-    text: 'text-red-700 dark:text-red-300',
+    text: 'text-red-800 dark:text-red-200',
     icon: 'text-red-500'
   },
   info: {
-    bg: 'bg-indigo-50 dark:bg-indigo-900/20',
-    border: 'border-indigo-200 dark:border-indigo-800',
-    text: 'text-indigo-700 dark:text-indigo-300',
-    icon: 'text-indigo-500'
+    bg: 'bg-lime-50 dark:bg-lime-900/20',
+    border: 'border-lime-200 dark:border-lime-800',
+    text: 'text-lime-800 dark:text-lime-200',
+    icon: 'text-lime-500'
   },
   warning: {
     bg: 'bg-amber-50 dark:bg-amber-900/20',
     border: 'border-amber-200 dark:border-amber-800',
-    text: 'text-amber-700 dark:text-amber-300',
+    text: 'text-amber-800 dark:text-amber-200',
     icon: 'text-amber-500'
   }
 }
