@@ -116,12 +116,9 @@ async function ensureInitialization() {
   // internal authz is required — let it throw
   await initializeInternalAuth()
 
-  const config = loadConfig()
-  if (config.mode === 'local') {
-    import('./db/seed.js').then(({ seedDefaults }) => seedDefaults()).catch(err => {
-      console.warn('seed failed:', err)
-    })
-  }
+  import('./db/seed.js').then(({ seedDefaults }) => seedDefaults()).catch(err => {
+    console.warn('seed failed:', err)
+  })
 
   initialized = true
 }
@@ -139,7 +136,7 @@ function tryCreateHttpsServer(app: Express, config: ReturnType<typeof loadConfig
 
 function printBanner(config: ReturnType<typeof loadConfig>, url: string) {
   const lines = [
-    `ziri ${config.mode || 'local'} — ${url}`,
+    `ziri local — ${url}`,
     config.ssl?.enabled ? '  ssl: on' : null,
     config.publicUrl && config.publicUrl !== url ? `  public: ${config.publicUrl}` : null,
     `  email: ${config.email?.enabled ? config.email.provider || 'manual' : 'off'}`,
