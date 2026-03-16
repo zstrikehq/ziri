@@ -182,7 +182,7 @@ async function getRootKeyForCli(): Promise<string> {
   if (key) {
     return key
   }
-  const password = await promptPassword('Enter root key for credentials (or set ZIRI_ROOT_KEY env var): ')
+  const password = await promptPassword('Enter root key for credentials: ')
   if (!password || password.trim().length === 0) {
     throw new Error('Root key cannot be empty')
   }

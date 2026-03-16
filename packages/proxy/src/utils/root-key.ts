@@ -9,31 +9,51 @@ const ROOT_KEY_FILE = join(CONFIG_DIR, '.ziri-root-key')
 
 let currentRootKey: string | null = null
 
+function loadRootKeyWithRotation(): string {
+  const raw = process.env.ROTATE_ROOT_KEY
+  const rotate = raw && raw.toLowerCase() === 'true'
+
+  const fileExists = existsSync(ROOT_KEY_FILE)
+
+  if (!fileExists) {
+    const key = generateRootKey()
+    saveRootKey(key)
+    currentRootKey = key
+    return key
+  }
+
+  let fileKey: string | null = null
+
+  try {
+    const content = readFileSync(ROOT_KEY_FILE, 'utf-8').trim()
+    if (content) {
+      fileKey = content
+    }
+  } catch (error: any) {
+    console.error(`[ROOT KEY] Failed to read root key file, regenerating: ${error.message}`)
+  }
+
+  if (rotate || !fileKey) {
+    const key = generateRootKey()
+    saveRootKey(key)
+    currentRootKey = key
+    return key
+  }
+
+  currentRootKey = fileKey
+  return fileKey
+}
+
 export function generateRootKey(): string {
   const key = randomBytes(32).toString('hex')
   return key
 }
 
-export function getRootKey(): string | null {
+export function getRootKey(): string {
   if (currentRootKey) {
     return currentRootKey
   }
-  const envKey = process.env.ZIRI_ROOT_KEY
-  if (envKey) {
-    currentRootKey = envKey
-    return envKey
-  }
-  if (existsSync(ROOT_KEY_FILE)) {
-    try {
-      const fileKey = readFileSync(ROOT_KEY_FILE, 'utf-8').trim()
-      currentRootKey = fileKey
-      return fileKey
-    } catch (error: any) {
-      console.error(`[ROOT KEY] Failed to read root key file: ${error.message}`)
-      return null
-    }
-  }
-  return null
+  return loadRootKeyWithRotation()
 }
 
 export function saveRootKey(key: string): void {
@@ -61,20 +81,4 @@ export function saveRootKey(key: string): void {
     console.error(`[ROOT KEY] Failed to write key file: ${error.message}`)
     throw error
   }
-}
-
-export function initializeRootKey(): string {
-  const envKey = process.env.ZIRI_ROOT_KEY
-  if (envKey) {
-    currentRootKey = envKey
-    if (!existsSync(ROOT_KEY_FILE)) {
-      saveRootKey(envKey)
-    }
-    return envKey
-  }
-
-  const newKey = generateRootKey()
-  currentRootKey = newKey
-  saveRootKey(newKey)
-  return newKey
 }

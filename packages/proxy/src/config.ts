@@ -1,7 +1,7 @@
  
  
 import { readConfig, type ZiriConfig } from './config/index.js'
-import { getRootKey, initializeRootKey } from './utils/root-key.js'
+import { getRootKey } from './utils/root-key.js'
 
 export interface ProxyConfig {
   port: number
@@ -59,10 +59,7 @@ export function loadConfig(): ProxyConfig {
     console.warn('no config file found, using defaults')
   }
 
-  let rootKey = getRootKey()
-  if (!rootKey) {
-    rootKey = initializeRootKey()
-  }
+  const rootKey = getRootKey()
 
   const serverConfig = fileConfig?.server || {}
   const port = process.env.PORT ? parseInt(process.env.PORT, 10) : (serverConfig.port || (fileConfig as any)?.port || DEFAULT_PORT)

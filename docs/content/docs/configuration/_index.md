@@ -29,7 +29,7 @@ Files stored in the config directory:
 
 -   `config.json` - Server configuration
 -   `proxy.db` - SQLite database
--   `.ziri-root-key` - Root key for the built-in `ziri` admin (if not using `ZIRI_ROOT_KEY`)
+-   `.ziri-root-key` - Root key for the built-in `ziri` admin
 -   `encryption.key` - Encryption key (if not using env var)
 
 ## Configuration Types

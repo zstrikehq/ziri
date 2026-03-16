@@ -78,7 +78,7 @@ When you start the proxy for the first time, it will:
    - Email: `ziri@ziri.local`
    - Role: Admin (full access)
 
-You can set a fixed root key via the `ZIRI_ROOT_KEY` environment variable if you prefer.
+On first start, the root key is generated and stored in the `.ziri-root-key` file inside the config directory.
 
 ## Accessing the Admin UI
 
@@ -135,8 +135,8 @@ Update configuration via the UI's Config page (Admin only) or by editing the fil
 - `PORT` - Server port (default: 3100)
 - `HOST` - Server host (default: 127.0.0.1)
 - `CONFIG_DIR` - Directory for config and data files
-- `ZIRI_ROOT_KEY` - Root key for admin auth (optional; if unset, key is written to `.ziri-root-key`)
 - `ZIRI_ENCRYPTION_KEY` - Encryption key for sensitive data (optional, auto-generated)
+- `ROTATE_ROOT_KEY` - When set to `true`, rotate the root key on every startup; when unset or `false`, reuse the key from `.ziri-root-key` after first creation.
 - `NODE_ENV` - Environment (`development` or `production`)
 
 ## API Endpoints

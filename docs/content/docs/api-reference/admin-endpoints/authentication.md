@@ -250,7 +250,6 @@ You can log in using the **root key** that ZIRI generates on first start.
 
 - The root key is stored as `.ziri-root-key` in the config directory (`CONFIG_DIR`).
 - In Docker, with `CONFIG_DIR=/data`, the file is `/data/.ziri-root-key` inside the container.
-- You can also set it explicitly via the `ZIRI_ROOT_KEY` environment variable.
 
 ```bash
 curl -X POST http://localhost:3100/api/auth/admin/login \
@@ -260,7 +259,7 @@ curl -X POST http://localhost:3100/api/auth/admin/login \
     "password": "your-root-key"
   }'
 ```
-If `ZIRI_ROOT_KEY` is not set, ZIRI reads the existing `.ziri-root-key` from disk and keeps it stable across restarts. If no key file exists, ZIRI generates one on startup. If you set `ZIRI_ROOT_KEY`, that value is used and persisted to `.ziri-root-key` on first run when the file does not exist.
+ZIRI reads the `.ziri-root-key` file from disk and keeps the value stable across restarts by default. If no key file exists, ZIRI generates one on startup. When `ROTATE_ROOT_KEY` is set to `true`, the root key is rotated on every startup and the file is overwritten with the new value.
 
 ## Next Steps
 

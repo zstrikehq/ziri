@@ -209,11 +209,11 @@ Logging level: `debug`, `info`, `warn`, `error`.
 
 Configuration is loaded in this order:
 
-1. Environment variables (`PORT`, `HOST`, `CONFIG_DIR`, `ZIRI_ROOT_KEY`, `ZIRI_ENCRYPTION_KEY`)
+1. Environment variables (`PORT`, `HOST`, `CONFIG_DIR`, `ZIRI_ENCRYPTION_KEY`, `ROTATE_ROOT_KEY`)
 2. Config file (`config.json`)
 3. Defaults
 
-Environment variables override config file settings. Secrets like the root key are **never** returned by this API; they are stored only in `.ziri-root-key` (or provided via `ZIRI_ROOT_KEY`).
+Environment variables override config file settings. Secrets like the root key are **never** returned by this API; they are stored only in `.ziri-root-key`.
 
 ## Config File Location
 

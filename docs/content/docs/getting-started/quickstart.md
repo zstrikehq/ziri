@@ -55,7 +55,7 @@ Open `http://localhost:3100` in your browser. You'll be redirected to the login 
 Log in with:
 
 -   **Username / Email**: `ziri` or `ziri@ziri.local`
--   **Password**: The root key from Step 1 (or the value of `ZIRI_ROOT_KEY` if you set it)
+-   **Password**: The root key from Step 1
 
 ## Step 3: Configure a Provider
 

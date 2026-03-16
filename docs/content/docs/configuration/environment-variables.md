@@ -48,17 +48,17 @@ environment:
 **Default**: `127.0.0.1`  
 **Use case**: Docker (use `0.0.0.0` to accept external connections).
 
-## ZIRI_ROOT_KEY
+## ROTATE_ROOT_KEY
 
-Set a persistent **root key** for the built-in `ziri` admin. Prevents the root key from changing on each restart.
+Control whether the root key is rotated on each startup.
 
 ```yaml
 environment:
-    - ZIRI_ROOT_KEY=your-secure-key-here
+    - ROTATE_ROOT_KEY=true
 ```
 
-**Default**: If not set, ZIRI generates a new root key on startup.  
-**Use case**: Production deployments where you want a stable, known root key for `ziri` admin login and `x-root-key` access.
+**Default**: Not set (treated as `false`) — ZIRI generates a root key on first start and reuses the value from `.ziri-root-key` on subsequent restarts.  
+**Use case**: Set to `true` in environments where you want a new root key on every start and are comfortable invalidating existing sessions/credentials.
 
 ## ZIRI_ENCRYPTION_KEY
 
@@ -103,8 +103,8 @@ environment:
     - CONFIG_DIR=/data
     - PORT=3100
     - HOST=0.0.0.0
-    - ZIRI_ROOT_KEY=${ROOT_KEY}
     - ZIRI_ENCRYPTION_KEY=${ENCRYPTION_KEY}
+    - ROTATE_ROOT_KEY=false
     - NODE_ENV=production
 ```
 
@@ -112,7 +112,6 @@ Or use an `.env` file:
 
 ```bash {filename=".env"}
 # .env
-ROOT_KEY=your-root-key
 ENCRYPTION_KEY=your-encryption-key
 ```
 

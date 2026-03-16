@@ -164,12 +164,7 @@ Check the model documentation to see which actions it supports.
 
 **Solution**:
 
-Set `ZIRI_ROOT_KEY` environment variable in Docker Compose:
-
-```yaml
-environment:
-    - ZIRI_ROOT_KEY=your-persistent-key
-```
+Ensure `ROTATE_ROOT_KEY` is not set to `true` (or remove it entirely) so the proxy reuses the value from `.ziri-root-key` after the first start.
 
 ## Next Steps
 

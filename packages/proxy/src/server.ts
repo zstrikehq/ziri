@@ -9,7 +9,6 @@ import { errorHandler, notFoundHandler } from './middleware/error-handler.js'
 import { findFreePort } from './utils/port-finder.js'
 import { loadConfig } from './config.js'
 import { initializeEncryptionKey } from './utils/encryption-key.js'
-import { initializeRootKey } from './utils/root-key.js'
 import { getDatabase } from './db/index.js'
 import { serviceFactory } from './services/service-factory.js'
 import { initializeServerSession, getServerSessionId } from './utils/server-session.js'
@@ -99,7 +98,6 @@ let initialized = false
 async function ensureInitialization() {
   if (initialized) return
 
-  initializeRootKey()
   initializeEncryptionKey()
   getDatabase()
   serviceFactory.initialize()
@@ -116,12 +114,9 @@ async function ensureInitialization() {
   // internal authz is required — let it throw
   await initializeInternalAuth()
 
-  const config = loadConfig()
-  if (config.mode === 'local') {
-    import('./db/seed.js').then(({ seedDefaults }) => seedDefaults()).catch(err => {
-      console.warn('seed failed:', err)
-    })
-  }
+  import('./db/seed.js').then(({ seedDefaults }) => seedDefaults()).catch(err => {
+    console.warn('seed failed:', err)
+  })
 
   initialized = true
 }
@@ -139,7 +134,7 @@ function tryCreateHttpsServer(app: Express, config: ReturnType<typeof loadConfig
 
 function printBanner(config: ReturnType<typeof loadConfig>, url: string) {
   const lines = [
-    `ziri ${config.mode || 'local'} — ${url}`,
+    `ziri local — ${url}`,
     config.ssl?.enabled ? '  ssl: on' : null,
     config.publicUrl && config.publicUrl !== url ? `  public: ${config.publicUrl}` : null,
     `  email: ${config.email?.enabled ? config.email.provider || 'manual' : 'off'}`,
