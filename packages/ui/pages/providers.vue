@@ -105,6 +105,7 @@ onMounted(async () => {
 const showCreateModal = ref(false)
 const showEditModal = ref(false)
 const showDeleteModal = ref(false)
+const showExamplesModal = ref(false)
 const providerToDelete = ref<Provider | null>(null)
 const providerToEdit = ref<Provider | null>(null)
 const testingProvider = ref<string | null>(null)
@@ -306,6 +307,10 @@ const handleOpenCreateModal = () => {
   showCreateModal.value = true
 }
 
+const handleOpenExamplesModal = () => {
+  showExamplesModal.value = true
+}
+
 const columns = computed(() => {
   const baseColumns = [
     { key: 'name', header: 'Provider', sortable: true },
@@ -320,6 +325,57 @@ const columns = computed(() => {
   }
   
   return baseColumns
+})
+
+const exampleApiBaseUrl = computed(() => {
+  const configuredPublicUrl = (configStore.publicUrl || '').trim()
+  if (configuredPublicUrl) {
+    return configuredPublicUrl.replace(/\/+$/, '')
+  }
+
+  if (typeof window !== 'undefined' && window.location?.origin) {
+    return window.location.origin.replace(/\/+$/, '')
+  }
+
+  return 'http://localhost:3100'
+})
+
+const chatCompletionCurlExample = computed(() => {
+  return `curl -X POST ${exampleApiBaseUrl.value}/api/chat/completions \\
+  -H "Content-Type: application/json" \\
+  -H "X-API-Key: <your_ziri_api_key>" \\
+  -d '{
+    "provider": "openai",
+    "model": "gpt-4o-mini",
+    "messages": [
+      {"role": "user", "content": "Hello, ZIRI!"}
+    ]
+  }'`
+})
+
+const embeddingsCurlExample = computed(() => {
+  return `curl -X POST ${exampleApiBaseUrl.value}/api/embeddings \\
+  -H "Content-Type: application/json" \\
+  -H "X-API-Key: <your_ziri_api_key>" \\
+  -d '{
+    "provider": "openai",
+    "model": "text-embedding-3-small",
+    "input": "Hello, ZIRI!"
+  }'`
+})
+
+const imageGenerationCurlExample = computed(() => {
+  return `curl -X POST ${exampleApiBaseUrl.value}/api/images \\
+  -H "Content-Type: application/json" \\
+  -H "X-API-Key: <your_ziri_api_key>" \\
+  -d '{
+    "provider": "openai",
+    "model": "dall-e-3",
+    "prompt": "A white cat sitting on a windowsill",
+    "size": "1024x1024",
+    "quality": "standard",
+    "n": 1
+  }'`
 })
 </script>
 
@@ -404,22 +460,40 @@ const columns = computed(() => {
           </button>
         </div>
       </div>
-      <UiButton v-if="canCreateProvider" @click="handleOpenCreateModal">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-        </svg>
-        Add Provider
-      </UiButton>
+      <div class="flex items-center gap-2">
+        <UiButton v-if="canCreateProvider" variant="outline" @click="handleOpenExamplesModal">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17h6M9 13h6M9 9h6" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4h10a2 2 0 012 2v12a2 2 0 01-2 2H7a2 2 0 01-2-2V6a2 2 0 012-2z" />
+          </svg>
+          Examples
+        </UiButton>
+        <UiButton v-if="canCreateProvider" @click="handleOpenCreateModal">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          Add Provider
+        </UiButton>
+      </div>
     </div>
 
     <!-- Empty state toolbar (when no providers at all) -->
     <div class="flex items-center justify-end gap-4" v-if="providers.length === 0 && !loading && !searchQuery">
-      <UiButton v-if="canCreateProvider" @click="handleOpenCreateModal">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-        </svg>
-        Add Provider
-      </UiButton>
+      <div class="flex items-center gap-2">
+        <UiButton v-if="canCreateProvider" variant="outline" @click="handleOpenExamplesModal">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17h6M9 13h6M9 9h6" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4h10a2 2 0 012 2v12a2 2 0 01-2 2H7a2 2 0 01-2-2V6a2 2 0 012-2z" />
+          </svg>
+          Examples
+        </UiButton>
+        <UiButton v-if="canCreateProvider" @click="handleOpenCreateModal">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          Add Provider
+        </UiButton>
+      </div>
     </div>
 
     <!-- Providers Table -->
@@ -586,7 +660,7 @@ const columns = computed(() => {
             required
           />
         </div>
-        
+
         <div class="flex justify-end gap-3">
           <UiButton type="button" variant="ghost" @click="showCreateModal = false">Cancel</UiButton>
           <UiButton type="submit" :disabled="loading">Add Provider</UiButton>
@@ -646,6 +720,38 @@ const columns = computed(() => {
           </UiButton>
         </div>
       </form>
+    </UiModal>
+
+    <UiModal v-model="showExamplesModal" title="Provider Request Examples">
+      <div class="space-y-4">
+        <div class="max-h-[70vh] overflow-y-auto pr-1 space-y-4">
+          <p class="text-sm text-[rgb(var(--text-secondary))]">
+            Use these examples to call ZIRI for chat completions, embeddings, and image generation.
+          </p>
+          <p class="text-xs text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-md px-3 py-2">
+            Note: Not every model supports all three tasks. Update model names based on your provider's capabilities.
+          </p>
+
+          <div class="space-y-3 rounded-lg border border-[rgb(var(--border))] bg-[rgb(var(--surface-elevated))] p-3">
+            <div>
+              <p class="text-xs font-semibold text-[rgb(var(--text))] mb-1">Chat Completions</p>
+              <pre class="whitespace-pre-wrap break-all text-xs font-mono text-[rgb(var(--text-muted))]">{{ chatCompletionCurlExample }}</pre>
+            </div>
+            <div>
+              <p class="text-xs font-semibold text-[rgb(var(--text))] mb-1">Embeddings</p>
+              <pre class="whitespace-pre-wrap break-all text-xs font-mono text-[rgb(var(--text-muted))]">{{ embeddingsCurlExample }}</pre>
+            </div>
+            <div>
+              <p class="text-xs font-semibold text-[rgb(var(--text))] mb-1">Image Generation</p>
+              <pre class="whitespace-pre-wrap break-all text-xs font-mono text-[rgb(var(--text-muted))]">{{ imageGenerationCurlExample }}</pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex justify-end">
+          <UiButton type="button" variant="ghost" @click="showExamplesModal = false">Close</UiButton>
+        </div>
+      </div>
     </UiModal>
 
     <!-- Delete Confirmation Modal -->
