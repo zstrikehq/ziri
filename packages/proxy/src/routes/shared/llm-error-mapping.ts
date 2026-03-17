@@ -12,10 +12,6 @@ export function mapChatRouteError(message: string): LlmMappedError | null {
     return { status: 500, code: 'PROVIDER_KEY_MISSING' }
   }
 
-  if (message.includes('PDP')) {
-    return { status: 503, code: 'PDP_UNAVAILABLE' }
-  }
-
   if (message.includes('LLM provider')) {
     return { status: 502, code: 'LLM_PROVIDER_ERROR' }
   }
