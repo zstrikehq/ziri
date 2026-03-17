@@ -63,7 +63,7 @@ const editUser = reactive<{
  
 const searchQuery = ref('')
 const currentPage = ref(1)
-const itemsPerPage = ref(20)
+const itemsPerPage = ref(10)
 const totalUsers = ref(0)
 
  

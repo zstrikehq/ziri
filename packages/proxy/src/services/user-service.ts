@@ -150,31 +150,35 @@ export function listUsers(params?: {
 }): { data: User[]; total: number } {
   const db = getDatabase()
 
-  const { rows, total } = paginatedQuery(db, 'auth', 'role IS NULL AND status != 0', [], {
-    search: params?.search,
-    searchColumns: ['name', 'id'],
-    limit: params?.limit,
-    offset: params?.offset,
-    sortBy: params?.sortBy,
-    sortOrder: params?.sortOrder,
-    columnMap: USER_COLUMNS
-  })
+  // Email is encrypted in DB, so search/sort on email must happen in JS after decryption.
+  // Fetch all matching rows, decrypt, then filter/sort/paginate in JS.
+  const all = (db.prepare('SELECT * FROM auth WHERE role IS NULL AND status != 0').all() as any[]).map(toUser)
 
-  let users = rows.map(toUser)
+  let users = all
 
-  // if searching, also match on decrypted email
   if (params?.search) {
     const q = params.search.toLowerCase()
-    const all = (db.prepare('SELECT * FROM auth WHERE role IS NULL AND status != 0').all() as any[]).map(toUser)
-    users = all.filter(u =>
+    users = users.filter(u =>
       u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q) || u.userId.toLowerCase().includes(q)
     )
-    const page = params.limit || 100
-    const off = params.offset || 0
-    return { data: users.slice(off, off + page), total: users.length }
   }
 
-  return { data: users, total }
+  if (params?.sortBy && params?.sortOrder) {
+    const key = params.sortBy as keyof User
+    const dir = params.sortOrder === 'asc' ? 1 : -1
+    users = [...users].sort((a, b) => {
+      const aVal = String(a[key] ?? '').toLowerCase()
+      const bVal = String(b[key] ?? '').toLowerCase()
+      if (aVal < bVal) return -1 * dir
+      if (aVal > bVal) return 1 * dir
+      return 0
+    })
+  }
+
+  const total = users.length
+  const limit = params?.limit || 100
+  const offset = params?.offset || 0
+  return { data: users.slice(offset, offset + limit), total }
 }
 
 export function listAllUsersForApiKeys(params?: {
@@ -183,28 +187,33 @@ export function listAllUsersForApiKeys(params?: {
 }): { data: User[]; total: number } {
   const db = getDatabase()
 
-  const { rows, total } = paginatedQuery(db, 'auth', 'status != 0', [], {
-    search: params?.search,
-    searchColumns: ['name', 'id'],
-    limit: params?.limit,
-    offset: params?.offset,
-    sortBy: params?.sortBy,
-    sortOrder: params?.sortOrder,
-    columnMap: USER_COLUMNS
-  })
+  const all = (db.prepare('SELECT * FROM auth WHERE status != 0').all() as any[]).map(toUser)
 
-  let users = rows.map(toUser)
+  let users = all
 
   if (params?.search) {
     const q = params.search.toLowerCase()
-    const all = (db.prepare('SELECT * FROM auth WHERE status != 0').all() as any[]).map(toUser)
-    users = all.filter(u =>
+    users = users.filter(u =>
       u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q) || u.userId.toLowerCase().includes(q)
     )
-    return { data: users.slice(params?.offset || 0, (params?.offset || 0) + (params?.limit || 100)), total: users.length }
   }
 
-  return { data: users, total }
+  if (params?.sortBy && params?.sortOrder) {
+    const key = params.sortBy as keyof User
+    const dir = params.sortOrder === 'asc' ? 1 : -1
+    users = [...users].sort((a, b) => {
+      const aVal = String(a[key] ?? '').toLowerCase()
+      const bVal = String(b[key] ?? '').toLowerCase()
+      if (aVal < bVal) return -1 * dir
+      if (aVal > bVal) return 1 * dir
+      return 0
+    })
+  }
+
+  const total = users.length
+  const limit = params?.limit || 100
+  const offset = params?.offset || 0
+  return { data: users.slice(offset, offset + limit), total }
 }
 
 export function getUserById(userId: string): User | null {
