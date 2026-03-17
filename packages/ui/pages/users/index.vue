@@ -22,8 +22,7 @@ const canResetPassword = ref(false)
 
  
 const showCreateModal = ref(false)
-const showPasswordModal = ref(false)
-const showApiKeyModal = ref(false)
+const showCredentialsModal = ref(false)
 const showDeleteModal = ref(false)
 const showResetPasswordModal = ref(false)
 const generatedPassword = ref('')
@@ -64,7 +63,7 @@ const editUser = reactive<{
  
 const searchQuery = ref('')
 const currentPage = ref(1)
-const itemsPerPage = ref(20)
+const itemsPerPage = ref(10)
 const totalUsers = ref(0)
 
  
@@ -131,35 +130,37 @@ const handleCreateUser = async () => {
     toast.warning('Email and name are required')
     return
   }
-  
 
   const check = await checkAction('create_user', 'users')
   if (!check.allowed) {
     toast.error('You do not have permission to create users')
     return
   }
-  
+
   if (isCreatingUser.value) return
-  
+
   try {
     isCreatingUser.value = true
     const result = await createUser(newUser)
     showCreateModal.value = false
-    
- 
+    generatedPassword.value = ''
+    generatedApiKey.value = ''
+
     if (result.password) {
       generatedPassword.value = result.password
-      showPasswordModal.value = true
       toast.warning('Email was not sent. Please save the password below.')
     } else {
       toast.success('User created. Credentials sent via email.')
     }
+
     if (result.apiKey) {
       generatedApiKey.value = result.apiKey
-      showApiKeyModal.value = true
     }
-    
- 
+
+    if (result.password || result.apiKey) {
+      showCredentialsModal.value = true
+    }
+
     Object.assign(newUser, {
       email: '',
       name: '',
@@ -169,6 +170,8 @@ const handleCreateUser = async () => {
       createApiKey: true,
       roleId: undefined
     })
+
+    await fetchUsers()
   } catch (error: any) {
     toast.error(`Failed to create user: ${getUserMessage(error)}`)
   } finally {
@@ -252,6 +255,12 @@ const handleDeleteUser = async () => {
     showDeleteModal.value = false
     userToDelete.value = null
     toast.success('User deleted')
+    await fetchUsers()
+    const total = totalUsers.value
+    const maxIndex = (currentPage.value - 1) * itemsPerPage.value
+    if (currentPage.value > 1 && maxIndex >= total) {
+      currentPage.value = currentPage.value - 1
+    }
   } catch (error: any) {
     toast.error(`Failed to delete user: ${getUserMessage(error)}`)
   } finally {
@@ -267,16 +276,20 @@ const handleResetPassword = async () => {
     const result = await resetPassword(userToResetPassword.value.userId)
     selectedUser.value = userToResetPassword.value
     showResetPasswordModal.value = false
-    
- 
+    generatedPassword.value = ''
+    generatedApiKey.value = ''
+
     if (result.password) {
       generatedPassword.value = result.password
-      showPasswordModal.value = true
       toast.warning('Email was not sent. Please save the password below.')
     } else if (result.emailSent) {
       toast.success('Password reset. New password sent via email.')
     } else {
       toast.success('Password reset.')
+    }
+
+    if (result.password) {
+      showCredentialsModal.value = true
     }
     
     userToResetPassword.value = null
@@ -295,11 +308,6 @@ const copyPassword = () => {
 const copyApiKey = () => {
   navigator.clipboard.writeText(generatedApiKey.value)
   toast.success('API key copied to clipboard')
-}
-
-const closeApiKeyModal = () => {
-  showApiKeyModal.value = false
-  generatedApiKey.value = ''
 }
 </script>
 
@@ -629,20 +637,22 @@ const closeApiKeyModal = () => {
           </UiButton>
         </div>
       </form>
-    </UiModal>
-
-    <!-- Password Modal -->
-    <UiModal v-model="showPasswordModal" title="Generated Password">
+    </UiModal>    
+    <!-- Credentials Modal (Password + API Key) -->
+    <UiModal v-model="showCredentialsModal" title="Generated Credentials">
       <div class="space-y-4">
-        <div class="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+        <div
+          v-if="generatedPassword"
+          class="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg"
+        >
           <p class="text-sm font-semibold text-yellow-900 dark:text-yellow-100 mb-2">
             {{ selectedUser ? 'Password Reset' : 'User Created' }}
           </p>
           <p class="text-xs text-yellow-800 dark:text-yellow-200 mb-3">
-            ⚠️ Save this password now - it won't be shown again!
+            Save this password now - it will not be shown again.
           </p>
           <div class="flex items-center gap-2">
-            <code class="flex-1 text-sm font-mono bg-white dark:bg-gray-800 p-2 rounded">
+            <code class="flex-1 text-sm font-mono bg-white dark:bg-gray-800 p-2 rounded break-all">
               {{ generatedPassword }}
             </code>
             <UiButton size="sm" @click="copyPassword">
@@ -650,23 +660,16 @@ const closeApiKeyModal = () => {
             </UiButton>
           </div>
         </div>
-        <div class="flex justify-end">
-          <UiButton @click="showPasswordModal = false">
-            Close
-          </UiButton>
-        </div>
-      </div>
-    </UiModal>
 
-    <!-- API Key Modal (shown once when user created with createApiKey) -->
-    <UiModal v-model="showApiKeyModal" title="API Key Created">
-      <div class="space-y-4">
-        <div class="p-4 bg-green-50 dark:bg-green-900/20 border-2 border-green-200 dark:border-green-800 rounded-lg">
+        <div
+          v-if="generatedApiKey"
+          class="p-4 bg-green-50 dark:bg-green-900/20 border-2 border-green-200 dark:border-green-800 rounded-lg"
+        >
           <p class="text-sm font-semibold text-green-900 dark:text-green-100 mb-2">
             API key created successfully
           </p>
           <p class="text-xs text-green-800 dark:text-green-200 mb-3">
-            Save this API key now - it won't be shown again!
+            Save this API key now - it will not be shown again.
           </p>
           <div class="flex items-center gap-2">
             <code class="flex-1 text-sm font-mono bg-white dark:bg-gray-800 p-2 rounded break-all">
@@ -677,9 +680,16 @@ const closeApiKeyModal = () => {
             </UiButton>
           </div>
         </div>
+
         <div class="flex justify-end">
-          <UiButton @click="closeApiKeyModal">
-            Done
+          <UiButton
+            @click="
+              showCredentialsModal = false;
+              generatedPassword = '';
+              generatedApiKey = '';
+            "
+          >
+            Close
           </UiButton>
         </div>
       </div>

@@ -15,7 +15,6 @@ The `config.json` file stores server configuration.
 
 ```json {filename="config.json"}
 {
-	"mode": "local",
 	"server": {
 		"host": "127.0.0.1",
 		"port": 3100
@@ -44,13 +43,6 @@ The `config.json` file stores server configuration.
 ```
 
 ## Fields
-
-### mode
-
-Server mode: `"local"` or `"live"`.
-
--   `local` - Local mode (default)
--   `live` - Backend API + External PDP
 
 ### server
 
@@ -131,7 +123,6 @@ If no config file exists, ZIRI uses these defaults:
 
 ```json {filename="config.json"}
 {
-	"mode": "local",
 	"server": {
 		"host": "127.0.0.1",
 		"port": 3100

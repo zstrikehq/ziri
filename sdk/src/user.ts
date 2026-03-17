@@ -46,7 +46,6 @@ export class UserSDK {
   private readonly baseUrl: string
   private readonly fetchImpl: typeof fetch
   private readonly timeoutMs: number
-  private readonly userId: string
 
   constructor(config: UserSDKConfig) {
     const apiKey = config.apiKey?.trim()
@@ -63,7 +62,6 @@ export class UserSDK {
     const proxyUrl = this.resolveProxyUrl(config.proxyUrl)
 
     this.apiKey = apiKey
-    this.userId = this.extractUserId(apiKey)
     this.baseUrl = proxyUrl
     this.fetchImpl = fetchImpl
     this.timeoutMs = config.timeoutMs ?? DEFAULT_TIMEOUT_MS
@@ -121,10 +119,6 @@ export class UserSDK {
       prompt,
       ...extra
     })
-  }
-
-  getUserId(): string {
-    return this.userId
   }
 
   private async request<T>(path: string, payload: UnknownRecord): Promise<T> {
@@ -188,17 +182,12 @@ export class UserSDK {
   }
 
   private validateApiKey(apiKey: string): void {
-    if (!apiKey.startsWith('ziri-')) {
-      throw new Error('Invalid API key format. Expected prefix: ziri-')
+    if (!/^ziri_[0-9a-f]{32}$/.test(apiKey)) {
+      throw new Error('Invalid API key format.')
     }
-  }
-
-  private extractUserId(apiKey: string): string {
-    const withoutPrefix = apiKey.slice('ziri-'.length)
-    const separatorIndex = withoutPrefix.lastIndexOf('-')
-    if (separatorIndex <= 0) {
-      throw new Error('Invalid API key format; missing user identifier segment')
+    const uuid = apiKey.slice('ziri_'.length)
+    if (uuid[12] !== '4' || !/[89ab]/.test(uuid[16] || '')) {
+      throw new Error('Invalid API key format.')
     }
-    return withoutPrefix.slice(0, separatorIndex)
   }
 }

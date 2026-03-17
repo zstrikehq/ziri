@@ -63,7 +63,7 @@ const editUser = reactive<{
 
 const searchQuery = ref('')
 const currentPage = ref(1)
-const itemsPerPage = ref(20)
+const itemsPerPage = ref(10)
 const totalUsers = ref(0)
 const sortBy = ref<string | null>(null)
 const sortOrder = ref<'asc' | 'desc' | null>(null)
@@ -227,6 +227,11 @@ const handleDeleteUser = async () => {
     userToDelete.value = null
     toast.success('User deleted')
     await fetchUsers()
+    const total = totalUsers.value
+    const maxIndex = (currentPage.value - 1) * itemsPerPage.value
+    if (currentPage.value > 1 && maxIndex >= total) {
+      currentPage.value = currentPage.value - 1
+    }
   } catch (error: any) {
     toast.error(getUserMessage(error))
   } finally {
@@ -617,7 +622,7 @@ const getRoleBadgeColor = (role: string) => {
           >
             <option 
               value="admin" 
-              :disabled="!canUpdateAdmin && (selectedUser?.role === 'admin' || editUser.role === 'admin')"
+              :disabled="!canUpdateAdmin"
             >
               Admin
             </option>

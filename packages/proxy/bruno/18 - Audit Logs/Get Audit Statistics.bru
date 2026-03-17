@@ -1,0 +1,36 @@
+meta {
+  name: Get Audit Statistics
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/audit/statistics
+  body: none
+  auth: inherit
+}
+
+params:query {
+  ~startDate:
+  ~endDate:
+}
+
+tests {
+  test("should return 200 on success", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("success: should return data", function() {
+    if (res.getStatus() === 200) {
+      const body = res.getBody();
+      expect(body).to.have.property("data");
+    }
+  });
+
+  test("failure 401: should return error when unauthorized", function() {
+    if (res.getStatus() === 401) {
+      const body = res.getBody();
+      expect(body).to.have.property("error");
+    }
+  });
+}

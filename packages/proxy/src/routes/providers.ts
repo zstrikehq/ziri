@@ -59,6 +59,36 @@ router.post('/', (req: Request, res: Response) => {
   }
 })
 
+router.put('/:name', (req: Request, res: Response) => {
+  const t0 = Date.now()
+  const { apiKey, displayName } = req.body
+
+  if (!apiKey && (!displayName || !String(displayName).trim())) {
+    res.status(400).json({ error: 'Nothing to update' })
+    return
+  }
+
+  try {
+    const provider = providerService.updateProvider(req.params.name, { apiKey, displayName })
+    res.json({ provider })
+
+    logInternalAction(req, {
+      action: 'update_provider',
+      resourceType: 'provider',
+      resourceId: provider.name,
+      decisionReason: res.locals.decisionReason ?? null,
+      actionDurationMs: Date.now() - t0
+    })
+  } catch (err: any) {
+    if (err.message === 'Provider not found' || err.message.startsWith('Invalid API key')) {
+      res.status(400).json({ error: err.message })
+      return
+    }
+    console.error('provider update failed:', err)
+    res.status(500).json({ error: 'Failed to update provider' })
+  }
+})
+
 router.delete('/:name', (req: Request, res: Response) => {
   const t0 = Date.now()
   try {

@@ -20,7 +20,6 @@ function resolvePort(config: Record<string, any>): number {
 function normalizeGatewayConfig(config: Record<string, any>): GatewayConfig {
   const port = resolvePort(config)
   return {
-    mode: config.mode || 'local',
     server: config.server || {
       host: config.host || '127.0.0.1',
       port
@@ -30,11 +29,6 @@ function normalizeGatewayConfig(config: Record<string, any>): GatewayConfig {
       enabled: false,
       provider: 'manual'
     },
-    projectId: config.projectId || '',
-    orgId: config.orgId || '',
-    clientId: config.clientId || '',
-    clientSecret: config.clientSecret || '',
-    pdpUrl: config.pdpUrl || '',
     proxyUrl: config.proxyUrl || '',
     port,
     logLevel: config.logLevel || 'info'
@@ -103,7 +97,6 @@ export const useConfigStore = defineStore('config', {
       if (!import.meta.client) return
 
       const configToSave: Partial<GatewayConfig> = {
-        mode: this.mode || 'local',
         server: this.server || {
           host: '127.0.0.1',
           port: this.port || 3100

@@ -66,7 +66,7 @@ export function useRulesPageState() {
   const filterEffect = ref<'' | 'permit' | 'forbid'>('')
 
   const currentPage = ref(1)
-  const itemsPerPage = ref(20)
+  const itemsPerPage = ref(10)
   const totalRules = ref(0)
 
   const sortBy = ref<string | null>(null)
@@ -119,15 +119,12 @@ export function useRulesPageState() {
     }
   }
 
-  const handleSort = (newSortBy: string | null, newSortOrder: 'asc' | 'desc' | null) => {
-    sortBy.value = newSortBy
-    sortOrder.value = newSortOrder
-    currentPage.value = 1
-  }
-
-  watch([debouncedSearchQuery, filterEffect, currentPage, itemsPerPage, sortBy, sortOrder], () => {
-    fetchRules()
-  })
+  watch(
+    [debouncedSearchQuery, filterEffect, currentPage, itemsPerPage, sortBy, sortOrder],
+    () => {
+      fetchRules()
+    }
+  )
 
   watch(showCreateModal, (isOpen) => {
     if (!isOpen) return
@@ -363,10 +360,17 @@ export function useRulesPageState() {
     const model = editor.getModel()
     if (!monaco || !model) return
 
-    monaco.editor.onDidChangeMarkers((uris: Monaco.Uri[]) => {
+    monaco.editor.onDidChangeMarkers((uris: readonly Monaco.Uri[]) => {
       if (uris.some((uri: Monaco.Uri) => uri.toString() === model.uri.toString())) {
       }
     })
+  }
+
+  const handleSort = (columnKey: string | null, order: 'asc' | 'desc' | null) => {
+    sortBy.value = columnKey
+    sortOrder.value = order
+    currentPage.value = 1
+    fetchRules()
   }
 
   const handleCreateRule = async () => {
@@ -405,6 +409,8 @@ export function useRulesPageState() {
       }
       showCreateModal.value = false
       resetRuleForm()
+      currentPage.value = 1
+      await fetchRules()
     } catch {
     }
   }
@@ -475,10 +481,10 @@ export function useRulesPageState() {
       showEditModal.value = false
       ruleToEdit.value = null
       resetRuleForm()
+      await fetchRules()
     } catch {
     }
   }
-
   const handleCancelCreate = () => {
     showCreateModal.value = false
     resetRuleForm()
@@ -506,6 +512,12 @@ export function useRulesPageState() {
       await deleteRule(ruleToDelete.value.policy)
       showDeleteModal.value = false
       ruleToDelete.value = null
+      await fetchRules()
+      const total = totalRules.value || 0
+      const maxIndex = (currentPage.value - 1) * itemsPerPage.value
+      if (currentPage.value > 1 && maxIndex >= total) {
+        currentPage.value = currentPage.value - 1
+      }
     } catch {
     }
   }

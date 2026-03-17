@@ -1,0 +1,54 @@
+meta {
+  name: Create Dashboard User
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/dashboard-users
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "email": "{{testDashboardUserEmail}}",
+    "name": "{{testDashboardUserName}}",
+    "role": "viewer"
+  }
+}
+
+script:post-response {
+  const body = res.getBody();
+  if (body.user && body.user.userId) {
+    bru.setEnvVar("testDashboardUserId", body.user.userId);
+  }
+}
+
+tests {
+  test("should return 201 on success", function() {
+    expect(res.getStatus()).to.equal(201);
+  });
+
+  test("success: should return user.email", function() {
+    if (res.getStatus() === 201) {
+      const body = res.getBody();
+      expect(body).to.have.property("user");
+      expect(body.user).to.have.property("email");
+    }
+  });
+
+  test("failure 401: should return error when unauthorized", function() {
+    if (res.getStatus() === 401) {
+      const body = res.getBody();
+      expect(body).to.have.property("error");
+    }
+  });
+
+  test("failure 409: should return error when email already exists", function() {
+    if (res.getStatus() === 409) {
+      const body = res.getBody();
+      expect(body).to.have.property("error");
+    }
+  });
+}

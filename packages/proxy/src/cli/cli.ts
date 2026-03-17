@@ -7,7 +7,6 @@ import {
   writeConfig,
   setConfigValue,
   getConfigValue,
-  validateConfig,
   setProviderMetadata,
   getProviderMetadata,
   removeProviderMetadata,
@@ -84,8 +83,7 @@ program
       console.log('🔧 Initializing ZIRI configuration...\n')
       console.log('Please provide the following information:')
       console.log('Use: ziri config set <key>=<value> to set values')
-      console.log('Required keys: backendUrl, orgId, projectId, clientId, clientSecret')
-      console.log('Optional keys: pdpUrl (for live mode)')
+      console.log('Optional keys: publicUrl, logLevel')
       return
     }
     
@@ -184,7 +182,7 @@ async function getRootKeyForCli(): Promise<string> {
   if (key) {
     return key
   }
-  const password = await promptPassword('Enter root key for credentials (or set ZIRI_ROOT_KEY env var): ')
+  const password = await promptPassword('Enter root key for credentials: ')
   if (!password || password.trim().length === 0) {
     throw new Error('Root key cannot be empty')
   }

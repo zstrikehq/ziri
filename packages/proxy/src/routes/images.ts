@@ -5,6 +5,7 @@ import * as llmService from '../services/llm-service.js'
 import { modelCapabilityService } from '../services/model-capability-service.js'
 import { mapStandardLlmRouteError } from './shared/llm-error-mapping.js'
 import { handleLlmRequest, type LlmPreparedRequest } from './shared/llm-route-orchestrator.js'
+import { resolveProvider } from '../services/provider-service.js'
 
 const router: Router = Router()
 
@@ -41,7 +42,21 @@ router.post('/', async (req, res) => {
         }
       }
 
-      const capability = modelCapabilityService.checkModelAction(provider, model, 'image_generation')
+      const resolved = resolveProvider(String(provider))
+      if (!resolved) {
+        return {
+          status: 400,
+          body: {
+            error: `Unknown provider '${provider}'`,
+            code: 'PROVIDER_NOT_FOUND',
+            requestId
+          }
+        }
+      }
+
+      const canonicalProvider = resolved.name
+
+      const capability = modelCapabilityService.checkModelAction(canonicalProvider, model, 'image_generation')
       if (!capability.supported) {
         return {
           status: 400,
@@ -60,7 +75,7 @@ router.post('/', async (req, res) => {
         WHERE provider = ? AND model = ? AND quality = ? AND size = ?
         ORDER BY effective_from DESC
         LIMIT 1
-      `).get(provider, model, imageQuality, imageSize) as {
+      `).get(canonicalProvider, model, imageQuality, imageSize) as {
         price_per_image: number
         max_images_per_request: number
       } | undefined
@@ -89,7 +104,7 @@ router.post('/', async (req, res) => {
 
       return {
         prepared: {
-          provider,
+          provider: canonicalProvider,
           model,
           prompt,
           n,

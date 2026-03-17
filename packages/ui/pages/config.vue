@@ -3,18 +3,12 @@ import { useConfigStore } from '~/stores/config'
 import { useToast } from '~/composables/useToast'
 import { useAdminAuth } from '~/composables/useAdminAuth'
 import { validateEmail, validateEmailOrFromAddress, getFromAddressValidationHint } from '~/utils/validators'
-import { useSchema } from '~/composables/useSchema'
-import { useRules } from '~/composables/useRules'
-import { useKeys } from '~/composables/useKeys'
 import { useInternalAuth } from '~/composables/useInternalAuth'
 import { useApiError } from '~/composables/useApiError'
 
 const configStore = useConfigStore()
 const toast = useToast()
 const { getAuthHeader } = useAdminAuth()
-const { getSchema } = useSchema()
-const { listRules } = useRules()
-const { listKeys } = useKeys()
 const { checkAction } = useInternalAuth()
 const { getUserMessage } = useApiError()
 
@@ -42,7 +36,6 @@ const emailProviders = ref<EmailProviderDef[]>([])
 
  
 const form = reactive({
-  mode: 'local' as 'local' | 'live',
   publicUrl: '',
   email: {
     enabled: false,
@@ -165,21 +158,18 @@ onMounted(async () => {
     const response = await fetch('/api/config', { headers })
     if (response.ok) {
       const config = await response.json()
-      form.mode = config.mode || 'local'
       form.publicUrl = config.publicUrl || ''
       mapEmailConfigToForm(config.email)
       form.logLevel = config.logLevel || 'info'
     } else {
- 
-      form.mode = 'local'
+
       form.publicUrl = configStore.publicUrl || ''
       const stored = configStore.email
       mapEmailConfigToForm(stored)
       form.logLevel = configStore.logLevel || 'info'
     }
   } catch (e) {
- 
-    form.mode = 'local'
+
     form.publicUrl = configStore.publicUrl || ''
     const stored = configStore.email
     mapEmailConfigToForm(stored)
@@ -279,7 +269,6 @@ const saveConfig = async () => {
 }
 
 const resetToDefaults = async () => {
-  form.mode = 'local'
   form.publicUrl = ''
   form.email = {
     enabled: false,
@@ -368,46 +357,7 @@ const resetToDefaults = async () => {
 
     <!-- Main Content (only show after permissions load) -->
     <template v-else>
-      <!-- <div class="flex items-center justify-between mb-6">
-        <h1 class="text-2xl font-bold text-[rgb(var(--text))]">Configuration</h1>
-      </div> -->
       <form @submit.prevent="saveConfig" class="max-w-2xl space-y-6">
-    <!-- Mode Display (Read-only for now) -->
-    <!-- <section class="card">
-      <div class="flex items-center gap-3 mb-5">
-        <div class="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
-          <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-          </svg>
-        </div>
-        <h3 class="text-sm font-bold text-[rgb(var(--text))]">Operation Mode</h3>
-      </div>
-      <div class="space-y-3">
-        <div class="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-xs font-semibold text-blue-900 dark:text-blue-100 mb-1">Current Mode</p>
-              <p class="text-sm font-bold text-blue-700 dark:text-blue-300 uppercase">
-                {{ form.mode }}
-              </p>
-            </div>
-            <div class="px-3 py-1 rounded-lg bg-blue-100 dark:bg-blue-800">
-              <span class="text-xs font-bold text-blue-900 dark:text-blue-100">
-                {{ form.mode === 'local' ? '🔒 Local' : '🌐 Live' }}
-              </span>
-            </div>
-          </div>
-        </div>
-        <div class="text-xs text-[rgb(var(--text-secondary))] space-y-1">
-          <p><strong>Local Mode:</strong> All data stored in local SQLite. Authorization via Cedar-WASM.</p>
-          <p><strong>Live Mode:</strong> Data stored in Backend API. Authorization via external PDP.</p>
-          <p class="text-[rgb(var(--text-muted))] italic mt-2">
-            ⚠️ Mode switching requires restarting the proxy server.
-          </p>
-        </div>
-      </div>
-    </section> -->
-
     <!-- Server Settings -->
     <section class="card">
       <div class="flex items-center gap-3 mb-5">
@@ -512,47 +462,6 @@ const resetToDefaults = async () => {
         </div>
       </div>
     </section>
-
-    <!-- Root Key (Read-only) -->
-    <!-- <section class="card" v-if="configStore.rootKey">
-      <div class="flex items-center gap-3 mb-5">
-        <div class="p-2 rounded-lg bg-yellow-100 dark:bg-yellow-900/30">
-          <svg class="w-5 h-5 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
-          </svg>
-        </div>
-        <h3 class="text-sm font-bold text-[rgb(var(--text))]">Root Key</h3>
-      </div>
-      <div class="space-y-3">
-        <div class="p-3 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800">
-          <div class="flex items-center justify-between mb-2">
-            <p class="text-xs font-semibold text-yellow-900 dark:text-yellow-100">Root Key</p>
-            <div class="flex gap-2">
-              <button
-                type="button"
-                @click="showRootKey = !showRootKey"
-                class="text-xs px-2 py-1 rounded bg-yellow-100 dark:bg-yellow-800 text-yellow-900 dark:text-yellow-100 hover:bg-yellow-200 dark:hover:bg-yellow-700 transition-colors"
-              >
-                {{ showRootKey ? 'Hide' : 'Show' }}
-              </button>
-              <button
-                type="button"
-                @click="copyMasterKey"
-                class="text-xs px-2 py-1 rounded bg-yellow-100 dark:bg-yellow-800 text-yellow-900 dark:text-yellow-100 hover:bg-yellow-200 dark:hover:bg-yellow-700 transition-colors"
-              >
-                Copy
-              </button>
-            </div>
-          </div>
-          <code class="text-xs font-mono text-yellow-800 dark:text-yellow-200 break-all">
-            {{ showRootKey ? configStore.rootKey : '••••••••••••••••••••••••••••••••' }}
-          </code>
-        </div>
-        <p class="text-xs text-[rgb(var(--text-secondary))]">
-          ⚠️ This root key is required for all admin operations. Store it securely.
-        </p>
-      </div>
-    </section> -->
 
     <!-- Actions -->
     <div class="flex gap-3">

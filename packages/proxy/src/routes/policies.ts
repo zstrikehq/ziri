@@ -24,116 +24,75 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
     let whereClause = "WHERE obj_type = 'policy'"
     const args: any[] = []
 
-    let orderByClause = 'ORDER BY created_at ASC'
-    if (sortBy && sortOrder && (sortOrder === 'asc' || sortOrder === 'desc')) {
-      const columnMap: Record<string, string> = {
-        'description': 'description',
-        'status': 'status',
-        'effect': 'content',
-        'createdAt': 'created_at',
-        'updatedAt': 'updated_at'
-      }
-      const dbColumn = columnMap[sortBy as string]
-      if (dbColumn) {
-        const order = sortOrder.toUpperCase()
-        orderByClause = `ORDER BY ${dbColumn} ${order}`
-      }
+    if (search) {
+      whereClause += " AND (LOWER(description) LIKE ? OR LOWER(content) LIKE ?)"
+      const q = `%${(search as string).toLowerCase()}%`
+      args.push(q, q)
     }
 
-    let countSql = `SELECT COUNT(*) as total FROM schema_policy ${whereClause}`
-    const countResult = db.prepare(countSql).get(...args) as { total: number }
-    let total = countResult.total
-
-    const limitValue = limit ? parseInt(limit as string, 10) : 100
-    const offsetValue = offset ? parseInt(offset as string, 10) : 0
+    // Fetch all matching rows (before effect filter) — effect filtering
+    // and sorting is done in JS to handle Cedar formatting variations
+    // like "permit(" vs "permit (" vs "permit\n("
     const dataSql = `
       SELECT content, description, status, created_at, updated_at
-      FROM schema_policy 
+      FROM schema_policy
       ${whereClause}
-      ${orderByClause}
-      LIMIT ? OFFSET ?
+      ORDER BY created_at ASC
     `
-    const rows = db.prepare(dataSql).all(...args, limitValue, offsetValue) as { content: string; description: string | null; status: number; created_at: string; updated_at: string }[]
+
+    const rows = db
+      .prepare(dataSql)
+      .all(...args) as { content: string; description: string | null; status: number; created_at: string; updated_at: string }[]
+
+    const detectEffect = (content: string): 'permit' | 'forbid' => {
+      return /permit\s*\(/i.test(content) ? 'permit' : 'forbid'
+    }
 
     let policies = rows.map(row => ({
       policy: row.content,
       description: row.description || '',
       isActive: row.status === 1,
-      effect: row.content.toLowerCase().includes('permit(') ? 'permit' : 'forbid' as 'permit' | 'forbid'
+      effect: detectEffect(row.content)
     }))
 
-    if (search) {
-      const searchLower = (search as string).toLowerCase()
-      policies = policies.filter(p =>
-        p.description.toLowerCase().includes(searchLower) ||
-        p.policy.toLowerCase().includes(searchLower)
-      )
-
-      const allRows = db.prepare(`
-        SELECT content, description, status 
-        FROM schema_policy 
-        ${whereClause}
-        ORDER BY created_at ASC
-      `).all(...args) as { content: string; description: string | null; status: number }[]
-      const allPolicies = allRows.map(row => ({
-        policy: row.content,
-        description: row.description || '',
-        isActive: row.status === 1,
-        effect: row.content.toLowerCase().includes('permit(') ? 'permit' : 'forbid' as 'permit' | 'forbid'
-      }))
-      const filtered = allPolicies.filter(p =>
-        p.description.toLowerCase().includes(searchLower) ||
-        p.policy.toLowerCase().includes(searchLower)
-      )
-      total = filtered.length
-    }
-
-    if (effect && (effect === 'permit' || effect === 'forbid')) {
+    // Apply effect filter in JS
+    if (effect === 'permit' || effect === 'forbid') {
       policies = policies.filter(p => p.effect === effect)
-      if (search) {
-        const allRows = db.prepare(`
-          SELECT content, description, status 
-          FROM schema_policy 
-          ${whereClause}
-          ORDER BY created_at ASC
-        `).all(...args) as { content: string; description: string | null; status: number }[]
-        const allPolicies = allRows.map(row => ({
-          policy: row.content,
-          description: row.description || '',
-          isActive: row.status === 1,
-          effect: row.content.toLowerCase().includes('permit(') ? 'permit' : 'forbid' as 'permit' | 'forbid'
-        }))
-        const searchLower = (search as string).toLowerCase()
-        const filtered = allPolicies.filter(p =>
-          (p.description.toLowerCase().includes(searchLower) ||
-            p.policy.toLowerCase().includes(searchLower)) &&
-          p.effect === effect
-        )
-        total = filtered.length
-      } else {
-        const allRows = db.prepare(`
-          SELECT content, description, status 
-          FROM schema_policy 
-          ${whereClause}
-          ORDER BY created_at ASC
-        `).all(...args) as { content: string; description: string | null; status: number }[]
-        const allPolicies = allRows.map(row => ({
-          policy: row.content,
-          description: row.description || '',
-          isActive: row.status === 1,
-          effect: row.content.toLowerCase().includes('permit(') ? 'permit' : 'forbid' as 'permit' | 'forbid'
-        }))
-        const filtered = allPolicies.filter(p => p.effect === effect)
-        total = filtered.length
-      }
     }
 
-    if (sortBy === 'effect' && sortOrder && (sortOrder === 'asc' || sortOrder === 'desc')) {
-      policies.sort((a, b) => {
-        const comparison = a.effect.localeCompare(b.effect)
-        return sortOrder === 'asc' ? comparison : -comparison
+    const total = policies.length
+
+    // Apply sorting in JS
+    if (sortBy && sortOrder && (sortOrder === 'asc' || sortOrder === 'desc')) {
+      const dir = sortOrder === 'asc' ? 1 : -1
+      policies.sort((a: any, b: any) => {
+        let aVal: string, bVal: string
+        switch (sortBy) {
+          case 'effect':
+            aVal = a.effect
+            bVal = b.effect
+            break
+          case 'description':
+            aVal = a.description.toLowerCase()
+            bVal = b.description.toLowerCase()
+            break
+          case 'status':
+            aVal = a.isActive ? '1' : '0'
+            bVal = b.isActive ? '1' : '0'
+            break
+          default:
+            return 0
+        }
+        if (aVal < bVal) return -1 * dir
+        if (aVal > bVal) return 1 * dir
+        return 0
       })
     }
+
+    // Apply pagination in JS
+    const limitValue = limit ? parseInt(limit as string, 10) : 100
+    const offsetValue = offset ? parseInt(offset as string, 10) : 0
+    policies = policies.slice(offsetValue, offsetValue + limitValue)
 
     res.json({
       data: {

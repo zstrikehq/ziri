@@ -1,28 +1,6 @@
-import { initializeRootKey } from './utils/root-key.js'
-import { initializeEncryptionKey } from './utils/encryption-key.js'
-import { getDatabase, closeDatabase } from './db/index.js'
+import { closeDatabase } from './db/index.js'
 import { loadConfig } from './config.js'
 import { startServer, stopServer } from './server.js'
-import { serviceFactory } from './services/service-factory.js'
-import { seedDefaults } from './db/seed.js'
-
-const rootKey = initializeRootKey()
-const encryptionKey = initializeEncryptionKey()
-getDatabase()
-
-const config = loadConfig()
-serviceFactory.initialize()
-
-import('./db/index.js').then(({ initializeAdminUser }) => {
-  initializeAdminUser().catch(err => console.warn('admin init failed:', err))
-}).catch(err => console.warn('admin module load failed:', err))
-
-if (config.mode === 'local') {
-  import('./db/index.js').then(async ({ ensureSchemaInitialized }) => {
-    await ensureSchemaInitialized()
-    return seedDefaults()
-  }).catch(err => console.warn('seed failed:', err))
-}
 
 import { fileURLToPath } from 'url'
 import { pathToFileURL } from 'url'
@@ -48,4 +26,4 @@ async function shutdown() {
 process.on('SIGINT', shutdown)
 process.on('SIGTERM', shutdown)
 
-export { config, rootKey }
+export { config }

@@ -26,7 +26,7 @@ const isDeleting = ref(false)
 
 const searchQuery = ref('')
 const currentPage = ref(1)
-const itemsPerPage = ref(20)
+const itemsPerPage = ref(10)
 const totalRoles = ref(0)
 const sortBy = ref<string | null>(null)
 const sortOrder = ref<'asc' | 'desc' | null>(null)
@@ -99,6 +99,11 @@ const handleDelete = async () => {
     showDeleteModal.value = false
     roleToDelete.value = null
     await fetchRoles()
+    const total = totalRoles.value
+    const maxIndex = (currentPage.value - 1) * itemsPerPage.value
+    if (currentPage.value > 1 && maxIndex >= total) {
+      currentPage.value = currentPage.value - 1
+    }
   } catch (e: any) {
     toast.error(getUserMessage(e))
   } finally {

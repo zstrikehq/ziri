@@ -4,6 +4,7 @@ import { costEstimatorService } from '../services/cost-estimator-service.js'
 import { modelCapabilityService } from '../services/model-capability-service.js'
 import { mapStandardLlmRouteError } from './shared/llm-error-mapping.js'
 import { handleLlmRequest, type LlmPreparedRequest } from './shared/llm-route-orchestrator.js'
+import { resolveProvider } from '../services/provider-service.js'
 
 const router: Router = Router()
 
@@ -29,7 +30,21 @@ router.post('/', async (req, res) => {
         }
       }
 
-      const capability = modelCapabilityService.checkModelAction(provider, model, 'embedding')
+      const resolved = resolveProvider(String(provider))
+      if (!resolved) {
+        return {
+          status: 400,
+          body: {
+            error: `Unknown provider '${provider}'`,
+            code: 'PROVIDER_NOT_FOUND',
+            requestId
+          }
+        }
+      }
+
+      const canonicalProvider = resolved.name
+
+      const capability = modelCapabilityService.checkModelAction(canonicalProvider, model, 'embedding')
       if (!capability.supported) {
         return {
           status: 400,
@@ -41,11 +56,11 @@ router.post('/', async (req, res) => {
         }
       }
 
-      const estimation = await estimateEmbeddingCost(provider, model, input)
+      const estimation = await estimateEmbeddingCost(canonicalProvider, model, input)
 
       return {
         prepared: {
-          provider,
+          provider: canonicalProvider,
           model,
           input,
           otherParams,

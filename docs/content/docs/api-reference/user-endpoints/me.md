@@ -32,10 +32,10 @@ Bearer token in Authorization header.
 
 ### Error Responses
 
-| Status | Code      | Description    |
-| ------ | --------- | -------------- |
-| 401    | -         | Missing or invalid Bearer token |
-| 404    | -         | User not found |
+| Status | Code | Description                     |
+| ------ | ---- | ------------------------------- |
+| 401    | -    | Missing or invalid Bearer token |
+| 404    | -    | User not found                  |
 
 ---
 
@@ -66,12 +66,12 @@ Returns the authenticated user's API key metadata. The full key value is never r
 }
 ```
 
-| Field               | Description                                    |
-| ------------------- | ---------------------------------------------- |
-| `apiKey`            | Always `null` — full key is never returned     |
-| `keySuffix`         | Last characters of key hash for identification |
-| `currentDailySpend` | Spend accumulated since last daily reset       |
-| `currentMonthlySpend` | Spend accumulated since last monthly reset   |
+| Field                 | Description                                    |
+| --------------------- | ---------------------------------------------- |
+| `apiKey`              | Always `null` — full key is never returned     |
+| `keySuffix`           | Last characters of key hash for identification |
+| `currentDailySpend`   | Spend accumulated since last daily reset       |
+| `currentMonthlySpend` | Spend accumulated since last monthly reset     |
 
 ---
 
@@ -87,9 +87,9 @@ Returns aggregated usage statistics for the authenticated user.
 
 ```json
 {
-	"currentDailySpend": 12.50,
+	"currentDailySpend": 12.5,
 	"dailySpendLimit": 0,
-	"currentMonthlySpend": 85.00,
+	"currentMonthlySpend": 85.0,
 	"monthlySpendLimit": 0,
 	"totalRequests": 1547,
 	"totalTokens": 2340000,
@@ -98,14 +98,14 @@ Returns aggregated usage statistics for the authenticated user.
 }
 ```
 
-| Field                | Description                                      |
-| -------------------- | ------------------------------------------------ |
-| `currentDailySpend`  | Cost accumulated today                           |
-| `dailySpendLimit`    | Daily spend cap (0 = unlimited)                  |
-| `currentMonthlySpend`| Cost accumulated this month                      |
-| `monthlySpendLimit`  | Monthly spend cap (0 = unlimited)                |
-| `totalRequests`      | Total permitted requests across all time         |
-| `totalTokens`        | Total tokens consumed across all time            |
+| Field                 | Description                              |
+| --------------------- | ---------------------------------------- |
+| `currentDailySpend`   | Cost accumulated today                   |
+| `dailySpendLimit`     | Daily spend cap (0 = unlimited)          |
+| `currentMonthlySpend` | Cost accumulated this month              |
+| `monthlySpendLimit`   | Monthly spend cap (0 = unlimited)        |
+| `totalRequests`       | Total permitted requests across all time |
+| `totalTokens`         | Total tokens consumed across all time    |
 
 ---
 
@@ -121,7 +121,7 @@ Generates a new API key for the authenticated user and revokes the existing one.
 
 ```json
 {
-	"apiKey": "ziri-user-123-a1b2c3d4e5f67890",
+	"apiKey": "<your_ziri_api_key>",
 	"userId": "user-123",
 	"message": "Key rotated. Save the new key — you won't see it again."
 }
@@ -129,7 +129,7 @@ Generates a new API key for the authenticated user and revokes the existing one.
 
 ### Error Responses
 
-| Status | Code | Description                     |
-| ------ | ---- | ------------------------------- |
-| 401    | -    | Missing or invalid Bearer token |
+| Status | Code | Description                                 |
+| ------ | ---- | ------------------------------------------- |
+| 401    | -    | Missing or invalid Bearer token             |
 | 404    | -    | User not found or no existing key to rotate |

@@ -176,14 +176,6 @@ export async function createDashboardUser(input: CreateDashboardUserInput): Prom
   }
 }
 
-const DASHBOARD_USER_SORT_COLUMNS: Record<string, string> = {
-  userId: 'id',
-  name: 'name',
-  email: 'email',
-  lastSignIn: 'last_sign_in',
-  createdAt: 'created_at'
-}
-
 export function listDashboardUsers(params?: {
   search?: string
   limit?: number
@@ -192,38 +184,35 @@ export function listDashboardUsers(params?: {
   sortOrder?: 'asc' | 'desc' | null
 }): { data: DashboardUser[]; total: number } {
   const db = getDatabase()
-  
-  let whereClause = 'WHERE role IS NOT NULL AND status != 0'
-  const args: any[] = []
-  
+
+  // Email is encrypted in DB, so search/sort on email must happen in JS after decryption.
+  const all = (db.prepare('SELECT * FROM auth WHERE role IS NOT NULL AND status != 0').all() as any[]).map(mapDbUserToDashboardUser)
+
+  let users = all
+
   if (params?.search) {
-    const searchLower = params.search.toLowerCase()
-    whereClause += ' AND (LOWER(name) LIKE ? OR LOWER(email) LIKE ? OR LOWER(id) LIKE ?)'
-    const searchPattern = `%${searchLower}%`
-    args.push(searchPattern, searchPattern, searchPattern)
+    const q = params.search.toLowerCase()
+    users = users.filter(u =>
+      u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q) || u.userId.toLowerCase().includes(q)
+    )
   }
-  
-  const countSql = `SELECT COUNT(*) as total FROM auth ${whereClause}`
-  const countResult = db.prepare(countSql).get(...args) as { total: number }
-  const total = countResult.total
-  
-  let orderByClause = 'ORDER BY created_at DESC'
+
   if (params?.sortBy && params?.sortOrder) {
-    const dbColumn = DASHBOARD_USER_SORT_COLUMNS[params.sortBy]
-    if (dbColumn) {
-      const order = params.sortOrder.toUpperCase()
-      orderByClause = `ORDER BY ${dbColumn} ${order}`
-    }
+    const key = params.sortBy as keyof DashboardUser
+    const dir = params.sortOrder === 'asc' ? 1 : -1
+    users = [...users].sort((a, b) => {
+      const aVal = String(a[key] ?? '').toLowerCase()
+      const bVal = String(b[key] ?? '').toLowerCase()
+      if (aVal < bVal) return -1 * dir
+      if (aVal > bVal) return 1 * dir
+      return 0
+    })
   }
-  
+
+  const total = users.length
   const limit = params?.limit || 100
   const offset = params?.offset || 0
-  const dataSql = `SELECT * FROM auth ${whereClause} ${orderByClause} LIMIT ? OFFSET ?`
-  const rows = db.prepare(dataSql).all(...args, limit, offset) as any[]
-  
-  const users = rows.map(mapDbUserToDashboardUser)
-  
-  return { data: users, total }
+  return { data: users.slice(offset, offset + limit), total }
 }
 
 export function getDashboardUser(userId: string): DashboardUser | null {

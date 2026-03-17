@@ -45,15 +45,14 @@ environment:
     - CONFIG_DIR=/data
     - PORT=3100
     - HOST=0.0.0.0
-    - ZIRI_ROOT_KEY=${ROOT_KEY}
     - ZIRI_ENCRYPTION_KEY=${ENCRYPTION_KEY}
+    - ROTATE_ROOT_KEY=false
 ```
 
 Use a `.env` file for secrets:
 
 ```bash {filename=".env"}
 # .env
-ROOT_KEY=your-root-key
 ENCRYPTION_KEY=your-encryption-key
 ```
 

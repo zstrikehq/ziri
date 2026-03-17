@@ -1,0 +1,39 @@
+meta {
+  name: Rotate My Key
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/api/me/rotate
+  body: none
+  auth: inherit
+}
+
+script:post-response {
+  const body = res.getBody();
+  if (body.apiKey) {
+    bru.setEnvVar("testApiKey", body.apiKey);
+  }
+}
+
+tests {
+  test("should return 200 on success", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("success: should return apiKey string", function() {
+    if (res.getStatus() === 200) {
+      const body = res.getBody();
+      expect(body).to.have.property("apiKey");
+      expect(body.apiKey).to.be.a("string").and.not.empty;
+    }
+  });
+
+  test("failure 401: should return error when unauthorized", function() {
+    if (res.getStatus() === 401) {
+      const body = res.getBody();
+      expect(body).to.have.property("error");
+    }
+  });
+}

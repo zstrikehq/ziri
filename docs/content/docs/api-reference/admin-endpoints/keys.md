@@ -104,7 +104,7 @@ curl -X POST http://localhost:3100/api/keys \
 
 ```json
 {
-	"apiKey": "ziri-user-123-a1b2c3d4e5f67890",
+	"apiKey": "<your_ziri_api_key>",
 	"userId": "user-123",
 	"message": "API key created successfully. Save the key - it won't be shown again!"
 }
@@ -157,7 +157,7 @@ curl -X POST http://localhost:3100/api/keys/user-123/rotate \
 
 ```json
 {
-	"apiKey": "ziri-user-123-b9c8d7e6f5a43210",
+	"apiKey": "<your_ziri_api_key>",
 	"userId": "user-123",
 	"message": "API key rotated successfully. Save the new key - it won't be shown again!"
 }
@@ -259,24 +259,23 @@ Status: 404
 API keys follow this format:
 
 ```
-ziri-{userId}-{hash}
+ziri_<uuidv4withoutdashes>
 ```
 
-Example: `ziri-user-123-a1b2c3d4e5f67890`
+Example: `ziri_550e8400e29b41d4a716446655440000`
 
--   `ziri-` - Prefix identifying ZIRI keys
--   `{userId}` - User ID extracted from the key
--   `{hash}` - Random hash for security
+- `ziri_` - Prefix identifying ZIRI keys
+- `<uuidv4withoutdashes>` - Random UUIDv4 string (32 hex chars, no dashes)
 
 ## Key Status
 
 Keys have a status:
 
--   `1` - Active
--   `0` - Revoked
+- `1` - Active
+- `0` - Revoked
 
 Revoked keys cannot be used for requests.
 
 ## Next Steps
 
--   See [Users API](/api-reference/admin-endpoints/users) for user management
+- See [Users API](/api-reference/admin-endpoints/users) for user management

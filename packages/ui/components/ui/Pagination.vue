@@ -35,24 +35,41 @@ const itemsPerPageOptions = computed(() => {
   }
   return options
 })
+
+const selectValue = computed(() => {
+  const total = props.totalItems || 0
+  // Only show 'all' if the "All" option is actually rendered (total > 100)
+  // AND the current itemsPerPage covers all items
+  if (total > 100 && props.itemsPerPage >= total) {
+    return 'all'
+  }
+  // Ensure the value matches one of the available options
+  const options = itemsPerPageOptions.value
+  if (options.includes(props.itemsPerPage)) {
+    return props.itemsPerPage
+  }
+  // Fallback: find the smallest option >= itemsPerPage, or the largest option
+  const larger = options.find(o => o >= props.itemsPerPage)
+  return larger ?? options[options.length - 1]
+})
 </script>
 
 <template>
   <div class="flex items-center justify-between gap-4 flex-wrap">
     <div class="flex items-center gap-2">
       <span class="text-sm text-[rgb(var(--text-muted))]">
-        Showing {{ Math.min((currentPage - 1) * itemsPerPage + 1, totalItems || 0) }} to 
-        {{ Math.min(currentPage * itemsPerPage, totalItems || 0) }} of 
+        Showing {{ Math.min((currentPage - 1) * itemsPerPage + 1, totalItems || 0) }} to
+        {{ Math.min(currentPage * itemsPerPage, totalItems || 0) }} of
         {{ (totalItems || 0).toLocaleString() }} entries
       </span>
     </div>
-    
+
     <div class="flex items-center gap-3">
       <!-- Items per page selector -->
       <div v-if="showItemsPerPage" class="flex items-center gap-2">
         <span class="text-sm text-[rgb(var(--text-muted))]">Show:</span>
-        <select 
-          :value="itemsPerPage >= (totalItems || 0) ? 'all' : itemsPerPage"
+        <select
+          :value="selectValue"
           @change="(e) => {
             const value = (e.target as HTMLSelectElement).value
             const total = props.totalItems || 0
@@ -71,7 +88,7 @@ const itemsPerPageOptions = computed(() => {
           <option v-if="(totalItems || 0) > 100" value="all">All</option>
         </select>
       </div>
-      
+
       <!-- Page navigation -->
       <div class="flex items-center gap-1">
         <button
@@ -81,7 +98,7 @@ const itemsPerPageOptions = computed(() => {
         >
           Previous
         </button>
-        
+
         <div class="flex items-center gap-1">
           <template v-if="totalPages <= 7">
             <button
@@ -140,7 +157,7 @@ const itemsPerPageOptions = computed(() => {
             </button>
           </template>
         </div>
-        
+
         <button
           @click="goToPage(currentPage + 1)"
           :disabled="currentPage === totalPages"

@@ -1,0 +1,42 @@
+meta {
+  name: List Users
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/users?limit=50&offset=0
+  body: none
+  auth: inherit
+}
+
+params:query {
+  limit: 50
+  offset: 0
+  ~search:
+  ~sortBy: createdAt
+  ~sortOrder: desc
+  ~forApiKeys: true
+}
+
+tests {
+  test("should return 200 on success", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("success: should return users array and total", function() {
+    if (res.getStatus() === 200) {
+      const body = res.getBody();
+      expect(body).to.have.property("users");
+      expect(body.users).to.be.an("array");
+      expect(body).to.have.property("total");
+    }
+  });
+
+  test("failure 401: should return error when unauthorized", function() {
+    if (res.getStatus() === 401) {
+      const body = res.getBody();
+      expect(body).to.have.property("error");
+    }
+  });
+}

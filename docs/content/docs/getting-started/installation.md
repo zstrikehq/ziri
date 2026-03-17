@@ -90,7 +90,7 @@ docker compose exec proxy cat /data/.ziri-root-key
 Use this root key to log in to the admin UI:
 
 -   **Username / Email**: `ziri` or `ziri@ziri.local`
--   **Password**: The root key from `.ziri-root-key` (or from the `ZIRI_ROOT_KEY` environment variable, if you set it)
+-   **Password**: The root key from `.ziri-root-key`
 
 ## Stopping ZIRI
 

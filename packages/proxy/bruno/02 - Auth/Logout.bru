@@ -1,0 +1,37 @@
+meta {
+  name: Logout
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/api/auth/logout
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "refreshToken": "{{refreshToken}}"
+  }
+}
+
+tests {
+  test("should return 200 on success", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("failure 401: should return error when unauthorized", function() {
+    if (res.getStatus() === 401) {
+      const body = res.getBody();
+      expect(body).to.have.property("error");
+    }
+  });
+
+  test("failure 400: should return error when malformed body", function() {
+    if (res.getStatus() === 400) {
+      const body = res.getBody();
+      expect(body).to.have.property("error");
+    }
+  });
+}

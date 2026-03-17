@@ -18,7 +18,7 @@ const filterAction = ref('')
 const filterResourceType = ref('')
 
 const currentPage = ref(1)
-const itemsPerPage = ref(20)
+const itemsPerPage = ref(10)
 
 const sortBy = ref<string | null>(null)
 const sortOrder = ref<'asc' | 'desc' | null>(null)

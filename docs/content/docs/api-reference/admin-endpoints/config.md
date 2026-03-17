@@ -26,7 +26,6 @@ curl -H "Authorization: Bearer your-token" \
 
 ```json
 {
-  "mode": "local",
   "server": {
     "host": "127.0.0.1",
     "port": 3100
@@ -53,7 +52,6 @@ POST /api/config
 
 ```typescript
 {
-  mode?: 'local' | 'live'           // Optional
   server?: {                        // Optional
     host?: string
     port?: number
@@ -76,7 +74,6 @@ curl -X POST http://localhost:3100/api/config \
   -H "Authorization: Bearer your-token" \
   -H "Content-Type: application/json" \
   -d '{
-    "mode": "local",
     "server": {
       "host": "0.0.0.0",
       "port": 3100
@@ -110,7 +107,6 @@ curl -X POST http://localhost:3100/api/config \
 	"success": true,
 	"message": "Configuration saved successfully. Restart the proxy server for server settings to take effect.",
 	"config": {
-		"mode": "local",
 		"server": {
 			"host": "0.0.0.0",
 			"port": 3100
@@ -128,10 +124,6 @@ curl -X POST http://localhost:3100/api/config \
 **Note**: Server settings (host, port) require a restart to take effect.
 
 ## Configuration Fields
-
-### Mode
-
--   `local` - Local mode (default)
 
 ### Server
 
@@ -217,11 +209,11 @@ Logging level: `debug`, `info`, `warn`, `error`.
 
 Configuration is loaded in this order:
 
-1. Environment variables (`PORT`, `HOST`, `CONFIG_DIR`, `ZIRI_ROOT_KEY`, `ZIRI_ENCRYPTION_KEY`)
+1. Environment variables (`PORT`, `HOST`, `CONFIG_DIR`, `ZIRI_ENCRYPTION_KEY`, `ROTATE_ROOT_KEY`)
 2. Config file (`config.json`)
 3. Defaults
 
-Environment variables override config file settings. Secrets like the root key are **never** returned by this API; they are stored only in `.ziri-root-key` (or provided via `ZIRI_ROOT_KEY`).
+Environment variables override config file settings. Secrets like the root key are **never** returned by this API; they are stored only in `.ziri-root-key`.
 
 ## Config File Location
 

@@ -43,6 +43,7 @@ const routeActionMap: Record<string, { action: string; resourceType: string }> =
   'GET:/api/providers': { action: 'list_providers', resourceType: 'providers' },
   'GET:/api/providers/:name': { action: 'get_provider', resourceType: 'providers' },
   'POST:/api/providers': { action: 'create_provider', resourceType: 'providers' },
+  'PUT:/api/providers/:name': { action: 'update_provider', resourceType: 'providers' },
   'DELETE:/api/providers/:name': { action: 'delete_provider', resourceType: 'providers' },
   'POST:/api/providers/:name/test': { action: 'test_provider', resourceType: 'providers' },
 

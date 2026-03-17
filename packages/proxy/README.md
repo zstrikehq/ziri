@@ -78,7 +78,7 @@ When you start the proxy for the first time, it will:
    - Email: `ziri@ziri.local`
    - Role: Admin (full access)
 
-You can set a fixed root key via the `ZIRI_ROOT_KEY` environment variable if you prefer.
+On first start, the root key is generated and stored in the `.ziri-root-key` file inside the config directory.
 
 ## Accessing the Admin UI
 
@@ -135,8 +135,8 @@ Update configuration via the UI's Config page (Admin only) or by editing the fil
 - `PORT` - Server port (default: 3100)
 - `HOST` - Server host (default: 127.0.0.1)
 - `CONFIG_DIR` - Directory for config and data files
-- `ZIRI_ROOT_KEY` - Root key for admin auth (optional; if unset, key is written to `.ziri-root-key`)
 - `ZIRI_ENCRYPTION_KEY` - Encryption key for sensitive data (optional, auto-generated)
+- `ROTATE_ROOT_KEY` - When set to `true`, rotate the root key on every startup; when unset or `false`, reuse the key from `.ziri-root-key` after first creation.
 - `NODE_ENV` - Environment (`development` or `production`)
 
 ## API Endpoints
@@ -200,3 +200,85 @@ npm run dev
 # Production mode
 npm start
 ```
+
+### Testing with Bruno
+
+The Bruno API collection is in `packages/proxy/bruno/`. It covers all API endpoints and handles the full auth/setup flow automatically via post-response scripts.
+
+#### Prerequisites
+
+- [Bruno](https://www.usebruno.com/) installed (GUI) or `@usebruno/cli` installed (CLI: `npm install -g @usebruno/cli`)
+- The proxy running locally (`npm run dev` or `npm start`)
+- A copy of `packages/proxy/bruno/environments/Local.bru.example` saved as `Local.bru` with your secrets filled in
+
+#### Without SSL (HTTP)
+
+No extra configuration needed. Set `baseUrl` to `http://localhost:3000` in your `Local.bru` environment file.
+
+**GUI:**
+1. Open Bruno and load the `packages/proxy/bruno/` folder as a collection.
+2. Select the **Local** environment from the environment picker.
+3. Set `rootKey` to the value from your `.ziri-root-key` file.
+4. Run requests individually or use **Run Collection**.
+
+**CLI:**
+```bash
+cd packages/proxy/bruno
+bru run . -r --env Local
+```
+
+#### With SSL (HTTPS / mkcert)
+
+Bruno must trust the mkcert root CA. Do not use `--insecure`.
+
+1. **Generate certificates** if not already done — see the Local mkcert Setup section in the root README. Ensure `certs/rootCA.pem` exists.
+
+2. Set `baseUrl` to `https://localhost:3000` (or your HTTPS port) in `Local.bru`.
+
+3. **GUI — trust the CA in Bruno preferences:**
+   - Open Bruno → **Preferences** (gear icon) → **Use Custom CA Certificate**.
+   - Set the path to your mkcert root CA:
+     - Repo certs (recommended): absolute path to `certs/rootCA.pem` in your repo root (e.g. `C:\path\to\ziri\certs\rootCA.pem`).
+     - mkcert default location: `$(mkcert -CAROOT)/rootCA.pem` (Windows: `%LOCALAPPDATA%\mkcert\rootCA.pem`).
+   - Leave **SSL/TLS Certificate Validation** enabled.
+   - Run as normal — same steps as HTTP above.
+
+4. **CLI — add `cacert` to `bruno.json`** before running:
+
+   ```json
+   {
+     "version": "1",
+     "name": "ZIRI Gateway API",
+     "type": "collection",
+     "ignore": ["node_modules", "dist"],
+     "cacert": "/absolute/path/to/your/rootCA.pem"
+   }
+   ```
+
+   The path can be absolute or relative to the collection root. For the repo's `certs/` folder:
+
+   ```json
+   "cacert": "../../../../certs/rootCA.pem"
+   ```
+
+   Then run:
+
+   ```bash
+   cd packages/proxy/bruno
+   bru run . -r --env Local
+   ```
+
+#### Collection flow
+
+The collection uses post-response scripts to pass data between requests automatically (e.g. `adminToken`, `testUserId`, `testApiKey`). Run folders in order:
+
+| Folder | Purpose |
+|--------|---------|
+| 01 - Health | Verify the proxy is up |
+| 02 - Auth | Admin login — sets `adminToken` |
+| 03–13 | Setup: providers, roles, policies, users, keys, dashboard users |
+| 14 - LLM | End-to-end LLM calls with a user API key |
+| 15–19 | Read/list endpoints for all resources |
+| 20 - Cleanup | Delete test data created during the run |
+
+Run **02 - Auth / Admin Login** before any admin endpoint. Run **06 - Users / Create User** before any user-scoped endpoint.

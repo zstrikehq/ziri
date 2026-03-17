@@ -298,9 +298,9 @@ onMounted(() => {
         <h1 class="text-2xl font-bold text-[rgb(var(--text))]">Analytics</h1>
         <p class="text-sm text-[rgb(var(--text-muted))] mt-1">Monitor usage, performance, and spending</p>
       </div>
-      <select 
+      <select
         v-model="timeRange"
-        class="input w-32"
+        class="input"
         @change="fetchAllData"
       >
         <option value="today">Today</option>

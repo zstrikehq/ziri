@@ -1,19 +1,12 @@
  
  
 import { readConfig, type ZiriConfig } from './config/index.js'
-import { getRootKey, initializeRootKey } from './utils/root-key.js'
+import { getRootKey } from './utils/root-key.js'
 
 export interface ProxyConfig {
-  mode: 'local' | 'live'
   port: number
   host: string
   publicUrl?: string
-  backendUrl?: string
-  pdpUrl?: string
-  projectId?: string
-  orgId?: string
-  clientId?: string
-  clientSecret?: string
   rootKey: string
   logLevel: 'debug' | 'info' | 'warn' | 'error'
   ssl?: {
@@ -54,30 +47,24 @@ export interface ProxyConfig {
 
 const DEFAULT_PORT = 3100
 const DEFAULT_HOST = '127.0.0.1'
-const DEFAULT_MODE = 'local' as const
 const DEFAULT_LOG_LEVEL = 'info' as const
 
 export function loadConfig(): ProxyConfig {
   let fileConfig: ZiriConfig | null = null
-  
+
   try {
     fileConfig = readConfig()
   } catch (error) {
- 
+
     console.warn('no config file found, using defaults')
   }
-  
-  let rootKey = getRootKey()
-  if (!rootKey) {
-    rootKey = initializeRootKey()
-  }
 
-  const mode = fileConfig?.mode || DEFAULT_MODE
+  const rootKey = getRootKey()
+
   const serverConfig = fileConfig?.server || {}
   const port = process.env.PORT ? parseInt(process.env.PORT, 10) : (serverConfig.port || (fileConfig as any)?.port || DEFAULT_PORT)
   const host = process.env.HOST || serverConfig.host || DEFAULT_HOST
 
- 
   let emailConfig: ProxyConfig['email'] = undefined
   if (fileConfig?.email) {
     emailConfig = {
@@ -106,17 +93,10 @@ export function loadConfig(): ProxyConfig {
   }
 
   return {
-    mode,
     port,
     host,
     publicUrl: fileConfig?.publicUrl,
     ssl: sslConfig,
-    backendUrl: fileConfig?.backendUrl,
-    pdpUrl: fileConfig?.pdpUrl,
-    projectId: fileConfig?.projectId,
-    orgId: fileConfig?.orgId,
-    clientId: fileConfig?.clientId,
-    clientSecret: fileConfig?.clientSecret,
     rootKey,
     logLevel: ((fileConfig as any)?.logLevel as ProxyConfig['logLevel']) || DEFAULT_LOG_LEVEL,
     email: emailConfig

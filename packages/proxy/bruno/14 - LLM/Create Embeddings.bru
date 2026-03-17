@@ -1,0 +1,83 @@
+meta {
+  name: Create Embeddings
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/embeddings
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "provider": "{{testProvider}}",
+    "model": "text-embedding-3-small",
+    "input": "Hello world"
+  }
+}
+
+tests {
+  // Auth/policy errors from the gateway are expected in some environments (not API bugs).
+  const EXPECTED_CODES = [
+    'API_KEY_REQUIRED', 'INVALID_API_KEY_FORMAT', 'API_KEY_INVALID',
+    'API_KEY_REVOKED_OR_DISABLED', 'DASHBOARD_USER_DISABLED',
+    'USER_KEY_NOT_FOUND', 'USER_ENTITY_NOT_FOUND', 'RATE_LIMIT_EXCEEDED',
+    'AUTHORIZATION_DENIED', 'REQUEST_FAILED', 'QUEUE_FULL'
+  ];
+
+  test("should return 200 on success", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("success: should return data array with embedding", function() {
+    if (res.getStatus() === 200) {
+      const body = res.getBody();
+      expect(body).to.have.property("data");
+      expect(body.data).to.be.an("array").and.have.length.above(0);
+      expect(body.data[0]).to.have.property("embedding");
+    }
+  });
+
+  test("non-bug: known error code means environment/config issue", function() {
+    if (res.getStatus() !== 200) {
+      const body = res.getBody();
+      expect(body).to.have.property("error");
+      expect(body).to.have.property("code");
+      expect(EXPECTED_CODES).to.include(body.code);
+    }
+  });
+
+  test("failure 400: should return error when API key missing", function() {
+    if (res.getStatus() === 400) {
+      const body = res.getBody();
+      expect(body).to.have.property("error");
+      expect(body.code).to.equal("API_KEY_REQUIRED");
+    }
+  });
+
+  test("failure 401: should return error when API key format is invalid", function() {
+    if (res.getStatus() === 401) {
+      const body = res.getBody();
+      expect(body).to.have.property("error");
+      expect(body.code).to.equal("INVALID_API_KEY_FORMAT");
+    }
+  });
+
+  test("failure 403: should return error when policy denies or key is invalid", function() {
+    if (res.getStatus() === 403) {
+      const body = res.getBody();
+      expect(body).to.have.property("error");
+      expect(body).to.have.property("code");
+    }
+  });
+
+  test("failure 429: should return error when rate limit exceeded", function() {
+    if (res.getStatus() === 429) {
+      const body = res.getBody();
+      expect(body).to.have.property("error");
+      expect(body.code).to.equal("RATE_LIMIT_EXCEEDED");
+    }
+  });
+}

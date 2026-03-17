@@ -18,6 +18,7 @@ export interface Provider {
 export interface CreateProviderInput {
   name: string
   apiKey: string
+  displayName?: string
 }
 
 const providers = ref<Provider[]>([])
@@ -94,7 +95,8 @@ export function useProviders() {
         },
         body: JSON.stringify({
           name: input.name.toLowerCase(),
-          apiKey: input.apiKey
+          apiKey: input.apiKey,
+          metadata: input.displayName ? { displayName: input.displayName } : undefined
         })
       })
       
@@ -111,6 +113,43 @@ export function useProviders() {
       return data.data
     } catch (e: any) {
       error.value = e.message || 'Failed to add provider'
+      throw e
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const updateProvider = async (name: string, input: { apiKey?: string; displayName?: string }) => {
+    loading.value = true
+    error.value = null
+
+    try {
+      const authHeader = getAuthHeader()
+      if (!authHeader) {
+        throw new Error('Please login first')
+      }
+
+      const body: any = {}
+      if (input.apiKey && input.apiKey.trim()) body.apiKey = input.apiKey
+      if (input.displayName && input.displayName.trim()) body.displayName = input.displayName.trim()
+
+      const response = await fetch(`/api/providers/${name.toLowerCase()}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': authHeader
+        },
+        body: JSON.stringify(body)
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || `Failed to update provider: ${response.statusText}`)
+      }
+
+      await listProviders()
+    } catch (e: any) {
+      error.value = e.message || 'Failed to update provider'
       throw e
     } finally {
       loading.value = false
@@ -189,6 +228,7 @@ export function useProviders() {
     listProviders,
     addProvider,
     removeProvider,
-    testProvider
+    testProvider,
+    updateProvider
   }
 }

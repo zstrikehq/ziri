@@ -55,7 +55,7 @@ Open `http://localhost:3100` in your browser. You'll be redirected to the login 
 Log in with:
 
 -   **Username / Email**: `ziri` or `ziri@ziri.local`
--   **Password**: The root key from Step 1 (or the value of `ZIRI_ROOT_KEY` if you set it)
+-   **Password**: The root key from Step 1
 
 ## Step 3: Configure a Provider
 
@@ -90,7 +90,7 @@ When **Create API Key** is enabled, ZIRI creates and returns a key for the new u
 1. Click **Keys** in the sidebar
 2. Find the key for your user
 3. Click on it to view details
-4. Copy the API key (format: `ziri-user-123-a1b2c3d4e5f67890`)
+4. Copy the API key (format: `ziri_<uuidv4withoutdashes>`)
 
 **Note**: The key is only shown once. If you lose it, you'll need to rotate it (which creates a new key and deletes the old one).
 
@@ -125,7 +125,7 @@ Now test it with curl:
 ```bash
 curl -X POST http://localhost:3100/api/chat/completions \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: ziri-your-user-id-your-key-hash" \
+  -H "X-API-Key: <your_ziri_api_key>" \
   -d '{
     "provider": "openai",
     "model": "gpt-4o-mini",
@@ -135,7 +135,7 @@ curl -X POST http://localhost:3100/api/chat/completions \
   }'
 ```
 
-Replace `ziri-your-user-id-your-key-hash` with your actual API key from Step 5.
+Replace `<your_ziri_api_key>` with your actual API key from Step 5.
 
 You should get a response from OpenAI, routed through ZIRI.
 
@@ -151,7 +151,7 @@ npm install @ziri/sdk
 import { UserSDK } from "@ziri/sdk";
 
 const sdk = new UserSDK({
-	apiKey: "ziri-your-user-id-your-key-hash",
+	apiKey: "<your_ziri_api_key>",
 	proxyUrl: "http://localhost:3100",
 });
 
@@ -170,7 +170,7 @@ See the [SDK documentation](/docs/sdk/) for more details.
 
 **"Authorization denied"** - Check that you created a policy and it's active. Default policies deny everything.
 
-**"API key not found"** - Make sure you're using the correct API key format: `ziri-{userId}-{hash}`.
+**"API key not found"** - Make sure you're using the correct API key format: `ziri_<uuidv4withoutdashes>`.
 
 **"Provider not found"** - Add the provider in the UI first (Step 3).
 

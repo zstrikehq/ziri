@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useKeys } from '~/composables/useKeys'
+import { useKeysStore } from '~/stores/keys'
 import { useUsers } from '~/composables/useUsers'
 import { useConfigStore } from '~/stores/config'
 import { useToast } from '~/composables/useToast'
@@ -14,6 +15,7 @@ import type { ValidationError } from '~/composables/useCedarWasm'
 
 const router = useRouter()
 const configStore = useConfigStore()
+const keysStore = useKeysStore()
 const { listKeys, getKey, getKeyByUserId, createKey, updateKey, rotateKey, deleteKey, deleteKeyById, keys, loading } = useKeys()
 const { users } = useUsers()
 const { getAuthHeader } = useAdminAuth()
@@ -116,7 +118,7 @@ const filterStatus = ref<'' | 'active' | 'disabled'>('')
 
  
 const currentPage = ref(1)
-const itemsPerPage = ref(20)
+const itemsPerPage = ref(10)
 const totalKeys = ref(0)
 
  
@@ -153,18 +155,37 @@ const usersWithoutKey = computed(() => {
 const debouncedSearchQuery = useDebounce(searchQuery, 300)
 
  
+const resolveKeyName = (key: Key): string => {
+  const user = users.value.find(u => u.userId === key.userId)
+  return user?.name || key.name || ''
+}
+
 const fetchKeys = async () => {
   try {
     const result = await listKeys({
       search: debouncedSearchQuery.value || undefined,
       limit: itemsPerPage.value,
       offset: (currentPage.value - 1) * itemsPerPage.value,
-      sortBy: sortBy.value,
-      sortOrder: sortOrder.value
+      sortBy: sortBy.value === 'name' ? null : sortBy.value,
+      sortOrder: sortBy.value === 'name' ? null : sortOrder.value
     })
     totalKeys.value = result.total || 0
+
+    // If sorting by name, sort locally using resolved user names
+    if (sortBy.value === 'name' && sortOrder.value) {
+      const order = sortOrder.value
+      keysStore.keys = [...keysStore.keys].sort((a, b) => {
+        const aName = resolveKeyName(a).toLowerCase()
+        const bName = resolveKeyName(b).toLowerCase()
+        if (aName === '' && bName === '') return 0
+        if (aName === '') return 1
+        if (bName === '') return -1
+        const cmp = aName.localeCompare(bName)
+        return order === 'asc' ? cmp : -cmp
+      })
+    }
   } catch (e) {
- 
+
   }
 }
 
@@ -448,6 +469,11 @@ const handleDeleteKey = async () => {
     showDeleteKeyModal.value = false
     keyToDelete.value = null
     await fetchKeys()
+    const total = totalKeys.value
+    const maxIndex = (currentPage.value - 1) * itemsPerPage.value
+    if (currentPage.value > 1 && maxIndex >= total) {
+      currentPage.value = currentPage.value - 1
+    }
   } catch (e) {
 
   } finally {
@@ -581,7 +607,7 @@ const closeKeyModal = () => {
         </div>
         <select 
           v-model="filterStatus"
-          class="input w-32"
+          class="input"
         >
           <option value="">All Status</option>
           <option value="active">Active</option>

@@ -33,6 +33,7 @@ export class EventEmitterService extends EventEmitter {
 
   constructor() {
     super()
+    this.setMaxListeners(50)
     this.startBatching()
   }
 

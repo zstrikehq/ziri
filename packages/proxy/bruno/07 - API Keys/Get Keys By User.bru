@@ -1,0 +1,46 @@
+meta {
+  name: Get Keys By User
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/keys/user/{{testUserId}}
+  body: none
+  auth: inherit
+}
+
+script:post-response {
+  const body = res.getBody();
+  if (body.keys && body.keys.length > 0 && body.keys[0].id) {
+    bru.setEnvVar("testKeyId", body.keys[0].id);
+  }
+}
+
+tests {
+  test("should return 200 on success", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("success: should return keys array", function() {
+    if (res.getStatus() === 200) {
+      const body = res.getBody();
+      expect(body).to.have.property("keys");
+      expect(body.keys).to.be.an("array");
+    }
+  });
+
+  test("failure 401: should return error when unauthorized", function() {
+    if (res.getStatus() === 401) {
+      const body = res.getBody();
+      expect(body).to.have.property("error");
+    }
+  });
+
+  test("failure 404: should return error when user not found", function() {
+    if (res.getStatus() === 404) {
+      const body = res.getBody();
+      expect(body).to.have.property("error");
+    }
+  });
+}

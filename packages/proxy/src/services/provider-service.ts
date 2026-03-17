@@ -99,6 +99,36 @@ export function createOrUpdateProvider(input: CreateProviderInput): Provider {
   return getProvider(name)!
 }
 
+export function updateProvider(name: string, input: { apiKey?: string; displayName?: string }): Provider {
+  const db = getDatabase()
+  const row = db.prepare('SELECT * FROM provider_keys WHERE provider = ?').get(name.toLowerCase()) as any
+  if (!row) {
+    throw new Error('Provider not found')
+  }
+
+  let meta: ProviderMetadata = { name: row.provider, displayName: row.provider, baseUrl: '', models: [], defaultModel: '' }
+  if (row.metadata) {
+    try { meta = { ...meta, ...JSON.parse(row.metadata) } } catch {}
+  }
+
+  const nextMeta: ProviderMetadata = {
+    ...meta,
+    displayName: input.displayName && input.displayName.trim() ? input.displayName.trim() : meta.displayName
+  }
+
+  let enc = row.api_key
+  if (input.apiKey && input.apiKey.trim()) {
+    const v = validateProviderApiKey(name.toLowerCase(), input.apiKey)
+    if (!v.valid) throw new Error(v.error || 'Invalid API key format')
+    enc = encrypt(input.apiKey)
+  }
+
+  db.prepare(`UPDATE provider_keys SET api_key = ?, metadata = ?, updated_at = datetime('now') WHERE provider = ?`)
+    .run(enc, JSON.stringify(nextMeta), name.toLowerCase())
+
+  return getProvider(name)!
+}
+
 export function listProviders(params?: {
   search?: string; limit?: number; offset?: number
   sortBy?: string | null; sortOrder?: 'asc' | 'desc' | null
@@ -133,6 +163,15 @@ export function listProviders(params?: {
 export function getProvider(name: string): Provider | null {
   const row = getDatabase().prepare('SELECT * FROM provider_keys WHERE provider = ?').get(name.toLowerCase()) as any
   return row ? rowToProvider(row) : null
+}
+
+export function resolveProvider(input: string): Provider | null {
+  const byId = getProvider(input)
+  if (byId) return byId
+
+  const { data } = listProviders()
+  const match = data.find(p => p.displayName === input)
+  return match || null
 }
 
 export function getProviderApiKey(name: string): string | null {

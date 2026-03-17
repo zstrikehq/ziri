@@ -73,41 +73,70 @@ export function useKeys() {
         sortOrder?: 'asc' | 'desc' | null
     }) => {
         return runKeysCall(async (authHeader) => {
-            const queryParams = new URLSearchParams()
-            queryParams.set('includeApiKeys', 'true')
-            queryParams.set('entityType', 'UserKey')
-            if (params?.search) queryParams.set('search', params.search)
-            if (params?.limit) queryParams.set('limit', params.limit.toString())
-            if (params?.offset) queryParams.set('offset', params.offset.toString())
-            if (params?.sortBy) queryParams.set('sortBy', params.sortBy)
-            if (params?.sortOrder) queryParams.set('sortOrder', params.sortOrder)
-            
-            const url = `/api/entities?${queryParams.toString()}`
-            
-            const response = await fetch(url, {
+            const baseParams = new URLSearchParams()
+            baseParams.set('includeApiKeys', 'true')
+            baseParams.set('entityType', 'UserKey')
+
+            const baseUrl = `/api/entities?${baseParams.toString()}`
+
+            const response = await fetch(baseUrl, {
                 headers: {
                     'Authorization': authHeader
                 }
             })
-            
+
             if (!response.ok) {
                 const error = await response.json().catch(() => ({ error: response.statusText }))
                 throw new Error(extractApiErrorMessage({ data: error }, 'Failed to load entities'))
             }
-            
+
             const data: EntitiesResponse = await response.json()
             const userKeyEntities = data.data.filter(e => e.uid.type === 'UserKey')
-            
+
             const allEntitiesResponse = await fetch('/api/entities', {
                 headers: {
                     'Authorization': authHeader
                 }
             })
             const allEntitiesData: EntitiesResponse = await allEntitiesResponse.json()
-            
-            const keys = userKeyEntities.map(e => mapEntityToKey(e, allEntitiesData.data))
-            keysStore.keys = keys
-            return { keys, total: data.total || 0 }
+
+            let keys = userKeyEntities.map(e => mapEntityToKey(e, allEntitiesData.data))
+
+            if (params?.search) {
+                const q = params.search.toLowerCase()
+                keys = keys.filter(k =>
+                    k.userId.toLowerCase().includes(q) ||
+                    (k.name && k.name.toLowerCase().includes(q)) ||
+                    (k.email && k.email.toLowerCase().includes(q)) ||
+                    (k.keySuffix && k.keySuffix.toLowerCase().includes(q))
+                )
+            }
+
+            if (params?.sortBy && params?.sortOrder) {
+                const key = params.sortBy
+                const order = params.sortOrder
+                keys = [...keys].sort((a: any, b: any) => {
+                    const aVal = (a as any)[key] || ''
+                    const bVal = (b as any)[key] || ''
+                    if (aVal === '' && bVal === '') return 0
+                    if (aVal === '') return 1
+                    if (bVal === '') return -1
+                    if (typeof aVal === 'string' && typeof bVal === 'string') {
+                        const cmp = aVal.toLowerCase().localeCompare(bVal.toLowerCase())
+                        return order === 'asc' ? cmp : -cmp
+                    }
+                    const cmp = aVal < bVal ? -1 : aVal > bVal ? 1 : 0
+                    return order === 'asc' ? cmp : -cmp
+                })
+            }
+
+            const total = keys.length
+            const limit = params?.limit ?? total
+            const offset = params?.offset ?? 0
+            const paged = keys.slice(offset, offset + limit)
+
+            keysStore.keys = paged
+            return { keys: paged, total }
         })
     }
 

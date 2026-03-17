@@ -1,0 +1,46 @@
+meta {
+  name: Query Internal Audit Logs
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/internal-audit-logs
+  body: none
+  auth: inherit
+}
+
+params:query {
+  limit: 20
+  offset: 0
+  ~search:
+  ~userId:
+  ~action:
+  ~resourceType:
+  ~from:
+  ~to:
+  ~sortBy: timestamp
+  ~sortOrder: desc
+}
+
+tests {
+  test("should return 200 on success", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("success: should return items array and total", function() {
+    if (res.getStatus() === 200) {
+      const body = res.getBody();
+      expect(body).to.have.property("items");
+      expect(body.items).to.be.an("array");
+      expect(body).to.have.property("total");
+    }
+  });
+
+  test("failure 401: should return error when unauthorized", function() {
+    if (res.getStatus() === 401) {
+      const body = res.getBody();
+      expect(body).to.have.property("error");
+    }
+  });
+}

@@ -53,9 +53,9 @@ curl -X POST http://localhost:3100/api/providers \
 
 OpenAI supports:
 
--   **Completions**: gpt-4, gpt-4o, gpt-4o-mini, gpt-3.5-turbo, etc.
--   **Embeddings**: text-embedding-3-small, text-embedding-3-large, text-embedding-ada-002
--   **Images**: dall-e-3, dall-e-2
+- **Completions**: gpt-4, gpt-4o, gpt-4o-mini, gpt-3.5-turbo, etc.
+- **Embeddings**: text-embedding-3-small, text-embedding-3-large, text-embedding-ada-002
+- **Images**: dall-e-3, dall-e-2
 
 ## Anthropic Setup
 
@@ -75,7 +75,7 @@ OpenAI supports:
 
 Anthropic supports:
 
--   **Completions**: claude-3-opus, claude-3-sonnet, claude-3-haiku, etc.
+- **Completions**: claude-3-opus, claude-3-sonnet, claude-3-haiku, etc.
 
 ## Testing Provider Connection
 
@@ -105,28 +105,28 @@ Success response:
 
 Provider API keys are:
 
--   **Encrypted** before storage
--   **Never returned** in API responses
--   **Decrypted** only when making requests to the provider
+- **Encrypted** before storage
+- **Never returned** in API responses
+- **Decrypted** only when making requests to the provider
 
 ## Troubleshooting
 
 ### Connection Failed
 
--   **Invalid API key** - Check that the key is correct and not expired.
--   **Network issues** - Check firewall and network connectivity.
--   **Provider outage** - Check provider status page.
+- **Invalid API key** - Check that the key is correct and not expired.
+- **Network issues** - Check firewall and network connectivity.
+- **Provider outage** - Check provider status page.
 
 ### Models Not Available
 
--   **Pricing not configured** - Models need pricing data. This is seeded automatically, but check if your model is in the pricing table.
--   **Model not supported** - Check if the model supports the action you're requesting.
+- **Pricing not configured** - Models need pricing data. This is seeded automatically, but check if your model is in the pricing table.
+- **Model not supported** - Check if the model supports the action you're requesting.
 
 ### API Key Not Working
 
--   **Key revoked** - Provider may have revoked the key. Generate a new one.
--   **Wrong provider** - Make sure you're using the correct provider name.
--   **Key format** - Check that the key format matches the provider's requirements.
+- **Key revoked** - Provider may have revoked the key. Generate a new one.
+- **Wrong provider** - Make sure you're using the correct provider name.
+- **Key format** - Check that the key format matches the provider's requirements.
 
 ## Best Practices
 
@@ -138,5 +138,5 @@ Provider API keys are:
 
 ## Next Steps
 
--   [First Policy Guide](/docs/guides/first-policy) - Create policies to control provider usage
--   [Provider API](/docs/api-reference/admin-endpoints/providers) - Manage providers via API
+- [First Policy Guide](/docs/guides/first-policy) - Create policies to control provider usage
+- [Provider API](/docs/api-reference/admin-endpoints/providers) - Manage providers via API

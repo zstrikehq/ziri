@@ -54,14 +54,14 @@ The sections below show this end to end.
    docker compose up -d
    ```
 
-3. Grab the root key from `/data/.ziri-root-key` (or set `ZIRI_ROOT_KEY` to use a fixed key). The key is never printed to logs.
+3. Grab the root key from `/data/.ziri-root-key`. The key is never printed to logs.
 4. To wipe data during development, run `cd packages/proxy && node scripts/drop-tables.js [--reset-root-key]` and restart the container.
 
 ### Admin Login
 
 - URL: `http://localhost:3100`
 - Username/email: `ziri` or `ziri@ziri.local`
-- Password: value stored in `.ziri-root-key` or `ZIRI_ROOT_KEY`
+- Password: value stored in `.ziri-root-key`
 
 The UI lets you add providers, define Cedar policies, create users, manage keys/roles, view logs and costs, and review internal audit trails.
 
@@ -92,7 +92,7 @@ With the proxy running and an API key ready:
 ```bash
 curl -X POST http://localhost:3100/api/chat/completions \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: ziri-your-api-key-here" \
+  -H "X-API-Key: <your_ziri_api_key>" \
   -d '{
     "provider": "openai",
     "model": "gpt-4o-mini",
@@ -120,7 +120,7 @@ npm install @ziri/sdk
 import { UserSDK } from '@ziri/sdk'
 
 const sdk = new UserSDK({
-  apiKey: 'ziri-your-api-key-here',
+  apiKey: '<your_ziri_api_key>',
   proxyUrl: 'http://localhost:3100'
 })
 
@@ -172,7 +172,6 @@ Configure the proxy via environment variables, a `config.json` stored inside the
     - CONFIG_DIR=/data
     - PORT=3100
     - HOST=0.0.0.0
-    - ZIRI_ROOT_KEY=${ROOT_KEY}
     - ZIRI_ENCRYPTION_KEY=${ENCRYPTION_KEY}
   ```
 

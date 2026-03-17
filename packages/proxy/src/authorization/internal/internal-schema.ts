@@ -247,6 +247,12 @@ action "create_provider" appliesTo {
   context: InternalContext
 };
 
+action "update_provider" appliesTo {
+  principal: [DashboardUser],
+  resource: [Dashboard],
+  context: InternalContext
+};
+
 action "delete_provider" appliesTo {
   principal: [DashboardUser],
   resource: [Dashboard],

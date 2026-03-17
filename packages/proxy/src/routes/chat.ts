@@ -3,6 +3,7 @@ import * as llmService from '../services/llm-service.js'
 import { costEstimatorService } from '../services/cost-estimator-service.js'
 import { mapChatRouteError } from './shared/llm-error-mapping.js'
 import { handleLlmRequest, type LlmPreparedRequest, type LlmUsage } from './shared/llm-route-orchestrator.js'
+import { resolveProvider } from '../services/provider-service.js'
 
 const router: Router = Router()
 
@@ -32,11 +33,25 @@ router.post('/completions', async (req, res) => {
         }
       }
 
-      const estimation = await estimateChatCost(provider, model, messages, request.body?.max_tokens)
+      const resolved = resolveProvider(String(provider))
+      if (!resolved) {
+        return {
+          status: 400,
+          body: {
+            error: `Unknown provider '${provider}'`,
+            code: 'PROVIDER_NOT_FOUND',
+            requestId
+          }
+        }
+      }
+
+      const canonicalProvider = resolved.name
+
+      const estimation = await estimateChatCost(canonicalProvider, model, messages, request.body?.max_tokens)
 
       return {
         prepared: {
-          provider,
+          provider: canonicalProvider,
           model,
           messages,
           otherParams,

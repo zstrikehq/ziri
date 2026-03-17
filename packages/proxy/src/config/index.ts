@@ -4,7 +4,6 @@ import { homedir } from 'os'
 import type { ProviderMetadata } from './providers.js'
 
 export interface ZiriConfig {
-  mode?: 'local' | 'live'
   server?: {
     host?: string
     port?: number
@@ -44,16 +43,6 @@ export interface ZiriConfig {
     cert?: string
     key?: string
   }
-  backendUrl?: string
-  orgId?: string
-  projectId?: string
-  clientId?: string
-  clientSecret?: string
-  pdpUrl?: string
-  refreshInterval?: number
-  refreshFailRetry?: number
-  refreshFailRetryDelay?: number
-  maxStaleTime?: number
   providers?: Record<string, ProviderMetadata>
   [key: string]: any
 }
@@ -88,15 +77,6 @@ export function readConfig(): ZiriConfig | null {
   try {
     const content = readFileSync(configPath, 'utf-8')
     const config = JSON.parse(content) as Partial<ZiriConfig>
-    
-    const mode = config.mode || 'local'
-    
-    if (mode === 'live') {
-      if (!config.backendUrl || !config.orgId || !config.projectId || !config.clientId || !config.clientSecret) {
-        return null
-      }
-    }
-    
     return config as ZiriConfig
   } catch (error) {
     console.error('Failed to read config:', error)
@@ -121,25 +101,6 @@ export function writeConfig(config: Partial<ZiriConfig>): void {
   }
 }
 
-export function validateConfig(config: any): ZiriConfig {
-  if (!config.backendUrl) {
-    throw new Error('backendUrl is required')
-  }
-  if (!config.orgId) {
-    throw new Error('orgId is required')
-  }
-  if (!config.projectId) {
-    throw new Error('projectId is required')
-  }
-  if (!config.clientId) {
-    throw new Error('clientId is required')
-  }
-  if (!config.clientSecret) {
-    throw new Error('clientSecret is required')
-  }
-  
-  return config as ZiriConfig
-}
 
 export function getConfigValue(key: keyof ZiriConfig): any {
   const config = readConfig()

@@ -9,6 +9,7 @@ test-*.js
 *.test.js
 *.spec.js
 test-*.mjs
+packages/proxy/bruno/environments/Local.bru
 
 # Production
 dist/
@@ -92,6 +93,7 @@ DESIGN_*.md
 
 # Docs
 FLOWS.md
+AGENTS.md
 
 # Docs public folder
 docs/public/
