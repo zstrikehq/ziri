@@ -5,6 +5,8 @@ import { startServer, stopServer } from './server.js'
 import { fileURLToPath } from 'url'
 import { pathToFileURL } from 'url'
 
+const config = loadConfig()
+
 const __filename = fileURLToPath(import.meta.url)
 const isMainModule = process.argv[1] &&
   (fileURLToPath(import.meta.url) === fileURLToPath(pathToFileURL(process.argv[1]).href) ||
