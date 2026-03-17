@@ -4,6 +4,12 @@ meta {
   seq: 2
 }
 
+script:pre-request {
+  if (process.env.ZIRI_TEST_PROVIDER_API_KEY && !bru.getEnvVar('testProviderApiKey')) {
+    bru.setEnvVar('testProviderApiKey', process.env.ZIRI_TEST_PROVIDER_API_KEY);
+  }
+}
+
 post {
   url: {{baseUrl}}/api/providers
   body: json
