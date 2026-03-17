@@ -16,7 +16,7 @@ entity Role;
 entity User in [Role] = {
   "user_id": __cedar::String,
   "email": __cedar::String,
-  "tenant"?: __cedar::String,
+  "tenant": __cedar::String,
   "is_agent": __cedar::Bool,
   "limit_requests_per_minute": __cedar::Long,
 };

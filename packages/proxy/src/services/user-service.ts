@@ -64,8 +64,10 @@ export async function createUser(input: CreateUserInput): Promise<{ user: User; 
   const password = generatePassword(16)
   const pwHash = await hashPassword(password)
 
+  const tenant = (input.tenant && input.tenant.trim()) || 'default'
+
   db.prepare(`INSERT INTO auth (id, email, email_hash, name, password, tenant, is_agent, status) VALUES (?,?,?,?,?,?,?,?)`)
-    .run(id, encrypt(input.email), eHash, input.name, pwHash, input.tenant || null, input.isAgent ? 1 : 0, 1)
+    .run(id, encrypt(input.email), eHash, input.name, pwHash, tenant, input.isAgent ? 1 : 0, 1)
 
   const user = toUser(db.prepare('SELECT * FROM auth WHERE id = ?').get(id))
 
@@ -87,7 +89,7 @@ export async function createUser(input: CreateUserInput): Promise<{ user: User; 
   try {
     await entities.createEntity({
       uid: { type: 'User', id },
-      attrs: { user_id: id, email: input.email, tenant: input.tenant || '', is_agent: input.isAgent, limit_requests_per_minute: rpm },
+      attrs: { user_id: id, email: input.email, tenant, is_agent: input.isAgent, limit_requests_per_minute: rpm },
       parents
     }, 1)
   } catch (err: any) {
@@ -240,7 +242,11 @@ export async function updateUser(userId: string, updates: Partial<CreateUserInpu
     vals.push(encrypt(updates.email), newHash)
   }
   if (updates.name !== undefined)   { sets.push('name = ?');     vals.push(updates.name) }
-  if (updates.tenant !== undefined) { sets.push('tenant = ?');   vals.push(updates.tenant || null) }
+  if (updates.tenant !== undefined) {
+    const t = (updates.tenant && updates.tenant.trim()) || 'default'
+    sets.push('tenant = ?')
+    vals.push(t)
+  }
   if (updates.isAgent !== undefined){ sets.push('is_agent = ?'); vals.push(updates.isAgent ? 1 : 0) }
 
   if (sets.length) {

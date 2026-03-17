@@ -43,7 +43,7 @@ const showEditModal = ref(false)
 const newUser = reactive<CreateUserInput>({
   email: '',
   name: '',
-  tenant: '',
+  tenant: 'default',
   isAgent: false,
   limitRequestsPerMinute: 100,
   createApiKey: true,
@@ -126,8 +126,8 @@ onMounted(async () => {
 })
 
 const handleCreateUser = async () => {
-  if (!newUser.email.trim() || !newUser.name.trim()) {
-    toast.warning('Email and name are required')
+  if (!newUser.email.trim() || !newUser.name.trim() || !newUser.tenant.trim()) {
+    toast.warning('Email, name, and tenant are required')
     return
   }
 
@@ -164,7 +164,7 @@ const handleCreateUser = async () => {
     Object.assign(newUser, {
       email: '',
       name: '',
-      tenant: '',
+      tenant: 'default',
       isAgent: false,
       limitRequestsPerMinute: 100,
       createApiKey: true,
@@ -183,7 +183,7 @@ const openEditModal = (user: User) => {
   if (!canUpdateUser.value) return
   userToEdit.value = user
   editUser.name = user.name
-  editUser.tenant = user.tenant || ''
+  editUser.tenant = user.tenant || 'default'
   editUser.roleId = user.roleId
   selectedUser.value = user
   showEditModal.value = true
@@ -198,11 +198,16 @@ const handleUpdateUser = async () => {
     return
   }
 
+  if (!editUser.name.trim() || !editUser.tenant.trim()) {
+    toast.warning('Name and tenant are required')
+    return
+  }
+
   try {
     isUpdatingUser.value = true
     await updateUser(userToEdit.value.userId, {
       name: editUser.name.trim(),
-      tenant: editUser.tenant.trim() || undefined,
+      tenant: editUser.tenant.trim(),
       roleId: editUser.roleId || undefined
     })
     userToEdit.value = null
@@ -534,7 +539,7 @@ const copyApiKey = () => {
         <div class="flex-1 overflow-y-auto space-y-4 pr-1">
           <UiInput v-model="newUser.email" label="Email" type="email" required />
           <UiInput v-model="newUser.name" label="Name" required />
-          <UiInput v-model="newUser.tenant" label="Tenant" />
+          <UiInput v-model="newUser.tenant" label="Tenant" required />
           <div>
             <label class="block text-sm font-medium text-[rgb(var(--text))] mb-1">Role</label>
             <select
