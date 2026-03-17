@@ -620,7 +620,7 @@ const copyApiKey = () => {
             </span>
           </div>
           <UiInput v-model="editUser.name" label="Name" required />
-          <UiInput v-model="editUser.tenant" label="Tenant" />
+          <UiInput v-model="editUser.tenant" label="Tenant" required />
           <div>
             <label class="block text-sm font-medium text-[rgb(var(--text))] mb-1">Role</label>
             <select
