@@ -142,7 +142,7 @@ export async function initializeAdminUser(): Promise<void> {
       emailHash,
       'Administrator',
       rootKeyHash,
-      null,
+      'default',
       0,
       1,
       'admin'
