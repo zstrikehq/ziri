@@ -52,6 +52,21 @@ const selectValue = computed(() => {
   const larger = options.find(o => o >= props.itemsPerPage)
   return larger ?? options[options.length - 1]
 })
+
+const handleItemsPerPageChange = (event: Event) => {
+  const target = event.target as HTMLSelectElement | null
+  if (!target) return
+
+  const value = target.value
+  const total = props.totalItems || 0
+
+  if (value === 'all') {
+    emit('update:itemsPerPage', total)
+  } else {
+    emit('update:itemsPerPage', Number(value))
+  }
+  emit('update:currentPage', 1)
+}
 </script>
 
 <template>
@@ -70,16 +85,7 @@ const selectValue = computed(() => {
         <span class="text-sm text-[rgb(var(--text-muted))]">Show:</span>
         <select
           :value="selectValue"
-          @change="(e) => {
-            const value = (e.target as HTMLSelectElement).value
-            const total = props.totalItems || 0
-            if (value === 'all') {
-              emit('update:itemsPerPage', total)
-            } else {
-              emit('update:itemsPerPage', Number(value))
-            }
-            emit('update:currentPage', 1)
-          }"
+          @change="handleItemsPerPageChange"
           class="input w-20 text-sm py-1"
         >
           <option v-for="option in itemsPerPageOptions" :key="option" :value="option">
@@ -94,7 +100,7 @@ const selectValue = computed(() => {
         <button
           @click="goToPage(currentPage - 1)"
           :disabled="currentPage === 1"
-          class="px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-[rgb(var(--text-secondary))] hover:bg-[rgb(var(--surface-elevated))] hover:text-[rgb(var(--text))]"
+          class="px-3 py-1.5 border border-[rgb(var(--border))] text-sm font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-[rgb(var(--text-secondary))] hover:border-[rgb(var(--border-strong))] hover:bg-[rgb(var(--surface-elevated))] hover:text-[rgb(var(--text))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-border-accent))] focus-visible:ring-offset-2 focus-visible:ring-offset-[rgb(var(--surface-panel))]"
         >
           Previous
         </button>
@@ -106,10 +112,10 @@ const selectValue = computed(() => {
               :key="page"
               @click="goToPage(page)"
               :class="[
-                'px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200',
+                'px-3 py-1.5 border text-sm font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-border-accent))] focus-visible:ring-offset-2 focus-visible:ring-offset-[rgb(var(--surface-panel))]',
                 currentPage === page
-                  ? 'bg-[rgb(var(--primary))] text-[#0a0a0a]'
-                  : 'text-[rgb(var(--text-secondary))] hover:bg-[rgb(var(--surface-elevated))] hover:text-[rgb(var(--text))]'
+                  ? 'border-[rgb(var(--primary))] bg-[rgb(var(--primary))] text-[#0a0a0a]'
+                  : 'border-[rgb(var(--border))] text-[rgb(var(--text-secondary))] hover:border-[rgb(var(--border-strong))] hover:bg-[rgb(var(--surface-elevated))] hover:text-[rgb(var(--text))]'
               ]"
             >
               {{ page }}
@@ -120,10 +126,10 @@ const selectValue = computed(() => {
               v-if="currentPage > 3"
               @click="goToPage(1)"
               :class="[
-                'px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200',
+                'px-3 py-1.5 border text-sm font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-border-accent))] focus-visible:ring-offset-2 focus-visible:ring-offset-[rgb(var(--surface-panel))]',
                 currentPage === 1
-                  ? 'bg-[rgb(var(--primary))] text-[#0a0a0a]'
-                  : 'text-[rgb(var(--text-secondary))] hover:bg-[rgb(var(--surface-elevated))] hover:text-[rgb(var(--text))]'
+                  ? 'border-[rgb(var(--primary))] bg-[rgb(var(--primary))] text-[#0a0a0a]'
+                  : 'border-[rgb(var(--border))] text-[rgb(var(--text-secondary))] hover:border-[rgb(var(--border-strong))] hover:bg-[rgb(var(--surface-elevated))] hover:text-[rgb(var(--text))]'
               ]"
             >
               1
@@ -134,10 +140,10 @@ const selectValue = computed(() => {
               :key="page"
               @click="goToPage(page)"
               :class="[
-                'px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200',
+                'px-3 py-1.5 border text-sm font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-border-accent))] focus-visible:ring-offset-2 focus-visible:ring-offset-[rgb(var(--surface-panel))]',
                 currentPage === page
-                  ? 'bg-[rgb(var(--primary))] text-[#0a0a0a]'
-                  : 'text-[rgb(var(--text-secondary))] hover:bg-[rgb(var(--surface-elevated))] hover:text-[rgb(var(--text))]'
+                  ? 'border-[rgb(var(--primary))] bg-[rgb(var(--primary))] text-[#0a0a0a]'
+                  : 'border-[rgb(var(--border))] text-[rgb(var(--text-secondary))] hover:border-[rgb(var(--border-strong))] hover:bg-[rgb(var(--surface-elevated))] hover:text-[rgb(var(--text))]'
               ]"
             >
               {{ page }}
@@ -147,10 +153,10 @@ const selectValue = computed(() => {
               v-if="currentPage < totalPages - 2"
               @click="goToPage(totalPages)"
               :class="[
-                'px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200',
+                'px-3 py-1.5 border text-sm font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-border-accent))] focus-visible:ring-offset-2 focus-visible:ring-offset-[rgb(var(--surface-panel))]',
                 currentPage === totalPages
-                  ? 'bg-[rgb(var(--primary))] text-[#0a0a0a]'
-                  : 'text-[rgb(var(--text-secondary))] hover:bg-[rgb(var(--surface-elevated))] hover:text-[rgb(var(--text))]'
+                  ? 'border-[rgb(var(--primary))] bg-[rgb(var(--primary))] text-[#0a0a0a]'
+                  : 'border-[rgb(var(--border))] text-[rgb(var(--text-secondary))] hover:border-[rgb(var(--border-strong))] hover:bg-[rgb(var(--surface-elevated))] hover:text-[rgb(var(--text))]'
               ]"
             >
               {{ totalPages }}
@@ -161,7 +167,7 @@ const selectValue = computed(() => {
         <button
           @click="goToPage(currentPage + 1)"
           :disabled="currentPage === totalPages"
-          class="px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-[rgb(var(--text-secondary))] hover:bg-[rgb(var(--surface-elevated))] hover:text-[rgb(var(--text))]"
+          class="px-3 py-1.5 border border-[rgb(var(--border))] text-sm font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-[rgb(var(--text-secondary))] hover:border-[rgb(var(--border-strong))] hover:bg-[rgb(var(--surface-elevated))] hover:text-[rgb(var(--text))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-border-accent))] focus-visible:ring-offset-2 focus-visible:ring-offset-[rgb(var(--surface-panel))]"
         >
           Next
         </button>

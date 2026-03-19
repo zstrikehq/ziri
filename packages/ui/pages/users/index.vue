@@ -539,7 +539,7 @@ const copyApiKey = () => {
             <label class="block text-sm font-medium text-[rgb(var(--text))] mb-1">Role</label>
             <select
               v-model="newUser.roleId"
-              class="w-full px-3 py-2 rounded-lg border-2 border-[rgb(var(--border))] bg-[rgb(var(--surface))] text-[rgb(var(--text))] focus:outline-none focus:ring-2 focus:ring-lime-400"
+              class="input w-full"
             >
               <option :value="undefined">None</option>
               <option v-for="r in rolesList" :key="r.id" :value="r.id">{{ r.id }}</option>
@@ -603,13 +603,13 @@ const copyApiKey = () => {
             <p class="text-xs font-semibold text-[rgb(var(--text-secondary))]">Agent</p>
             <span
               v-if="userToEdit.isAgent"
-              class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300"
+              class="badge badge-info"
             >
               Agent
             </span>
             <span
               v-else
-              class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"
+              class="badge badge-neutral"
             >
               Standard user
             </span>
@@ -620,7 +620,7 @@ const copyApiKey = () => {
             <label class="block text-sm font-medium text-[rgb(var(--text))] mb-1">Role</label>
             <select
               v-model="editUser.roleId"
-              class="w-full px-3 py-2 rounded-lg border-2 border-[rgb(var(--border))] bg-[rgb(var(--surface))] text-[rgb(var(--text))] focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              class="input w-full"
               :disabled="userToEdit.userId === 'ziri'"
             >
               <option :value="undefined">None</option>

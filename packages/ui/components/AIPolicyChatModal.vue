@@ -194,7 +194,7 @@ const {
           <button
             @click="sendMessage"
             :disabled="!currentMessage.trim() || isLoading || !selectedModel || availableModels.length === 0"
-            class="px-3 py-2 rounded bg-[rgb(var(--primary))] text-[#0a0a0a] hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+            class="btn btn-primary px-3 py-2 min-h-0 flex items-center justify-center"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
@@ -265,7 +265,7 @@ const {
 .model-select {
   padding: 4px 8px;
   border: 1px solid rgb(var(--border));
-  border-radius: 6px;
+  border-radius: 0;
   background: rgb(var(--surface));
   color: rgb(var(--text));
   font-size: 11px;
@@ -280,10 +280,38 @@ const {
   border-color: rgb(var(--border-strong));
 }
 
-.model-select:focus {
-  outline: none;
+.model-select:focus-visible {
+  outline: 2px solid rgba(var(--color-border-accent), 0.8);
+  outline-offset: 1px;
   border-color: rgb(var(--primary));
-  box-shadow: 0 0 0 2px rgba(var(--primary), 0.1);
+  box-shadow: 0 0 0 3px rgba(var(--primary), 0.16);
+}
+
+.close-button {
+  margin-left: auto;
+  color: rgb(var(--text-secondary));
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 0;
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.close-button:hover {
+  border-color: rgb(var(--border-strong));
+  background: rgb(var(--surface-elevated));
+  color: rgb(var(--text));
+}
+
+.close-button:focus-visible {
+  outline: 2px solid rgba(var(--color-border-accent), 0.85);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(var(--color-glow), 0.2);
 }
 
 .status-text {
@@ -340,7 +368,7 @@ const {
 
 .ai-avatar {
   background: rgb(var(--primary));
-  color: white;
+  color: rgb(9 12 8);
 }
 
 .user-avatar {
@@ -367,7 +395,7 @@ const {
 
 .user-bubble {
   background: rgb(var(--primary));
-  color: white;
+  color: rgb(9 12 8);
 }
 
 .message-text {
@@ -379,7 +407,7 @@ const {
 }
 
 .user-bubble .message-text {
-  color: white;
+  color: rgb(9 12 8);
 }
 
 .example-text {
@@ -431,11 +459,11 @@ const {
 .copy-button {
   color: rgb(var(--text-muted));
   background: transparent;
-  border: none;
+  border: 1px solid transparent;
   padding: 6px;
   width: 28px;
   height: 28px;
-  border-radius: 6px;
+  border-radius: 0;
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
@@ -444,8 +472,14 @@ const {
 }
 
 .copy-button:hover {
+  border-color: rgb(var(--border-strong));
   color: rgb(var(--color-text-accent));
   background: rgb(var(--surface-elevated));
+}
+
+.copy-button:focus-visible {
+  outline: 2px solid rgba(var(--color-border-accent), 0.85);
+  outline-offset: 2px;
 }
 
 .code-editor-content {
@@ -562,11 +596,12 @@ const {
   font-family: inherit;
 }
 
-.message-input:focus {
-  outline: none;
+.message-input:focus-visible {
+  outline: 2px solid rgba(var(--color-border-accent), 0.85);
+  outline-offset: 1px;
   border-color: rgb(var(--color-border-accent));
   background: rgb(var(--surface));
-  box-shadow: 0 0 0 2px rgba(var(--color-glow), 0.16);
+  box-shadow: 0 0 0 3px rgba(var(--color-glow), 0.22);
 }
 
 .message-input::placeholder {
