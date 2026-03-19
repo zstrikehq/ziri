@@ -199,6 +199,9 @@ npm run dev
 
 # Production mode
 npm start
+
+# Run Bruno API tests (proxy must be running)
+npm run test:bruno
 ```
 
 ### Testing with Bruno
@@ -209,11 +212,13 @@ The Bruno API collection is in `packages/proxy/bruno/`. It covers all API endpoi
 
 - [Bruno](https://www.usebruno.com/) installed (GUI) or `@usebruno/cli` installed (CLI: `npm install -g @usebruno/cli`)
 - The proxy running locally (`npm run dev` or `npm start`)
-- A copy of `packages/proxy/bruno/environments/Local.bru.example` saved as `Local.bru` with your secrets filled in
+- A copy of `packages/proxy/bruno/environments/Local.bru.example` saved as `Local.bru` with your secrets filled in:
+  - `rootKey` — from `.ziri-root-key`
+  - `testProviderApiKey` — your provider API key (OpenRouter, OpenAI, etc.) for Create Provider and LLM tests
 
 #### Without SSL (HTTP)
 
-No extra configuration needed. Set `baseUrl` to `http://localhost:3000` in your `Local.bru` environment file.
+No extra configuration needed. Set `baseUrl` to `http://localhost:3100` in your `Local.bru` environment file.
 
 **GUI:**
 1. Open Bruno and load the `packages/proxy/bruno/` folder as a collection.
@@ -223,17 +228,18 @@ No extra configuration needed. Set `baseUrl` to `http://localhost:3000` in your 
 
 **CLI:**
 ```bash
-cd packages/proxy/bruno
-bru run . -r --env Local
+cd packages/proxy
+npm run test:bruno
 ```
+Or from the bruno folder: `bru run . -r --env Local`
 
 #### With SSL (HTTPS / mkcert)
 
 Bruno must trust the mkcert root CA. Do not use `--insecure`.
 
-1. **Generate certificates** if not already done — see the Local mkcert Setup section in the root README. Ensure `certs/rootCA.pem` exists.
+1. **Generate certificates** if not already done — see the Local mkcert Setup section in the root README. Ensure `certs/rootCA.pem` exists at the repo root.
 
-2. Set `baseUrl` to `https://localhost:3000` (or your HTTPS port) in `Local.bru`.
+2. Set `baseUrl` to `https://localhost:3100` (or your HTTPS port) in `Local.bru`.
 
 3. **GUI — trust the CA in Bruno preferences:**
    - Open Bruno → **Preferences** (gear icon) → **Use Custom CA Certificate**.
@@ -243,30 +249,14 @@ Bruno must trust the mkcert root CA. Do not use `--insecure`.
    - Leave **SSL/TLS Certificate Validation** enabled.
    - Run as normal — same steps as HTTP above.
 
-4. **CLI — add `cacert` to `bruno.json`** before running:
-
-   ```json
-   {
-     "version": "1",
-     "name": "ZIRI Gateway API",
-     "type": "collection",
-     "ignore": ["node_modules", "dist"],
-     "cacert": "/absolute/path/to/your/rootCA.pem"
-   }
-   ```
-
-   The path can be absolute or relative to the collection root. For the repo's `certs/` folder:
-
-   ```json
-   "cacert": "../../../../certs/rootCA.pem"
-   ```
-
-   Then run:
+4. **CLI** — `bruno.json` already includes `cacert` pointing to `../../../certs/rootCA.pem`. Run:
 
    ```bash
-   cd packages/proxy/bruno
-   bru run . -r --env Local
+   cd packages/proxy
+   npm run test:bruno
    ```
+
+   This script passes `--cacert` to Bruno so HTTPS requests succeed. To run manually from the bruno folder: `bru run . -r --env Local --cacert ../../../certs/rootCA.pem`
 
 #### Collection flow
 

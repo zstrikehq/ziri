@@ -2,5 +2,6 @@
   "version": "1",
   "name": "ZIRI Gateway API",
   "type": "collection",
-  "ignore": ["node_modules", "dist"]
+  "ignore": ["node_modules", "dist"],
+  "cacert": "../../../certs/rootCA.pem"
 }

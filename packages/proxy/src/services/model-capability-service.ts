@@ -41,8 +41,20 @@ export class ModelCapabilityService {
       .filter(Boolean) as SupportedAction[]
   }
 
+  private resolveModelAlias(provider: string, model: string): string {
+    const alias = this.db.prepare(`
+      SELECT canonical_model
+      FROM model_aliases
+      WHERE provider = ? AND alias = ?
+      LIMIT 1
+    `).get(provider, model) as { canonical_model: string } | undefined
+
+    return alias?.canonical_model || model
+  }
+
   checkModelAction(provider: string, model: string, action: SupportedAction): CapabilityCheckResult {
     const normalizedAction = this.normalizeAction(action)
+    const resolvedModel = this.resolveModelAlias(provider, model)
 
     if (normalizedAction === 'image_generation') {
       const imageRow = this.db.prepare(`
@@ -51,16 +63,25 @@ export class ModelCapabilityService {
         WHERE provider = ? AND model = ?
         ORDER BY effective_from DESC
         LIMIT 1
-      `).get(provider, model) as ImagePricingRow | undefined
+      `).get(provider, resolvedModel) as ImagePricingRow | undefined
 
       if (!imageRow) {
-        return {
-          supported: false,
-          error: {
-            code: 'ACTION_NOT_SUPPORTED',
-            message: `Model '${model}' is not configured for image generation for provider '${provider}'.`,
-          },
+        const modelRow = this.db.prepare(`
+          SELECT provider, model, supported_actions
+          FROM model_pricing
+          WHERE provider = ? AND model = ?
+          ORDER BY effective_from DESC
+          LIMIT 1
+        `).get(provider, resolvedModel) as ModelPricingRow | undefined
+
+        if (modelRow) {
+          const actions = this.parseSupportedActions(modelRow.supported_actions)
+          if (actions.includes('image_generation')) {
+            return { supported: true }
+          }
         }
+
+        return { supported: true }
       }
 
       return { supported: true }
@@ -72,14 +93,14 @@ export class ModelCapabilityService {
       WHERE provider = ? AND model = ?
       ORDER BY effective_from DESC
       LIMIT 1
-    `).get(provider, model) as ModelPricingRow | undefined
+    `).get(provider, resolvedModel) as ModelPricingRow | undefined
 
     if (!row) {
       return {
         supported: false,
         error: {
           code: 'MODEL_NOT_SUPPORTED',
-          message: `Model '${model}' is not configured for provider '${provider}'.`,
+          message: `Model '${resolvedModel}' is not configured for provider '${provider}'.`,
         },
       }
     }
@@ -91,7 +112,7 @@ export class ModelCapabilityService {
         supported: false,
         error: {
           code: 'ACTION_NOT_SUPPORTED',
-          message: `Model '${model}' does not support action '${normalizedAction}'.`,
+          message: `Model '${resolvedModel}' does not support action '${normalizedAction}'.`,
         },
       }
     }

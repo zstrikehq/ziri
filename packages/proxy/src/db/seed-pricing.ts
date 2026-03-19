@@ -643,16 +643,88 @@ interface ImagePricingSeed {
   max_images_per_request?: number
 }
 
-export const OPENAI_IMAGE_PRICING: ImagePricingSeed[] = [
-  { provider: 'openai', model: 'dall-e-3', quality: 'standard', size: '1024x1024', price_per_image: 0.040, max_images_per_request: 1 },
-  { provider: 'openai', model: 'dall-e-3', quality: 'standard', size: '1024x1792', price_per_image: 0.080, max_images_per_request: 1 },
-  { provider: 'openai', model: 'dall-e-3', quality: 'standard', size: '1792x1024', price_per_image: 0.080, max_images_per_request: 1 },
-  { provider: 'openai', model: 'dall-e-3', quality: 'hd', size: '1024x1024', price_per_image: 0.080, max_images_per_request: 1 },
-  { provider: 'openai', model: 'dall-e-3', quality: 'hd', size: '1024x1792', price_per_image: 0.120, max_images_per_request: 1 },
-  { provider: 'openai', model: 'dall-e-3', quality: 'hd', size: '1792x1024', price_per_image: 0.120, max_images_per_request: 1 },
-  { provider: 'openai', model: 'dall-e-2', quality: 'standard', size: '256x256', price_per_image: 0.016, max_images_per_request: 10 },
-  { provider: 'openai', model: 'dall-e-2', quality: 'standard', size: '512x512', price_per_image: 0.018, max_images_per_request: 10 },
-  { provider: 'openai', model: 'dall-e-2', quality: 'standard', size: '1024x1024', price_per_image: 0.020, max_images_per_request: 10 },
+export const IMAGE_PRICING: ImagePricingSeed[] = [
+  { provider: 'google', model: 'gemini-2.0-flash-exp-image-generation', quality: 'standard', size: 'default', price_per_image: 0.039000, max_images_per_request: 1 },
+  { provider: 'google', model: 'gemini-2.5-flash-image', quality: 'standard', size: 'default', price_per_image: 0.039000, max_images_per_request: 1 },
+  { provider: 'google', model: 'gemini-3-pro-image-preview', quality: 'standard', size: 'default', price_per_image: 0.134000, max_images_per_request: 1 },
+  { provider: 'google', model: 'gemini-3.1-flash-image-preview', quality: 'standard', size: 'default', price_per_image: 0.045000, max_images_per_request: 1 },
+  { provider: 'google', model: 'deep-research-pro-preview-12-2025', quality: 'standard', size: 'default', price_per_image: 0.134000, max_images_per_request: 1 },
+  { provider: 'google', model: 'imagen-3.0-fast-generate-001', quality: 'standard', size: 'default', price_per_image: 0.020000, max_images_per_request: 1 },
+  { provider: 'google', model: 'imagen-3.0-generate-001', quality: 'standard', size: 'default', price_per_image: 0.040000, max_images_per_request: 1 },
+  { provider: 'google', model: 'imagen-3.0-generate-002', quality: 'standard', size: 'default', price_per_image: 0.040000, max_images_per_request: 1 },
+  { provider: 'google', model: 'imagen-4.0-fast-generate-001', quality: 'standard', size: 'default', price_per_image: 0.020000, max_images_per_request: 1 },
+  { provider: 'google', model: 'imagen-4.0-generate-001', quality: 'standard', size: 'default', price_per_image: 0.040000, max_images_per_request: 1 },
+  { provider: 'google', model: 'imagen-4.0-ultra-generate-001', quality: 'standard', size: 'default', price_per_image: 0.060000, max_images_per_request: 1 },
+
+  { provider: 'openai', model: 'dall-e-2', quality: 'standard', size: '1024x1024', price_per_image: 0.019923, max_images_per_request: 1 },
+  { provider: 'openai', model: 'dall-e-2', quality: 'standard', size: '256x256', price_per_image: 0.016000, max_images_per_request: 1 },
+  { provider: 'openai', model: 'dall-e-2', quality: 'standard', size: '512x512', price_per_image: 0.017983, max_images_per_request: 1 },
+  { provider: 'openai', model: 'dall-e-2', quality: 'standard', size: 'default', price_per_image: 0.020000, max_images_per_request: 1 },
+  { provider: 'openai', model: 'dall-e-3', quality: 'hd', size: '1024x1024', price_per_image: 0.079996, max_images_per_request: 1 },
+  { provider: 'openai', model: 'dall-e-3', quality: 'hd', size: '1024x1792', price_per_image: 0.119991, max_images_per_request: 1 },
+  { provider: 'openai', model: 'dall-e-3', quality: 'hd', size: '1792x1024', price_per_image: 0.119991, max_images_per_request: 1 },
+  { provider: 'openai', model: 'dall-e-3', quality: 'standard', size: '1024x1024', price_per_image: 0.040000, max_images_per_request: 1 },
+  { provider: 'openai', model: 'dall-e-3', quality: 'standard', size: '1024x1792', price_per_image: 0.079988, max_images_per_request: 1 },
+  { provider: 'openai', model: 'dall-e-3', quality: 'standard', size: '1792x1024', price_per_image: 0.079988, max_images_per_request: 1 },
+  { provider: 'openai', model: 'dall-e-3', quality: 'standard', size: 'default', price_per_image: 0.040000, max_images_per_request: 1 },
+  { provider: 'openai', model: 'gpt-image-1', quality: 'high', size: '1024x1024', price_per_image: 0.167000, max_images_per_request: 1 },
+  { provider: 'openai', model: 'gpt-image-1', quality: 'high', size: '1024x1536', price_per_image: 0.250000, max_images_per_request: 1 },
+  { provider: 'openai', model: 'gpt-image-1', quality: 'high', size: '1536x1024', price_per_image: 0.250000, max_images_per_request: 1 },
+  { provider: 'openai', model: 'gpt-image-1', quality: 'low', size: '1024x1024', price_per_image: 0.011000, max_images_per_request: 1 },
+  { provider: 'openai', model: 'gpt-image-1', quality: 'low', size: '1024x1536', price_per_image: 0.016000, max_images_per_request: 1 },
+  { provider: 'openai', model: 'gpt-image-1', quality: 'low', size: '1536x1024', price_per_image: 0.016000, max_images_per_request: 1 },
+  { provider: 'openai', model: 'gpt-image-1', quality: 'medium', size: '1024x1024', price_per_image: 0.042000, max_images_per_request: 1 },
+  { provider: 'openai', model: 'gpt-image-1', quality: 'medium', size: '1024x1536', price_per_image: 0.063000, max_images_per_request: 1 },
+  { provider: 'openai', model: 'gpt-image-1', quality: 'medium', size: '1536x1024', price_per_image: 0.063000, max_images_per_request: 1 },
+  { provider: 'openai', model: 'gpt-image-1-mini', quality: 'low', size: '1024x1024', price_per_image: 0.005000, max_images_per_request: 1 },
+  { provider: 'openai', model: 'gpt-image-1-mini', quality: 'low', size: '1024x1536', price_per_image: 0.006000, max_images_per_request: 1 },
+  { provider: 'openai', model: 'gpt-image-1-mini', quality: 'low', size: '1536x1024', price_per_image: 0.006000, max_images_per_request: 1 },
+  { provider: 'openai', model: 'gpt-image-1-mini', quality: 'medium', size: '1024x1024', price_per_image: 0.011000, max_images_per_request: 1 },
+  { provider: 'openai', model: 'gpt-image-1-mini', quality: 'medium', size: '1024x1536', price_per_image: 0.015000, max_images_per_request: 1 },
+  { provider: 'openai', model: 'gpt-image-1-mini', quality: 'medium', size: '1536x1024', price_per_image: 0.015000, max_images_per_request: 1 },
+  { provider: 'openai', model: 'gpt-image-1.5', quality: 'high', size: '1024x1024', price_per_image: 0.133000, max_images_per_request: 1 },
+  { provider: 'openai', model: 'gpt-image-1.5', quality: 'high', size: '1024x1536', price_per_image: 0.200000, max_images_per_request: 1 },
+  { provider: 'openai', model: 'gpt-image-1.5', quality: 'high', size: '1536x1024', price_per_image: 0.200000, max_images_per_request: 1 },
+  { provider: 'openai', model: 'gpt-image-1.5', quality: 'low', size: '1024x1024', price_per_image: 0.009000, max_images_per_request: 1 },
+  { provider: 'openai', model: 'gpt-image-1.5', quality: 'low', size: '1024x1536', price_per_image: 0.013000, max_images_per_request: 1 },
+  { provider: 'openai', model: 'gpt-image-1.5', quality: 'low', size: '1536x1024', price_per_image: 0.013000, max_images_per_request: 1 },
+  { provider: 'openai', model: 'gpt-image-1.5', quality: 'medium', size: '1024x1024', price_per_image: 0.034000, max_images_per_request: 1 },
+  { provider: 'openai', model: 'gpt-image-1.5', quality: 'medium', size: '1024x1536', price_per_image: 0.050000, max_images_per_request: 1 },
+  { provider: 'openai', model: 'gpt-image-1.5', quality: 'medium', size: '1536x1024', price_per_image: 0.050000, max_images_per_request: 1 },
+  { provider: 'openai', model: 'gpt-image-1.5', quality: 'standard', size: '1024x1024', price_per_image: 0.009000, max_images_per_request: 1 },
+  { provider: 'openai', model: 'gpt-image-1.5', quality: 'standard', size: '1024x1536', price_per_image: 0.013000, max_images_per_request: 1 },
+  { provider: 'openai', model: 'gpt-image-1.5', quality: 'standard', size: '1536x1024', price_per_image: 0.013000, max_images_per_request: 1 },
+  { provider: 'openai', model: 'gpt-image-1.5-2025-12-16', quality: 'high', size: '1024x1024', price_per_image: 0.133000, max_images_per_request: 1 },
+  { provider: 'openai', model: 'gpt-image-1.5-2025-12-16', quality: 'high', size: '1024x1536', price_per_image: 0.200000, max_images_per_request: 1 },
+  { provider: 'openai', model: 'gpt-image-1.5-2025-12-16', quality: 'high', size: '1536x1024', price_per_image: 0.200000, max_images_per_request: 1 },
+  { provider: 'openai', model: 'gpt-image-1.5-2025-12-16', quality: 'low', size: '1024x1024', price_per_image: 0.009000, max_images_per_request: 1 },
+  { provider: 'openai', model: 'gpt-image-1.5-2025-12-16', quality: 'low', size: '1024x1536', price_per_image: 0.013000, max_images_per_request: 1 },
+  { provider: 'openai', model: 'gpt-image-1.5-2025-12-16', quality: 'low', size: '1536x1024', price_per_image: 0.013000, max_images_per_request: 1 },
+  { provider: 'openai', model: 'gpt-image-1.5-2025-12-16', quality: 'medium', size: '1024x1024', price_per_image: 0.034000, max_images_per_request: 1 },
+  { provider: 'openai', model: 'gpt-image-1.5-2025-12-16', quality: 'medium', size: '1024x1536', price_per_image: 0.050000, max_images_per_request: 1 },
+  { provider: 'openai', model: 'gpt-image-1.5-2025-12-16', quality: 'medium', size: '1536x1024', price_per_image: 0.050000, max_images_per_request: 1 },
+  { provider: 'openai', model: 'gpt-image-1.5-2025-12-16', quality: 'standard', size: '1024x1024', price_per_image: 0.009000, max_images_per_request: 1 },
+  { provider: 'openai', model: 'gpt-image-1.5-2025-12-16', quality: 'standard', size: '1024x1536', price_per_image: 0.013000, max_images_per_request: 1 },
+  { provider: 'openai', model: 'gpt-image-1.5-2025-12-16', quality: 'standard', size: '1536x1024', price_per_image: 0.013000, max_images_per_request: 1 },
+
+  { provider: 'xai', model: 'grok-imagine-image', quality: 'standard', size: 'default', price_per_image: 0.020000, max_images_per_request: 10 },
+  { provider: 'xai', model: 'grok-imagine-image-pro', quality: 'standard', size: 'default', price_per_image: 0.070000, max_images_per_request: 10 },
+
+  { provider: 'vertex_ai', model: 'gemini-2.5-flash-image', quality: 'standard', size: 'default', price_per_image: 0.039000, max_images_per_request: 1 },
+  { provider: 'vertex_ai', model: 'gemini-3-pro-image-preview', quality: 'standard', size: 'default', price_per_image: 0.134000, max_images_per_request: 1 },
+  { provider: 'vertex_ai', model: 'gemini-3.1-flash-image-preview', quality: 'standard', size: 'default', price_per_image: 0.067200, max_images_per_request: 1 },
+  { provider: 'vertex_ai', model: 'deep-research-pro-preview-12-2025', quality: 'standard', size: 'default', price_per_image: 0.134000, max_images_per_request: 1 },
+  { provider: 'vertex_ai', model: 'imagegeneration@006', quality: 'standard', size: 'default', price_per_image: 0.020000, max_images_per_request: 1 },
+  { provider: 'vertex_ai', model: 'imagen-3.0-capability-001', quality: 'standard', size: 'default', price_per_image: 0.040000, max_images_per_request: 1 },
+  { provider: 'vertex_ai', model: 'imagen-3.0-fast-generate-001', quality: 'standard', size: 'default', price_per_image: 0.020000, max_images_per_request: 1 },
+  { provider: 'vertex_ai', model: 'imagen-3.0-generate-001', quality: 'standard', size: 'default', price_per_image: 0.040000, max_images_per_request: 1 },
+  { provider: 'vertex_ai', model: 'imagen-3.0-generate-002', quality: 'standard', size: 'default', price_per_image: 0.040000, max_images_per_request: 1 },
+  { provider: 'vertex_ai', model: 'imagen-4.0-fast-generate-001', quality: 'standard', size: 'default', price_per_image: 0.020000, max_images_per_request: 1 },
+  { provider: 'vertex_ai', model: 'imagen-4.0-generate-001', quality: 'standard', size: 'default', price_per_image: 0.040000, max_images_per_request: 1 },
+  { provider: 'vertex_ai', model: 'imagen-4.0-ultra-generate-001', quality: 'standard', size: 'default', price_per_image: 0.060000, max_images_per_request: 1 },
+
+  { provider: 'runwayml', model: 'gen4_image', quality: 'standard', size: 'default', price_per_image: 0.050000, max_images_per_request: 1 },
+  { provider: 'runwayml', model: 'gen4_image_turbo', quality: 'standard', size: 'default', price_per_image: 0.020000, max_images_per_request: 1 },
 ]
 
 export const MODEL_ALIASES: { alias: string; provider: string; canonical_model: string }[] = [
@@ -662,7 +734,7 @@ export const MODEL_ALIASES: { alias: string; provider: string; canonical_model: 
   { alias: 'gpt-5-latest', provider: 'openai', canonical_model: 'gpt-5.2' },
   { alias: 'o1-latest', provider: 'openai', canonical_model: 'o1' },
   { alias: 'o3-latest', provider: 'openai', canonical_model: 'o3' },
-  
+
   { alias: 'claude-3-sonnet', provider: 'anthropic', canonical_model: 'claude-3-sonnet-20240229' },
   { alias: 'claude-3-opus', provider: 'anthropic', canonical_model: 'claude-3-opus-20240229' },
   { alias: 'claude-3-haiku', provider: 'anthropic', canonical_model: 'claude-3-haiku-20240307' },
@@ -802,7 +874,7 @@ export function seedPricing(db: Database.Database): void {
       insertAlias.run(alias.alias, alias.provider, alias.canonical_model)
     }
 
-    for (const imagePricing of OPENAI_IMAGE_PRICING) {
+    for (const imagePricing of IMAGE_PRICING) {
       insertImagePricing.run(
         imagePricing.provider,
         imagePricing.model,
@@ -815,5 +887,5 @@ export function seedPricing(db: Database.Database): void {
   })
 
   transaction()
-  
+
 }

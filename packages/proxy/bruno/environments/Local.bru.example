@@ -3,16 +3,17 @@ vars {
   adminToken:
   userToken:
   refreshToken:
-  rootKey:
+  rootKey: <put_your_root_key_here>
   testUserId:
   testDashboardUserId:
   testProvider: openrouter
   testModel: openai/gpt-4o-mini
+  testImageModel: bytedance-seed/seedream-4.5
   testUserPassword:
   testApiKey:
   testKeyId:
   testRoleId: tester
-  testProviderApiKey:
+  testProviderApiKey: <put_your_provider_api_key_here>
   adminUsername: ziri
   testUserEmail: testuser@example.com
   testUserName: Test User

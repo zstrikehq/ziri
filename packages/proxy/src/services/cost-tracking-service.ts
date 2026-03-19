@@ -131,8 +131,8 @@ export class CostTrackingService {
     modelUsed?: string
     totalCost: number
     numImages: number
-    imageQuality: string
-    imageSize: string
+    imageQuality?: string
+    imageSize?: string
     requestTimestamp: string
     responseTimestamp?: string
     latencyMs?: number
@@ -182,8 +182,8 @@ export class CostTrackingService {
       entry.errorMessage || null,
       'image_generation',
       entry.numImages,
-      entry.imageQuality,
-      entry.imageSize
+      entry.imageQuality || null,
+      entry.imageSize || null
     )
 
     const keyRecord = this.db.prepare(

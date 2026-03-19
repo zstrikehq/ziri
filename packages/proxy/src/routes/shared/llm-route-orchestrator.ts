@@ -203,6 +203,12 @@ export async function handleLlmRequest<TPrepared extends LlmPreparedRequest, TRe
     const usage = spec.getUsage(llmResponse, prepared)
     const modelUsed = spec.getModelUsed?.(llmResponse, prepared) || (llmResponse as any).model || model
     const providerRequestId = spec.getProviderRequestId?.(llmResponse, prepared) || (llmResponse as any).id || ''
+    const actualCost = await spec.computeActualCost({
+      prepared,
+      response: llmResponse,
+      usage,
+      modelUsed
+    })
 
     let costTrackingId: number
 
@@ -216,10 +222,10 @@ export async function handleLlmRequest<TPrepared extends LlmPreparedRequest, TRe
         providerRequestId,
         modelRequested: model,
         modelUsed,
-        totalCost: imgPrepared.estimatedCost || 0,
+        totalCost: actualCost,
         numImages: imgPrepared.n || 1,
-        imageQuality: imgPrepared.imageQuality || 'standard',
-        imageSize: imgPrepared.imageSize || '1024x1024',
+        imageQuality: imgPrepared.imageQuality,
+        imageSize: imgPrepared.imageSize,
         requestTimestamp: new Date(llmRequestStartTime).toISOString(),
         responseTimestamp: new Date(llmResponseTime).toISOString(),
         latencyMs: llmResponseTime - llmRequestStartTime,
@@ -255,13 +261,6 @@ export async function handleLlmRequest<TPrepared extends LlmPreparedRequest, TRe
     })
 
     await auditLogService.updateWithProviderResponse(requestId, providerRequestId, costTrackingId)
-
-    const actualCost = await spec.computeActualCost({
-      prepared,
-      response: llmResponse,
-      usage,
-      modelUsed
-    })
 
     await resources.releaseQueue('response sent')
 

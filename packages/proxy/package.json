@@ -15,7 +15,8 @@
 		"copy:ui": "node scripts/copy-ui.js",
 		"dev": "tsx watch src/index.ts",
 		"start": "node dist/index.js",
-		"test:cedar": "tsx test-cedar-wasm.ts"
+		"test:cedar": "tsx test-cedar-wasm.ts",
+		"test:bruno": "cd bruno && bru run . -r --env Local --cacert ../../../certs/rootCA.pem"
 	},
 	"dependencies": {
 		"@aws-sdk/client-ses": "^3.988.0",

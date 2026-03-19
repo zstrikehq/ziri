@@ -39,7 +39,7 @@ const TEMPLATES: Record<string, Omit<ProviderMetadata, 'name'>> = {
     models: ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-2.0-flash', 'gemini-2.0-flash-lite', 'gemini-1.5-pro', 'gemini-1.5-pro-latest', 'gemini-1.5-flash', 'gemini-1.5-flash-latest', 'gemini-1.5-flash-8b'],
     defaultModel: 'gemini-2.5-pro'
   },
-  xai: { displayName: 'xAI (Grok)', baseUrl: 'https://api.x.ai/v1', models: ['grok-4', 'grok-4-fast-reasoning', 'grok-4-fast-non-reasoning', 'grok-3', 'grok-3-mini', 'grok-vision-beta'], defaultModel: 'grok-4' },
+  xai: { displayName: 'xAI (Grok)', baseUrl: 'https://api.x.ai/v1', models: ['grok-4', 'grok-4-fast-reasoning', 'grok-4-fast-non-reasoning', 'grok-3', 'grok-3-mini', 'grok-vision-beta', 'grok-imagine-image', 'grok-imagine-image-pro'], defaultModel: 'grok-4' },
   mistral: { displayName: 'Mistral', baseUrl: 'https://api.mistral.ai/v1', models: ['mistral-large-3', 'mistral-large-latest', 'mistral-medium-2505', 'mistral-small', 'mistral-nemo', 'mistral-small-2503'], defaultModel: 'mistral-large-3' },
   moonshot: { displayName: 'Kimi (Moonshot)', baseUrl: 'https://api.moonshot.ai/v1', models: ['kimi-k2.5', 'kimi-k2-thinking', 'kimi-k2-thinking-turbo', 'kimi-k2-0905-preview', 'kimi-k2-0711-preview', 'kimi-k2-turbo-preview'], defaultModel: 'kimi-k2.5' },
   deepseek: { displayName: 'DeepSeek', baseUrl: 'https://api.deepseek.com', models: ['deepseek-chat', 'deepseek-reasoner', 'deepseek-v3.2', 'deepseek-v3', 'deepseek-r1', 'deepseek-coder'], defaultModel: 'deepseek-chat' },
@@ -60,7 +60,7 @@ const PROVIDER_COLUMNS: Record<string, string> = {
 function rowToProvider(row: any): Provider {
   let meta: ProviderMetadata = { name: row.provider, displayName: row.provider, baseUrl: '', models: [], defaultModel: '' }
   if (row.metadata) {
-    try { meta = { ...meta, ...JSON.parse(row.metadata) } } catch {}
+    try { meta = { ...meta, ...JSON.parse(row.metadata) } } catch { }
   }
   return {
     id: row.id, name: row.provider,
@@ -108,7 +108,7 @@ export function updateProvider(name: string, input: { apiKey?: string; displayNa
 
   let meta: ProviderMetadata = { name: row.provider, displayName: row.provider, baseUrl: '', models: [], defaultModel: '' }
   if (row.metadata) {
-    try { meta = { ...meta, ...JSON.parse(row.metadata) } } catch {}
+    try { meta = { ...meta, ...JSON.parse(row.metadata) } } catch { }
   }
 
   const nextMeta: ProviderMetadata = {
@@ -202,7 +202,7 @@ export async function testProviderApiKey(name: string): Promise<{ success: boole
       const resp = await fetch(url, { headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' } })
       if (resp.ok) return { success: true }
       const body = await resp.json().catch(() => ({})) as any
-      return { success: false, error: body?.error?.message || 'Validation failed' }
+      return { success: false, error: body?.error?.message || body?.error || 'Validation failed' }
     } catch (err: any) {
       return { success: false, error: err.message }
     }

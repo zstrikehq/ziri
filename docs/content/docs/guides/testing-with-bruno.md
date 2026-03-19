@@ -26,7 +26,7 @@ Open `Local.bru` and set:
 
 | Variable | Where to find it |
 |----------|-----------------|
-| `baseUrl` | `http://localhost:3000` (HTTP) or `https://localhost:3000` (HTTPS) |
+| `baseUrl` | `http://localhost:3100` (HTTP) or `https://localhost:3100` (HTTPS) |
 | `rootKey` | Contents of `.ziri-root-key` at the repo root |
 
 The other variables (`testUserId`, `adminToken`, `testApiKey`, etc.) are populated automatically by post-response scripts as you run the collection. You do not need to set them manually.
@@ -37,7 +37,7 @@ The other variables (`testUserId`, `adminToken`, `testApiKey`, etc.) are populat
 
 The simplest setup. No certificate configuration required.
 
-Set `baseUrl` to `http://localhost:3000` in `Local.bru`, then:
+Set `baseUrl` to `http://localhost:3100` in `Local.bru`, then:
 
 **GUI:**
 1. Open Bruno and open the `packages/proxy/bruno/` folder as a collection.
@@ -46,9 +46,10 @@ Set `baseUrl` to `http://localhost:3000` in `Local.bru`, then:
 
 **CLI:**
 ```bash
-cd packages/proxy/bruno
-bru run . -r --env Local
+cd packages/proxy
+npm run test:bruno
 ```
+Or from the bruno folder: `bru run . -r --env Local`
 
 ## Running With SSL (HTTPS / mkcert)
 
@@ -60,25 +61,14 @@ Follow the Local mkcert Setup section in the [proxy README](https://github.com/y
 
 ### Step 2: Configure trust
 
-**CLI** — add a `cacert` field to `packages/proxy/bruno/bruno.json`:
+**CLI** — `bruno.json` already includes `cacert: "../../../certs/rootCA.pem"`. Run:
 
-```json
-{
-  "version": "1",
-  "name": "ZIRI Gateway API",
-  "type": "collection",
-  "ignore": ["node_modules", "dist"],
-  "cacert": "/absolute/path/to/your/rootCA.pem"
-}
+```bash
+cd packages/proxy
+npm run test:bruno
 ```
 
-The path can be absolute or relative to the collection root. If you used the repo's `certs/` folder:
-
-```json
-"cacert": "../../../../certs/rootCA.pem"
-```
-
-Do not commit `bruno.json` with a personal absolute path. Use the relative form if the CA lives in `certs/` at the repo root, or add your local `bruno.json` override to `.gitignore`.
+The script passes `--cacert` so Bruno trusts the mkcert certificate. To run manually: `bru run . -r --env Local --cacert ../../../certs/rootCA.pem`
 
 **GUI** — configure Bruno preferences once:
 
@@ -91,7 +81,7 @@ Do not commit `bruno.json` with a personal absolute path. Use the relative form 
 
 ### Step 3: Run
 
-Set `baseUrl` to `https://localhost:3000` in `Local.bru`, then run as described in the HTTP section above.
+Set `baseUrl` to `https://localhost:3100` in `Local.bru`, then run as described in the HTTP section above.
 
 ## Collection Flow
 
