@@ -201,6 +201,10 @@ npm run dev
 npm start
 ```
 
+### Load testing (wrk)
+
+For measuring proxy throughput/latency without hitting external providers, see `packages/proxy/loadtest/`.
+
 ### Testing with Bruno
 
 The Bruno API collection is in `packages/proxy/bruno/`. It covers all API endpoints and handles the full auth/setup flow automatically via post-response scripts.

@@ -41,6 +41,7 @@ const API_ROUTES: [string, string][] = [
   ['costs',              './routes/costs.js'],
   ['events',             './routes/events.js'],
   ['ai-policy',          './routes/ai-policy.js'],
+  ['loadtest',           './routes/loadtest.js'],
 ]
 
 export async function createServer(): Promise<Express> {

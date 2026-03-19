@@ -81,7 +81,9 @@ export function loadConfig(): ProxyConfig {
   }
 
   let sslConfig: ProxyConfig['ssl'] = undefined
-  const sslEnabled = process.env.SSL_ENABLED === 'true' || fileConfig?.ssl?.enabled
+  const sslEnabled = typeof process.env.SSL_ENABLED === 'string'
+    ? process.env.SSL_ENABLED === 'true'
+    : Boolean(fileConfig?.ssl?.enabled)
   const sslCert = process.env.SSL_CERT_PATH || fileConfig?.ssl?.cert
   const sslKey = process.env.SSL_KEY_PATH || fileConfig?.ssl?.key
   if (sslEnabled && sslCert && sslKey) {
