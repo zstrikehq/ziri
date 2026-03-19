@@ -83,7 +83,7 @@ function handleSubmit(): void {
             type="checkbox"
             class="sr-only peer"
           />
-          <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-lime-300 dark:peer-focus:ring-lime-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-lime-500 dark:peer-checked:bg-lime-600"></div>
+          <div class="w-11 h-6 bg-gray-300 dark:bg-gray-600 rounded-full border border-[rgb(var(--border))] peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[rgb(var(--color-border-accent))] peer-focus:ring-offset-2 peer-focus:ring-offset-[rgb(var(--surface-panel))] peer-checked:after:translate-x-full peer-checked:after:border-[rgb(var(--surface-panel))] after:content-[''] after:absolute after:top-[1px] after:left-[1px] after:bg-[rgb(var(--surface-panel))] after:border after:border-[rgb(var(--border-strong))] after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-lime-500 dark:peer-checked:bg-lime-400"></div>
           <span class="ml-3 text-sm font-medium text-[rgb(var(--text))]">
             {{ formState.isActive ? 'Enabled' : 'Disabled' }}
           </span>

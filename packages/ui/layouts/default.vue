@@ -73,7 +73,7 @@ const pageTitle = computed(() => {
 </script>
 
 <template>
-  <div class="flex h-screen bg-[rgb(var(--surface-elevated))] bg-texture">
+  <div class="terminal-shell flex h-screen">
     <!-- Desktop Sidebar - Wrap in ClientOnly to prevent SSR/hydration mismatch -->
     <ClientOnly>
       <LayoutSidebar />
@@ -161,11 +161,11 @@ const pageTitle = computed(() => {
       </template>
     </ClientOnly>
     
-    <div class="flex-1 flex flex-col overflow-hidden">
+    <div class="relative z-10 flex-1 flex flex-col overflow-hidden">
       <!-- Header -->
-      <header class="h-14 flex-shrink-0 border-b-2 border-[rgb(var(--border))] bg-[rgb(var(--surface))] flex items-center justify-between px-4 md:px-6">
-        <div class="flex items-center gap-3">
-          <h1 class="text-lg font-bold text-[rgb(var(--text))]">
+      <header class="terminal-frame h-14 flex-shrink-0 flex items-center justify-between px-4 md:px-6">
+        <div class="flex items-center gap-3 min-w-0">
+          <h1 class="text-sm md:text-base font-extrabold uppercase tracking-[0.12em] text-[rgb(var(--text))] truncate">
             {{ pageTitle }}
           </h1>
         </div>
@@ -187,8 +187,10 @@ const pageTitle = computed(() => {
       </header>
       
       <!-- Main Content -->
-      <main class="flex-1 overflow-auto p-4 md:p-6">
-        <slot />
+      <main class="relative flex-1 overflow-auto p-3 md:p-4">
+        <section class="terminal-frame relative z-10 h-full overflow-auto p-4 md:p-5">
+          <slot />
+        </section>
       </main>
     </div>
     

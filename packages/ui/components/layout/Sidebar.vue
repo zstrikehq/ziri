@@ -75,21 +75,20 @@ const navSections = computed(() => getNavSections(isDashboardUser.value))
 
 <template>
   <aside 
-    class="flex-shrink-0 flex flex-col border-r-2 transition-all duration-300 ease-out h-screen overflow-hidden"
+    class="terminal-frame relative z-10 flex-shrink-0 flex flex-col transition-all duration-300 ease-out h-screen overflow-hidden"
     :class="[
       isCollapsed ? 'w-16' : 'w-56',
-      'bg-[rgb(var(--surface))] border-[rgb(var(--border))]',
       'hidden md:flex'
     ]"
   >
     <!-- Logo Section -->
     <div 
-      class="h-14 py-2 border-b-2 border-[rgb(var(--border))] flex-shrink-0 min-w-0"
+      class="h-14 py-2 border-b border-[rgb(var(--border))] flex-shrink-0 min-w-0"
       :class="isCollapsed ? 'px-2' : 'px-4'"
     >
         <div class="flex items-center gap-3 min-w-0">
           <!-- Logo Icon -->
-          <div class="w-8 h-8 flex-shrink-0 rounded-lg bg-gradient-to-br from-lime-500 to-lime-600 p-1.5 flex items-center justify-center shadow-md shadow-lime-500/25 ring-1 ring-lime-500/20">
+          <div class="w-8 h-8 flex-shrink-0 border border-lime-500/60 bg-lime-300/85 p-1.5 flex items-center justify-center shadow-[0_0_14px_rgba(212,245,51,0.22)]">
             <img 
               :src="ziriLogo" 
               alt="Ziri Logo" 
@@ -97,8 +96,8 @@ const navSections = computed(() => getNavSections(isDashboardUser.value))
             />
           </div>
           <div v-if="!isCollapsed" class="overflow-hidden min-w-0 flex-1">
-            <h1 class="text-sm font-black tracking-wider truncate uppercase text-lime-600 dark:text-lime-400 drop-shadow-sm">ZIRI</h1>
-            <p class="text-[10px] font-bold text-[rgb(var(--text-muted))] truncate tracking-widest uppercase opacity-70">AI LLM  gateway auth</p>
+            <h1 class="text-xs font-black tracking-[0.16em] truncate uppercase text-[rgb(var(--color-text-accent))]">ZIRI</h1>
+            <p class="text-[10px] font-bold text-[rgb(var(--text-muted))] truncate tracking-[0.14em] uppercase">control interface</p>
           </div>
         </div>
     </div>
@@ -126,7 +125,7 @@ const navSections = computed(() => getNavSections(isDashboardUser.value))
 
       <!-- Sections -->
       <div class="flex-1">
-        <div v-for="(section, sectionIdx) in navSections" :key="section.title" v-show="!section.adminOnly || isAdmin" class="mb-4 last:mb-0">
+        <div v-for="section in navSections" :key="section.title" v-show="!section.adminOnly || isAdmin" class="mb-4 last:mb-0">
           <!-- Separator line when collapsed (before each section) -->
           <div 
             v-if="isCollapsed"
@@ -175,12 +174,12 @@ const navSections = computed(() => getNavSections(isDashboardUser.value))
 
     <!-- Collapse Toggle -->
     <div 
-      class="border-t-2 border-[rgb(var(--border))] flex-shrink-0 min-w-0"
+      class="border-t border-[rgb(var(--border))] flex-shrink-0 min-w-0"
       :class="isCollapsed ? 'p-2' : 'p-2'"
     >
       <button
         @click="toggleSidebar"
-        class="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 text-[rgb(var(--text-secondary))] hover:bg-[rgb(var(--surface-elevated))] hover:text-[rgb(var(--text))] relative min-w-0"
+        class="w-full flex items-center justify-center gap-2 py-2.5 border border-transparent text-xs font-bold uppercase tracking-[0.1em] transition-all duration-200 text-[rgb(var(--text-secondary))] hover:bg-[rgb(var(--surface-elevated))] hover:border-[rgb(var(--border-strong))] hover:text-[rgb(var(--text))] relative min-w-0"
         :class="isCollapsed ? 'px-2' : 'px-3'"
         @mouseenter="(e) => showTooltip(e, 'Expand sidebar')"
         @mouseleave="hideTooltip"
@@ -217,18 +216,6 @@ const navSections = computed(() => getNavSections(isDashboardUser.value))
     </Transition>
   </Teleport>
 </template>
-
-<style scoped>
-.nav-item {
-  @apply flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200;
-  @apply text-[rgb(var(--text-secondary))];
-  @apply hover:bg-[rgb(var(--surface-elevated))] hover:text-[rgb(var(--text))];
-}
-
-.nav-item.active {
-  @apply bg-[rgb(var(--primary))/0.06] text-[rgb(var(--color-text-accent))] font-semibold;
-}
-</style>
 
 <style scoped>
 /* Tooltip fade transition */
